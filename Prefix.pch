@@ -1,0 +1,43 @@
+//  Copyright (C) 2010-2016 Pierre-Olivier Latour <info@pol-online.net>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#ifdef __OBJC__
+  #import <Foundation/Foundation.h>
+  #import <UIKit/UIKit.h>
+#endif
+#import <QuartzCore/QuartzCore.h>
+
+#define __STORE_THUMBNAILS_IN_DATABASE__ 1
+#define __DISPLAY_THUMBNAILS_IN_BACKGROUND__ 1
+
+#ifdef __OBJC__
+#import "XLFacilityMacros.h"
+
+#define __COOLIRIS_TOOLKIT_LOGGING__
+
+#define LOG_DEBUG(...) XLOG_DEBUG(__VA_ARGS__)
+#define LOG_INFO(...) XLOG_INFO(__VA_ARGS__)
+#define LOG_VERBOSE(...) XLOG_VERBOSE(__VA_ARGS__)
+#define LOG_WARNING(...) XLOG_WARNING(__VA_ARGS__)
+#define LOG_ERROR(...) XLOG_ERROR(__VA_ARGS__)
+#define LOG_EXCEPTION(...) XLOG_EXCEPTION(__VA_ARGS__)
+
+#define CHECK(...) XLOG_CHECK(__VA_ARGS__)
+#define NOT_REACHED() XLOG_UNREACHABLE()
+
+#define DCHECK(...) XLOG_DEBUG_CHECK(__VA_ARGS__)
+#define DNOT_REACHED() XLOG_DEBUG_UNREACHABLE()
+
+#endif

@@ -1,0 +1,78 @@
+"SETTINGS_BUTTON" = "Settings";
+
+"INFO_FORMAT" = "%i Comics | %i Series | %.0f MB Database";
+"VERSION_FORMAT" = "ComicReader Version %@";
+
+"ADDRESS_UNAVAILABLE" = "Enable ComicReader Web Server to import comics over WiFi using your computer";
+"ADDRESS_WEBSITE_IP" = "Using your web browser go to\n%@";
+"ADDRESS_WEBSITE_BONJOUR" = "Using your web browser go to\n%@\n(or %@)";
+"ADDRESS_WEBDAV_IP" = "Using a WebDAV client connect to\n%@";
+"ADDRESS_WEBDAV_BONJOUR" = "Using a WebDAV client connect to\n%@\n(or %@)";
+
+"SPINNER_MESSAGE" = "Please Wait…";
+
+"LOG_TITLE" = "Log Contents";
+
+"MARK_READ" = "Mark Read";
+"MARK_NEW" = "Mark New";
+"DELETE" = "Delete";
+"MARK_ALL_READ" = "Mark All Read";
+"MARK_ALL_NEW" = "Mark All New";
+"DELETE_ALL" = "Delete All";
+
+"LABEL_FORMAT" = "Page %i of %i";
+
+"REQUIRE_UPDATE_TITLE" = "Library must be recreated";
+"REQUIRE_UPDATE_MESSAGE" = "All comics and series will be re-imported to be updated to the new look and bookmarks will be cleared.";
+"REQUIRE_UPDATE_CANCEL" = "Remind Me Later";
+"REQUIRE_UPDATE_CONTINUE" = "Recreate Now";
+
+"FORCE_UPDATE_TITLE" = "Are you sure?";
+"FORCE_UPDATE_MESSAGE" = "Recreating the library will clear all bookmarks and re-import all comics and series.";
+"FORCE_UPDATE_CANCEL" = "Cancel";
+"FORCE_UPDATE_CONTINUE" = "Continue";
+
+"MARK_ALL_READ_TITLE" = "Are you sure you want to mark all comics as read?";
+"MARK_ALL_READ_CANCEL" = "Cancel";
+"MARK_ALL_READ_CONTINUE" = "Continue";
+
+"MARK_ALL_NEW_TITLE" = "Are you sure you want to mark all comics as new?";
+"MARK_ALL_NEW_CANCEL" = "Cancel";
+"MARK_ALL_NEW_CONTINUE" = "Continue";
+
+"INBOX_ALERT_TITLE" = "File Added To Library";
+"INBOX_ALERT_MESSAGE" = "The file \"%@\" will be visible in the library after it has finished updating.";
+"INBOX_ALERT_BUTTON" = "Continue";
+
+"RATE_ALERT_TITLE" = "Are you enjoying ComicReader?";
+"RATE_ALERT_MESSAGE" = "Please rate it in the App Store.";
+"RATE_ALERT_CONFIRM" = "Rate Now";
+"RATE_ALERT_CANCEL" = "Remind Me Later";
+
+"PURCHASE_SPINNER" = "Contacting App Store\nPlease Wait…";
+
+"OFFLINE_ALERT_TITLE" = "No Internet Connection!";
+"OFFLINE_ALERT_MESSAGE" = "You must be online to do In-App Purchases. Make sure you have a valid Internet Connection.";
+"OFFLINE_ALERT_BUTTON" = "OK";
+
+"DISABLED_ALERT_TITLE" = "Purchase Not Allowed!";
+"DISABLED_ALERT_MESSAGE" = "It looks like In-App Purchases are not allowed from this device. Check the Settings app.";
+"DISABLED_ALERT_BUTTON" = "OK";
+
+"BUSY_ALERT_TITLE" = "Purchase Pending!";
+"BUSY_ALERT_MESSAGE" = "There is already an In-App Purchase pending. Please try again later.";
+"BUSY_ALERT_BUTTON" = "OK";
+
+"FAILED_ALERT_TITLE" = "Purchase Failed!";
+"FAILED_ALERT_MESSAGE" = "An error happened while performing the In-App Purchase. Please try again later.";
+"FAILED_ALERT_BUTTON" = "OK";
+
+"COMPLETE_ALERT_TITLE" = "Thanks For Your Purchase!";
+"COMPLETE_ALERT_MESSAGE" = "You now have unlimited use of the ComicReader web server.";
+"COMPLETE_ALERT_BUTTON" = "OK";
+
+"SERVER_NAME_FORMAT" = "ComicReader Web Server %@ (%@)";
+"SERVER_TITLE" = "ComicReader Web Server";
+"SERVER_CONTENT" = "<div class=\"alert alert-success alert-dismissable\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button><strong>You are successfully connected to the ComicReader app on your iPad.</strong> Drag &amp; drop comic files (%@) on this window or use the \"Upload Files&hellip;\" button to import them in ComicReader. Create top-level folders and import comics into them to create Series (subfolders are not supported).<br/>Please leave the app running in the foreground on your iPad while uploading or downloading comics.</div>";
+"SERVER_LIMITED_CONTENT" = "<div class=\"alert alert-danger alert-dismissable\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button><strong>Uploading comics using ComicReader Web Server is initially limited to %i files after which you will see &quot;Forbidden&quot; errors.</strong> Tap the Purchase button in the Settings window of the app to enable unlimited use of this feature. You will see the price and be prompted for confirmation before the purchase is processed by the App Store.</div>";
+"SERVER_FOOTER_FORMAT" = "%@ &mdash; ComicReader Version %@";

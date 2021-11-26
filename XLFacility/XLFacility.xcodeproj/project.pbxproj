@@ -1,0 +1,1083 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		E2B3CEE619E91770003ED065 /* Build All */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = E2B3CEE719E91770003ED065 /* Build configuration list for PBXAggregateTarget "Build All" */;
+			buildPhases = (
+			);
+			dependencies = (
+				E2B3CEEB19E91784003ED065 /* PBXTargetDependency */,
+				E2B3CF2B19E9189C003ED065 /* PBXTargetDependency */,
+				E26ABC2E19EC9FA400654D9F /* PBXTargetDependency */,
+				E2168F9619EE04B200865350 /* PBXTargetDependency */,
+				E2168F9819EE04B700865350 /* PBXTargetDependency */,
+			);
+			name = "Build All";
+			productName = "Build All";
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		E2168F7019EDC8FF00865350 /* XLTCPClientLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */; };
+		E2168F7119EDC8FF00865350 /* XLTCPClientLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */; };
+		E2168F7219EDC8FF00865350 /* XLTCPClientLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */; };
+		E2168F7319EDC8FF00865350 /* XLTCPClientLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */; };
+		E2168F8C19EE01B200865350 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2168F8019EDF2C000865350 /* main.m */; };
+		E2168F8E19EE02B500865350 /* XLFacility.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A419EA425700A1B39F /* XLFacility.m */; };
+		E2168F9019EE033100865350 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E280BF1319E9FF5000D85595 /* CFNetwork.framework */; };
+		E2168F9119EE034000865350 /* XLLogRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AC19EA425700A1B39F /* XLLogRecord.m */; };
+		E2168F9219EE034500865350 /* XLStandardLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */; };
+		E2168F9319EE034E00865350 /* XLFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A619EA425700A1B39F /* XLFileLogger.m */; };
+		E2168F9419EE035800865350 /* XLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A819EA425700A1B39F /* XLLogger.m */; };
+		E25663D519EF2CC40040CF5E /* c_test.c in Sources */ = {isa = PBXBuildFile; fileRef = E25663D419EF2CC40040CF5E /* c_test.c */; };
+		E25663D819EF63330040CF5E /* XLFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = E25663D719EF63330040CF5E /* XLFunctions.m */; };
+		E25663D919EF63330040CF5E /* XLFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = E25663D719EF63330040CF5E /* XLFunctions.m */; };
+		E25663DA19EF63330040CF5E /* XLFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = E25663D719EF63330040CF5E /* XLFunctions.m */; };
+		E25663DB19EF63330040CF5E /* XLFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = E25663D719EF63330040CF5E /* XLFunctions.m */; };
+		E25663DC19EF63330040CF5E /* XLFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = E25663D719EF63330040CF5E /* XLFunctions.m */; };
+		E26ABB5019EC278300654D9F /* XLTCPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */; };
+		E26ABB5119EC278300654D9F /* XLTCPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */; };
+		E26ABC1019EC9E2D00654D9F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABC0F19EC9E2D00654D9F /* AppDelegate.m */; };
+		E26ABC1219EC9E2D00654D9F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABC1119EC9E2D00654D9F /* main.m */; };
+		E26ABC1719EC9E2D00654D9F /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E26ABC1519EC9E2D00654D9F /* MainMenu.xib */; };
+		E26ABC2C19EC9F9A00654D9F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABC2B19EC9F9A00654D9F /* main.m */; };
+		E26ABC2F19EC9FF700654D9F /* XLASLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A019EA425700A1B39F /* XLASLLogger.m */; };
+		E26ABC3019EC9FF700654D9F /* XLCallbackLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */; };
+		E26ABC3119EC9FF700654D9F /* XLFacility.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A419EA425700A1B39F /* XLFacility.m */; };
+		E26ABC3219EC9FF700654D9F /* XLFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A619EA425700A1B39F /* XLFileLogger.m */; };
+		E26ABC3319EC9FF700654D9F /* XLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A819EA425700A1B39F /* XLLogger.m */; };
+		E26ABC3419EC9FF700654D9F /* XLLogRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AC19EA425700A1B39F /* XLLogRecord.m */; };
+		E26ABC3519EC9FF700654D9F /* XLStandardLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */; };
+		E26ABC3619EC9FF700654D9F /* XLDatabaseLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */; };
+		E26ABC3719EC9FF700654D9F /* XLHTTPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */; };
+		E26ABC3819EC9FF700654D9F /* XLTCPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */; };
+		E26ABC3919EC9FF700654D9F /* XLTelnetServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */; };
+		E26ABC3A19ECA02500654D9F /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E26DC19C19E883C600C68DDC /* libsqlite3.dylib */; };
+		E26ABC3B19ECA04600654D9F /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E280BF1319E9FF5000D85595 /* CFNetwork.framework */; };
+		E26ABC3D19ECA04F00654D9F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E26ABC3C19ECA04F00654D9F /* Cocoa.framework */; };
+		E26ABC4419ECBE2900654D9F /* XLAppKitOverlayLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABC4319ECBE2900654D9F /* XLAppKitOverlayLogger.m */; };
+		E26DC19D19E883C600C68DDC /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E26DC19C19E883C600C68DDC /* libsqlite3.dylib */; };
+		E280BF1419E9FF5000D85595 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E280BF1319E9FF5000D85595 /* CFNetwork.framework */; };
+		E280BF1619E9FF5500D85595 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E280BF1519E9FF5500D85595 /* CFNetwork.framework */; };
+		E298C47A19ED866100C76821 /* XLFacility_Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = E298C47919ED866100C76821 /* XLFacility_Tests.m */; };
+		E298C47B19ED890500C76821 /* XLASLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A019EA425700A1B39F /* XLASLLogger.m */; };
+		E298C47C19ED890500C76821 /* XLCallbackLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */; };
+		E298C47D19ED890500C76821 /* XLFacility.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A419EA425700A1B39F /* XLFacility.m */; };
+		E298C47E19ED890500C76821 /* XLFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A619EA425700A1B39F /* XLFileLogger.m */; };
+		E298C47F19ED890500C76821 /* XLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A819EA425700A1B39F /* XLLogger.m */; };
+		E298C48019ED890500C76821 /* XLLogRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AC19EA425700A1B39F /* XLLogRecord.m */; };
+		E298C48119ED890500C76821 /* XLStandardLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */; };
+		E298C48219ED890500C76821 /* XLDatabaseLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */; };
+		E298C48319ED890500C76821 /* XLHTTPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */; };
+		E298C48419ED890500C76821 /* XLTCPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */; };
+		E298C48519ED890500C76821 /* XLTelnetServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */; };
+		E298C48619ED892500C76821 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E280BF1319E9FF5000D85595 /* CFNetwork.framework */; };
+		E298C48719ED892700C76821 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E26DC19C19E883C600C68DDC /* libsqlite3.dylib */; };
+		E29DC8B619EA425700A1B39F /* XLASLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A019EA425700A1B39F /* XLASLLogger.m */; };
+		E29DC8B719EA425700A1B39F /* XLASLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A019EA425700A1B39F /* XLASLLogger.m */; };
+		E29DC8B819EA425700A1B39F /* XLCallbackLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */; };
+		E29DC8B919EA425700A1B39F /* XLCallbackLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */; };
+		E29DC8BA19EA425700A1B39F /* XLFacility.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A419EA425700A1B39F /* XLFacility.m */; };
+		E29DC8BB19EA425700A1B39F /* XLFacility.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A419EA425700A1B39F /* XLFacility.m */; };
+		E29DC8BC19EA425700A1B39F /* XLFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A619EA425700A1B39F /* XLFileLogger.m */; };
+		E29DC8BD19EA425700A1B39F /* XLFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A619EA425700A1B39F /* XLFileLogger.m */; };
+		E29DC8BE19EA425700A1B39F /* XLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A819EA425700A1B39F /* XLLogger.m */; };
+		E29DC8BF19EA425700A1B39F /* XLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8A819EA425700A1B39F /* XLLogger.m */; };
+		E29DC8C019EA425700A1B39F /* XLLogRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AC19EA425700A1B39F /* XLLogRecord.m */; };
+		E29DC8C119EA425700A1B39F /* XLLogRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AC19EA425700A1B39F /* XLLogRecord.m */; };
+		E29DC8C219EA425700A1B39F /* XLStandardLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */; };
+		E29DC8C319EA425700A1B39F /* XLStandardLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */; };
+		E29DC8C419EA425700A1B39F /* XLDatabaseLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */; };
+		E29DC8C519EA425700A1B39F /* XLDatabaseLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */; };
+		E29DC8C619EA425700A1B39F /* XLHTTPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */; };
+		E29DC8C719EA425700A1B39F /* XLHTTPServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */; };
+		E29DC8C819EA425700A1B39F /* XLTelnetServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */; };
+		E29DC8C919EA425700A1B39F /* XLTelnetServerLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */; };
+		E2B03E9D19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */; };
+		E2B03E9E19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */; };
+		E2B03E9F19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */; };
+		E2B03EA019F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */; };
+		E2B03EA119F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */; };
+		E2B03EA219F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */; };
+		E2B03EA319F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */; };
+		E2B03EA419F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */; };
+		E2B03EA519F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */; };
+		E2B03EA619F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */; };
+		E2B03EA719F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */; };
+		E2B03EA819F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */; };
+		E2B03EA919F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */; };
+		E2B03EAA19F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */; };
+		E2B03EAB19F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */; };
+		E2B03EB819F4C28A00D56CA6 /* GCDTCPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */; };
+		E2B03EB919F4C28A00D56CA6 /* GCDTCPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */; };
+		E2B03EBA19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */; };
+		E2B03EBB19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */; };
+		E2B03EBC19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */; };
+		E2B03EBD19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */; };
+		E2B03EBE19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */; };
+		E2B03EBF19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */; };
+		E2B03EC019F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */; };
+		E2B03EC119F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */; };
+		E2B03EC219F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */; };
+		E2B03EC319F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */; };
+		E2B03EC419F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */; };
+		E2B03EC519F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */; };
+		E2B03EC619F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */; };
+		E2B03EC719F4C28A00D56CA6 /* GCDTCPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */; };
+		E2B03EC819F4C28A00D56CA6 /* GCDTCPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */; };
+		E2B03EC919F4C28A00D56CA6 /* GCDTCPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */; };
+		E2B03ECA19F4C28A00D56CA6 /* GCDTCPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */; };
+		E2B03ECB19F4C28A00D56CA6 /* GCDTCPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */; };
+		E2B3CF1B19E91825003ED065 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B3CF1819E91825003ED065 /* AppDelegate.m */; };
+		E2B3CF1D19E91825003ED065 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2B3CF1A19E91825003ED065 /* main.m */; };
+		E2B3CF2D19E91990003ED065 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E2B3CF2C19E91990003ED065 /* libsqlite3.dylib */; };
+		E2B3CF3019E919DD003ED065 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2B3CF2F19E919DD003ED065 /* UIKit.framework */; };
+		E2BBC7FE19EAF0E90082CB48 /* XLUIKitOverlayLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = E2BBC7FD19EAF0E90082CB48 /* XLUIKitOverlayLogger.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E2168F9519EE04B200865350 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E26DC15F19E8494700C68DDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E298C46B19ED859F00C76821;
+			remoteInfo = "XLFacility (Tests)";
+		};
+		E2168F9719EE04B700865350 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E26DC15F19E8494700C68DDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2168F7D19EDF2C000865350;
+			remoteInfo = TCPServer;
+		};
+		E26ABC2D19EC9FA400654D9F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E26DC15F19E8494700C68DDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E26ABC0919EC9E2D00654D9F;
+			remoteInfo = "XLFacility (Mac)";
+		};
+		E2B3CEEA19E91784003ED065 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E26DC15F19E8494700C68DDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E26DC16619E8494700C68DDC;
+			remoteInfo = GCDLogger;
+		};
+		E2B3CF2A19E9189C003ED065 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E26DC15F19E8494700C68DDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2B3CEEF19E917BB003ED065;
+			remoteInfo = "GCDLogger (iOS)";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		E2168F6E19EDC8FF00865350 /* XLTCPClientLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLTCPClientLogger.h; sourceTree = "<group>"; };
+		E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLTCPClientLogger.m; sourceTree = "<group>"; };
+		E2168F7E19EDF2C000865350 /* TCPServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TCPServer; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2168F8019EDF2C000865350 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E25663D319EF284B0040CF5E /* XLFacilityCMacros.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XLFacilityCMacros.h; sourceTree = "<group>"; };
+		E25663D419EF2CC40040CF5E /* c_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = c_test.c; sourceTree = "<group>"; };
+		E25663D619EF63330040CF5E /* XLFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLFunctions.h; sourceTree = "<group>"; };
+		E25663D719EF63330040CF5E /* XLFunctions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLFunctions.m; sourceTree = "<group>"; };
+		E26A79651A054354009BEF26 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		E26ABB4E19EC278300654D9F /* XLTCPServerLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLTCPServerLogger.h; sourceTree = "<group>"; };
+		E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLTCPServerLogger.m; sourceTree = "<group>"; };
+		E26ABC0A19EC9E2D00654D9F /* XLFacility.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLFacility.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E26ABC0D19EC9E2D00654D9F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E26ABC0E19EC9E2D00654D9F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		E26ABC0F19EC9E2D00654D9F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		E26ABC1119EC9E2D00654D9F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E26ABC2B19EC9F9A00654D9F /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E26ABC3C19ECA04F00654D9F /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		E26ABC4219ECBE2900654D9F /* XLAppKitOverlayLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLAppKitOverlayLogger.h; sourceTree = "<group>"; };
+		E26ABC4319ECBE2900654D9F /* XLAppKitOverlayLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLAppKitOverlayLogger.m; sourceTree = "<group>"; };
+		E26DC16719E8494700C68DDC /* XLFacility */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = XLFacility; sourceTree = BUILT_PRODUCTS_DIR; };
+		E26DC19C19E883C600C68DDC /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		E280BF0E19E9F3DF00D85595 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		E280BF1319E9FF5000D85595 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		E280BF1519E9FF5500D85595 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.1.sdk/System/Library/Frameworks/CFNetwork.framework; sourceTree = DEVELOPER_DIR; };
+		E298C46C19ED859F00C76821 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E298C47919ED866100C76821 /* XLFacility_Tests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLFacility_Tests.m; sourceTree = "<group>"; };
+		E29DC89F19EA425700A1B39F /* XLASLLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLASLLogger.h; sourceTree = "<group>"; };
+		E29DC8A019EA425700A1B39F /* XLASLLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLASLLogger.m; sourceTree = "<group>"; };
+		E29DC8A119EA425700A1B39F /* XLCallbackLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLCallbackLogger.h; sourceTree = "<group>"; };
+		E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLCallbackLogger.m; sourceTree = "<group>"; };
+		E29DC8A319EA425700A1B39F /* XLFacility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLFacility.h; sourceTree = "<group>"; };
+		E29DC8A419EA425700A1B39F /* XLFacility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLFacility.m; sourceTree = "<group>"; };
+		E29DC8A519EA425700A1B39F /* XLFileLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLFileLogger.h; sourceTree = "<group>"; };
+		E29DC8A619EA425700A1B39F /* XLFileLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLFileLogger.m; sourceTree = "<group>"; };
+		E29DC8A719EA425700A1B39F /* XLLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLLogger.h; sourceTree = "<group>"; };
+		E29DC8A819EA425700A1B39F /* XLLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLLogger.m; sourceTree = "<group>"; };
+		E29DC8A919EA425700A1B39F /* XLFacilityMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLFacilityMacros.h; sourceTree = "<group>"; };
+		E29DC8AA19EA425700A1B39F /* XLFacilityPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLFacilityPrivate.h; sourceTree = "<group>"; };
+		E29DC8AB19EA425700A1B39F /* XLLogRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLLogRecord.h; sourceTree = "<group>"; };
+		E29DC8AC19EA425700A1B39F /* XLLogRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLLogRecord.m; sourceTree = "<group>"; };
+		E29DC8AD19EA425700A1B39F /* XLStandardLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLStandardLogger.h; sourceTree = "<group>"; };
+		E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLStandardLogger.m; sourceTree = "<group>"; };
+		E29DC8B019EA425700A1B39F /* XLDatabaseLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLDatabaseLogger.h; sourceTree = "<group>"; };
+		E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLDatabaseLogger.m; sourceTree = "<group>"; };
+		E29DC8B219EA425700A1B39F /* XLHTTPServerLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLHTTPServerLogger.h; sourceTree = "<group>"; };
+		E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLHTTPServerLogger.m; sourceTree = "<group>"; };
+		E29DC8B419EA425700A1B39F /* XLTelnetServerLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLTelnetServerLogger.h; sourceTree = "<group>"; };
+		E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLTelnetServerLogger.m; sourceTree = "<group>"; };
+		E2B03E9419F4C27D00D56CA6 /* _LoggingBridgePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _LoggingBridgePrivate.h; sourceTree = "<group>"; };
+		E2B03E9519F4C27D00D56CA6 /* GCDTelnetConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTelnetConnection.h; sourceTree = "<group>"; };
+		E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTelnetConnection.m; sourceTree = "<group>"; };
+		E2B03E9719F4C27D00D56CA6 /* GCDTelnetLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTelnetLogging.h; sourceTree = "<group>"; };
+		E2B03E9819F4C27D00D56CA6 /* GCDTelnetPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTelnetPrivate.h; sourceTree = "<group>"; };
+		E2B03E9919F4C27D00D56CA6 /* GCDTelnetServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTelnetServer.h; sourceTree = "<group>"; };
+		E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTelnetServer.m; sourceTree = "<group>"; };
+		E2B03E9B19F4C27D00D56CA6 /* NSMutableString+ANSI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableString+ANSI.h"; sourceTree = "<group>"; };
+		E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableString+ANSI.m"; sourceTree = "<group>"; };
+		E2B03EAD19F4C28A00D56CA6 /* _LoggingBridgePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _LoggingBridgePrivate.h; sourceTree = "<group>"; };
+		E2B03EAE19F4C28A00D56CA6 /* GCDNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDNetworking.h; sourceTree = "<group>"; };
+		E2B03EAF19F4C28A00D56CA6 /* GCDNetworkingPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDNetworkingPrivate.h; sourceTree = "<group>"; };
+		E2B03EB019F4C28A00D56CA6 /* GCDTCPClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTCPClient.h; sourceTree = "<group>"; };
+		E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTCPClient.m; sourceTree = "<group>"; };
+		E2B03EB219F4C28A00D56CA6 /* GCDTCPConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTCPConnection.h; sourceTree = "<group>"; };
+		E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTCPConnection.m; sourceTree = "<group>"; };
+		E2B03EB419F4C28A00D56CA6 /* GCDTCPPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTCPPeer.h; sourceTree = "<group>"; };
+		E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTCPPeer.m; sourceTree = "<group>"; };
+		E2B03EB619F4C28A00D56CA6 /* GCDTCPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDTCPServer.h; sourceTree = "<group>"; };
+		E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDTCPServer.m; sourceTree = "<group>"; };
+		E2B3CEF019E917BB003ED065 /* XLFacility.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLFacility.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2B3CF1719E91825003ED065 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		E2B3CF1819E91825003ED065 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		E2B3CF1919E91825003ED065 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E2B3CF1A19E91825003ED065 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		E2B3CF2C19E91990003ED065 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.1.sdk/usr/lib/libsqlite3.dylib; sourceTree = DEVELOPER_DIR; };
+		E2B3CF2F19E919DD003ED065 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.1.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		E2BBC7FC19EAF0E90082CB48 /* XLUIKitOverlayLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XLUIKitOverlayLogger.h; sourceTree = "<group>"; };
+		E2BBC7FD19EAF0E90082CB48 /* XLUIKitOverlayLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XLUIKitOverlayLogger.m; sourceTree = "<group>"; };
+		E2BBC7FF19EB1C320082CB48 /* XLFacility.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = XLFacility.podspec; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E2168F7B19EDF2C000865350 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2168F9019EE033100865350 /* CFNetwork.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E26ABC0719EC9E2D00654D9F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E26ABC3D19ECA04F00654D9F /* Cocoa.framework in Frameworks */,
+				E26ABC3B19ECA04600654D9F /* CFNetwork.framework in Frameworks */,
+				E26ABC3A19ECA02500654D9F /* libsqlite3.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E26DC16419E8494700C68DDC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E280BF1419E9FF5000D85595 /* CFNetwork.framework in Frameworks */,
+				E26DC19D19E883C600C68DDC /* libsqlite3.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E298C46919ED859F00C76821 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E298C48719ED892700C76821 /* libsqlite3.dylib in Frameworks */,
+				E298C48619ED892500C76821 /* CFNetwork.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2B3CEED19E917BB003ED065 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E280BF1619E9FF5500D85595 /* CFNetwork.framework in Frameworks */,
+				E2B3CF3019E919DD003ED065 /* UIKit.framework in Frameworks */,
+				E2B3CF2D19E91990003ED065 /* libsqlite3.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E2168F7F19EDF2C000865350 /* TCPServer */ = {
+			isa = PBXGroup;
+			children = (
+				E2168F8019EDF2C000865350 /* main.m */,
+			);
+			path = TCPServer;
+			sourceTree = "<group>";
+		};
+		E26ABC0B19EC9E2D00654D9F /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				E26ABC0E19EC9E2D00654D9F /* AppDelegate.h */,
+				E26ABC0F19EC9E2D00654D9F /* AppDelegate.m */,
+				E26ABC1519EC9E2D00654D9F /* MainMenu.xib */,
+				E26ABC0D19EC9E2D00654D9F /* Info.plist */,
+				E26ABC1119EC9E2D00654D9F /* main.m */,
+			);
+			path = Mac;
+			sourceTree = "<group>";
+		};
+		E26ABC2A19EC9F9A00654D9F /* CLT */ = {
+			isa = PBXGroup;
+			children = (
+				E26ABC2B19EC9F9A00654D9F /* main.m */,
+				E25663D419EF2CC40040CF5E /* c_test.c */,
+			);
+			path = CLT;
+			sourceTree = "<group>";
+		};
+		E26DC15E19E8494700C68DDC = {
+			isa = PBXGroup;
+			children = (
+				E280BF0E19E9F3DF00D85595 /* README.md */,
+				E2BBC7FF19EB1C320082CB48 /* XLFacility.podspec */,
+				E29DC89D19EA425700A1B39F /* XLFacility */,
+				E26ABC2A19EC9F9A00654D9F /* CLT */,
+				E2B3CF1619E91825003ED065 /* iOS */,
+				E26ABC0B19EC9E2D00654D9F /* Mac */,
+				E298C47719ED866100C76821 /* Tests */,
+				E2168F7F19EDF2C000865350 /* TCPServer */,
+				E2B03E9319F4C27D00D56CA6 /* GCDTelnetServer */,
+				E2B03EAC19F4C28A00D56CA6 /* GCDNetworking */,
+				E26DC19E19E883CC00C68DDC /* Mac Frameworks and Libraries */,
+				E2B3CF2E19E919AC003ED065 /* iOS Frameworks and Libraries */,
+				E26DC16819E8494700C68DDC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E26DC16819E8494700C68DDC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E26DC16719E8494700C68DDC /* XLFacility */,
+				E2B3CEF019E917BB003ED065 /* XLFacility.app */,
+				E26ABC0A19EC9E2D00654D9F /* XLFacility.app */,
+				E298C46C19ED859F00C76821 /* Tests.xctest */,
+				E2168F7E19EDF2C000865350 /* TCPServer */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E26DC19E19E883CC00C68DDC /* Mac Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				E26ABC3C19ECA04F00654D9F /* Cocoa.framework */,
+				E280BF1319E9FF5000D85595 /* CFNetwork.framework */,
+				E26DC19C19E883C600C68DDC /* libsqlite3.dylib */,
+			);
+			name = "Mac Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		E298C47719ED866100C76821 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				E298C47919ED866100C76821 /* XLFacility_Tests.m */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		E29DC89D19EA425700A1B39F /* XLFacility */ = {
+			isa = PBXGroup;
+			children = (
+				E29DC89E19EA425700A1B39F /* Core */,
+				E29DC8AF19EA425700A1B39F /* Extensions */,
+				E2BBC7FB19EAF0E90082CB48 /* UserInterface */,
+			);
+			path = XLFacility;
+			sourceTree = "<group>";
+		};
+		E29DC89E19EA425700A1B39F /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E29DC89F19EA425700A1B39F /* XLASLLogger.h */,
+				E29DC8A019EA425700A1B39F /* XLASLLogger.m */,
+				E29DC8A119EA425700A1B39F /* XLCallbackLogger.h */,
+				E29DC8A219EA425700A1B39F /* XLCallbackLogger.m */,
+				E29DC8A319EA425700A1B39F /* XLFacility.h */,
+				E29DC8A419EA425700A1B39F /* XLFacility.m */,
+				E25663D319EF284B0040CF5E /* XLFacilityCMacros.h */,
+				E29DC8A919EA425700A1B39F /* XLFacilityMacros.h */,
+				E29DC8AA19EA425700A1B39F /* XLFacilityPrivate.h */,
+				E29DC8A519EA425700A1B39F /* XLFileLogger.h */,
+				E29DC8A619EA425700A1B39F /* XLFileLogger.m */,
+				E25663D619EF63330040CF5E /* XLFunctions.h */,
+				E25663D719EF63330040CF5E /* XLFunctions.m */,
+				E29DC8A719EA425700A1B39F /* XLLogger.h */,
+				E29DC8A819EA425700A1B39F /* XLLogger.m */,
+				E29DC8AB19EA425700A1B39F /* XLLogRecord.h */,
+				E29DC8AC19EA425700A1B39F /* XLLogRecord.m */,
+				E29DC8AD19EA425700A1B39F /* XLStandardLogger.h */,
+				E29DC8AE19EA425700A1B39F /* XLStandardLogger.m */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		E29DC8AF19EA425700A1B39F /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				E29DC8B019EA425700A1B39F /* XLDatabaseLogger.h */,
+				E29DC8B119EA425700A1B39F /* XLDatabaseLogger.m */,
+				E29DC8B219EA425700A1B39F /* XLHTTPServerLogger.h */,
+				E29DC8B319EA425700A1B39F /* XLHTTPServerLogger.m */,
+				E2168F6E19EDC8FF00865350 /* XLTCPClientLogger.h */,
+				E2168F6F19EDC8FF00865350 /* XLTCPClientLogger.m */,
+				E26ABB4E19EC278300654D9F /* XLTCPServerLogger.h */,
+				E26ABB4F19EC278300654D9F /* XLTCPServerLogger.m */,
+				E29DC8B419EA425700A1B39F /* XLTelnetServerLogger.h */,
+				E29DC8B519EA425700A1B39F /* XLTelnetServerLogger.m */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		E2B03E9319F4C27D00D56CA6 /* GCDTelnetServer */ = {
+			isa = PBXGroup;
+			children = (
+				E2B03E9419F4C27D00D56CA6 /* _LoggingBridgePrivate.h */,
+				E2B03E9519F4C27D00D56CA6 /* GCDTelnetConnection.h */,
+				E2B03E9619F4C27D00D56CA6 /* GCDTelnetConnection.m */,
+				E2B03E9719F4C27D00D56CA6 /* GCDTelnetLogging.h */,
+				E2B03E9819F4C27D00D56CA6 /* GCDTelnetPrivate.h */,
+				E2B03E9919F4C27D00D56CA6 /* GCDTelnetServer.h */,
+				E2B03E9A19F4C27D00D56CA6 /* GCDTelnetServer.m */,
+				E2B03E9B19F4C27D00D56CA6 /* NSMutableString+ANSI.h */,
+				E2B03E9C19F4C27D00D56CA6 /* NSMutableString+ANSI.m */,
+			);
+			name = GCDTelnetServer;
+			path = GCDTelnetServer/GCDTelnetServer;
+			sourceTree = "<group>";
+		};
+		E2B03EAC19F4C28A00D56CA6 /* GCDNetworking */ = {
+			isa = PBXGroup;
+			children = (
+				E2B03EAD19F4C28A00D56CA6 /* _LoggingBridgePrivate.h */,
+				E2B03EAE19F4C28A00D56CA6 /* GCDNetworking.h */,
+				E2B03EAF19F4C28A00D56CA6 /* GCDNetworkingPrivate.h */,
+				E2B03EB019F4C28A00D56CA6 /* GCDTCPClient.h */,
+				E2B03EB119F4C28A00D56CA6 /* GCDTCPClient.m */,
+				E2B03EB219F4C28A00D56CA6 /* GCDTCPConnection.h */,
+				E2B03EB319F4C28A00D56CA6 /* GCDTCPConnection.m */,
+				E2B03EB419F4C28A00D56CA6 /* GCDTCPPeer.h */,
+				E2B03EB519F4C28A00D56CA6 /* GCDTCPPeer.m */,
+				E2B03EB619F4C28A00D56CA6 /* GCDTCPServer.h */,
+				E2B03EB719F4C28A00D56CA6 /* GCDTCPServer.m */,
+			);
+			name = GCDNetworking;
+			path = GCDTelnetServer/GCDNetworking/GCDNetworking;
+			sourceTree = "<group>";
+		};
+		E2B3CF1619E91825003ED065 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				E2B3CF1719E91825003ED065 /* AppDelegate.h */,
+				E2B3CF1819E91825003ED065 /* AppDelegate.m */,
+				E2B3CF1919E91825003ED065 /* Info.plist */,
+				E2B3CF1A19E91825003ED065 /* main.m */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		E2B3CF2E19E919AC003ED065 /* iOS Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				E2B3CF2F19E919DD003ED065 /* UIKit.framework */,
+				E280BF1519E9FF5500D85595 /* CFNetwork.framework */,
+				E2B3CF2C19E91990003ED065 /* libsqlite3.dylib */,
+			);
+			name = "iOS Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		E2BBC7FB19EAF0E90082CB48 /* UserInterface */ = {
+			isa = PBXGroup;
+			children = (
+				E26ABC4219ECBE2900654D9F /* XLAppKitOverlayLogger.h */,
+				E26ABC4319ECBE2900654D9F /* XLAppKitOverlayLogger.m */,
+				E2BBC7FC19EAF0E90082CB48 /* XLUIKitOverlayLogger.h */,
+				E2BBC7FD19EAF0E90082CB48 /* XLUIKitOverlayLogger.m */,
+			);
+			path = UserInterface;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E2168F7D19EDF2C000865350 /* TCPServer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2168F8219EDF2C000865350 /* Build configuration list for PBXNativeTarget "TCPServer" */;
+			buildPhases = (
+				E2168F7A19EDF2C000865350 /* Sources */,
+				E2168F7B19EDF2C000865350 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TCPServer;
+			productName = TCPServer;
+			productReference = E2168F7E19EDF2C000865350 /* TCPServer */;
+			productType = "com.apple.product-type.tool";
+		};
+		E26ABC0919EC9E2D00654D9F /* XLFacility (Mac) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E26ABC2419EC9E2D00654D9F /* Build configuration list for PBXNativeTarget "XLFacility (Mac)" */;
+			buildPhases = (
+				E26ABC0619EC9E2D00654D9F /* Sources */,
+				E26ABC0719EC9E2D00654D9F /* Frameworks */,
+				E26ABC0819EC9E2D00654D9F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "XLFacility (Mac)";
+			productName = Mac;
+			productReference = E26ABC0A19EC9E2D00654D9F /* XLFacility.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E26DC16619E8494700C68DDC /* XLFacility (CLT) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E26DC16E19E8494700C68DDC /* Build configuration list for PBXNativeTarget "XLFacility (CLT)" */;
+			buildPhases = (
+				E26DC16319E8494700C68DDC /* Sources */,
+				E26DC16419E8494700C68DDC /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "XLFacility (CLT)";
+			productName = Logger;
+			productReference = E26DC16719E8494700C68DDC /* XLFacility */;
+			productType = "com.apple.product-type.tool";
+		};
+		E298C46B19ED859F00C76821 /* XLFacility (Tests) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E298C47619ED859F00C76821 /* Build configuration list for PBXNativeTarget "XLFacility (Tests)" */;
+			buildPhases = (
+				E298C46819ED859F00C76821 /* Sources */,
+				E298C46919ED859F00C76821 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "XLFacility (Tests)";
+			productName = "XLFacility Tests";
+			productReference = E298C46C19ED859F00C76821 /* Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E2B3CEEF19E917BB003ED065 /* XLFacility (iOS) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2B3CF1019E917BC003ED065 /* Build configuration list for PBXNativeTarget "XLFacility (iOS)" */;
+			buildPhases = (
+				E2B3CEEC19E917BB003ED065 /* Sources */,
+				E2B3CEED19E917BB003ED065 /* Frameworks */,
+				E2B3CEEE19E917BB003ED065 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "XLFacility (iOS)";
+			productName = GCDLogger;
+			productReference = E2B3CEF019E917BB003ED065 /* XLFacility.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E26DC15F19E8494700C68DDC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "";
+				TargetAttributes = {
+					E2168F7D19EDF2C000865350 = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					E26ABC0919EC9E2D00654D9F = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					E26DC16619E8494700C68DDC = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					E298C46B19ED859F00C76821 = {
+						CreatedOnToolsVersion = 6.1;
+						TestTargetID = E26ABC0919EC9E2D00654D9F;
+					};
+					E2B3CEE619E91770003ED065 = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					E2B3CEEF19E917BB003ED065 = {
+						CreatedOnToolsVersion = 6.1;
+					};
+				};
+			};
+			buildConfigurationList = E26DC16219E8494700C68DDC /* Build configuration list for PBXProject "XLFacility" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E26DC15E19E8494700C68DDC;
+			productRefGroup = E26DC16819E8494700C68DDC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E2B3CEE619E91770003ED065 /* Build All */,
+				E26DC16619E8494700C68DDC /* XLFacility (CLT) */,
+				E2B3CEEF19E917BB003ED065 /* XLFacility (iOS) */,
+				E26ABC0919EC9E2D00654D9F /* XLFacility (Mac) */,
+				E298C46B19ED859F00C76821 /* XLFacility (Tests) */,
+				E2168F7D19EDF2C000865350 /* TCPServer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E26ABC0819EC9E2D00654D9F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E26ABC1719EC9E2D00654D9F /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2B3CEEE19E917BB003ED065 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E2168F7A19EDF2C000865350 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2168F8C19EE01B200865350 /* main.m in Sources */,
+				E2B03ECB19F4C28A00D56CA6 /* GCDTCPServer.m in Sources */,
+				E2168F8E19EE02B500865350 /* XLFacility.m in Sources */,
+				E2B03EC119F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */,
+				E2B03EC619F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */,
+				E2B03EA119F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */,
+				E2168F9119EE034000865350 /* XLLogRecord.m in Sources */,
+				E2168F9419EE035800865350 /* XLLogger.m in Sources */,
+				E2B03EAB19F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */,
+				E2168F9319EE034E00865350 /* XLFileLogger.m in Sources */,
+				E25663DC19EF63330040CF5E /* XLFunctions.m in Sources */,
+				E2168F9219EE034500865350 /* XLStandardLogger.m in Sources */,
+				E2B03EA619F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */,
+				E2B03EBC19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E26ABC0619EC9E2D00654D9F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E26ABC1219EC9E2D00654D9F /* main.m in Sources */,
+				E26ABC3919EC9FF700654D9F /* XLTelnetServerLogger.m in Sources */,
+				E26ABC2F19EC9FF700654D9F /* XLASLLogger.m in Sources */,
+				E26ABC4419ECBE2900654D9F /* XLAppKitOverlayLogger.m in Sources */,
+				E26ABC3619EC9FF700654D9F /* XLDatabaseLogger.m in Sources */,
+				E25663DA19EF63330040CF5E /* XLFunctions.m in Sources */,
+				E2168F7219EDC8FF00865350 /* XLTCPClientLogger.m in Sources */,
+				E26ABC3319EC9FF700654D9F /* XLLogger.m in Sources */,
+				E26ABC3819EC9FF700654D9F /* XLTCPServerLogger.m in Sources */,
+				E26ABC3119EC9FF700654D9F /* XLFacility.m in Sources */,
+				E2B03E9F19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */,
+				E26ABC3519EC9FF700654D9F /* XLStandardLogger.m in Sources */,
+				E26ABC3019EC9FF700654D9F /* XLCallbackLogger.m in Sources */,
+				E26ABC3419EC9FF700654D9F /* XLLogRecord.m in Sources */,
+				E26ABC3719EC9FF700654D9F /* XLHTTPServerLogger.m in Sources */,
+				E26ABC1019EC9E2D00654D9F /* AppDelegate.m in Sources */,
+				E2B03EC419F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */,
+				E26ABC3219EC9FF700654D9F /* XLFileLogger.m in Sources */,
+				E2B03EBF19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */,
+				E2B03EBA19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */,
+				E2B03EC919F4C28A00D56CA6 /* GCDTCPServer.m in Sources */,
+				E2B03EA919F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */,
+				E2B03EA419F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E26DC16319E8494700C68DDC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E26ABC2C19EC9F9A00654D9F /* main.m in Sources */,
+				E29DC8C419EA425700A1B39F /* XLDatabaseLogger.m in Sources */,
+				E29DC8B819EA425700A1B39F /* XLCallbackLogger.m in Sources */,
+				E2B03EC719F4C28A00D56CA6 /* GCDTCPServer.m in Sources */,
+				E29DC8B619EA425700A1B39F /* XLASLLogger.m in Sources */,
+				E29DC8BA19EA425700A1B39F /* XLFacility.m in Sources */,
+				E25663D819EF63330040CF5E /* XLFunctions.m in Sources */,
+				E2B03EBD19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */,
+				E2B03EC219F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */,
+				E25663D519EF2CC40040CF5E /* c_test.c in Sources */,
+				E2B03EA719F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */,
+				E29DC8BE19EA425700A1B39F /* XLLogger.m in Sources */,
+				E26ABB5019EC278300654D9F /* XLTCPServerLogger.m in Sources */,
+				E29DC8C819EA425700A1B39F /* XLTelnetServerLogger.m in Sources */,
+				E2B03E9D19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */,
+				E2B03EB819F4C28A00D56CA6 /* GCDTCPClient.m in Sources */,
+				E29DC8C219EA425700A1B39F /* XLStandardLogger.m in Sources */,
+				E29DC8C619EA425700A1B39F /* XLHTTPServerLogger.m in Sources */,
+				E29DC8C019EA425700A1B39F /* XLLogRecord.m in Sources */,
+				E2168F7019EDC8FF00865350 /* XLTCPClientLogger.m in Sources */,
+				E29DC8BC19EA425700A1B39F /* XLFileLogger.m in Sources */,
+				E2B03EA219F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E298C46819ED859F00C76821 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E298C47D19ED890500C76821 /* XLFacility.m in Sources */,
+				E2B03ECA19F4C28A00D56CA6 /* GCDTCPServer.m in Sources */,
+				E298C47F19ED890500C76821 /* XLLogger.m in Sources */,
+				E298C48119ED890500C76821 /* XLStandardLogger.m in Sources */,
+				E298C48219ED890500C76821 /* XLDatabaseLogger.m in Sources */,
+				E2B03EC519F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */,
+				E298C48319ED890500C76821 /* XLHTTPServerLogger.m in Sources */,
+				E2B03EBB19F4C28A00D56CA6 /* GCDTCPClient.m in Sources */,
+				E2B03EC019F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */,
+				E298C48019ED890500C76821 /* XLLogRecord.m in Sources */,
+				E298C47B19ED890500C76821 /* XLASLLogger.m in Sources */,
+				E2B03EA019F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */,
+				E298C47A19ED866100C76821 /* XLFacility_Tests.m in Sources */,
+				E298C48519ED890500C76821 /* XLTelnetServerLogger.m in Sources */,
+				E298C47C19ED890500C76821 /* XLCallbackLogger.m in Sources */,
+				E298C48419ED890500C76821 /* XLTCPServerLogger.m in Sources */,
+				E2168F7319EDC8FF00865350 /* XLTCPClientLogger.m in Sources */,
+				E2B03EAA19F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */,
+				E2B03EA519F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */,
+				E25663DB19EF63330040CF5E /* XLFunctions.m in Sources */,
+				E298C47E19ED890500C76821 /* XLFileLogger.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2B3CEEC19E917BB003ED065 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2B3CF1D19E91825003ED065 /* main.m in Sources */,
+				E26ABB5119EC278300654D9F /* XLTCPServerLogger.m in Sources */,
+				E2B3CF1B19E91825003ED065 /* AppDelegate.m in Sources */,
+				E29DC8C519EA425700A1B39F /* XLDatabaseLogger.m in Sources */,
+				E29DC8BB19EA425700A1B39F /* XLFacility.m in Sources */,
+				E25663D919EF63330040CF5E /* XLFunctions.m in Sources */,
+				E2168F7119EDC8FF00865350 /* XLTCPClientLogger.m in Sources */,
+				E29DC8C319EA425700A1B39F /* XLStandardLogger.m in Sources */,
+				E29DC8B919EA425700A1B39F /* XLCallbackLogger.m in Sources */,
+				E29DC8C719EA425700A1B39F /* XLHTTPServerLogger.m in Sources */,
+				E2B03E9E19F4C27D00D56CA6 /* GCDTelnetConnection.m in Sources */,
+				E29DC8BF19EA425700A1B39F /* XLLogger.m in Sources */,
+				E29DC8C919EA425700A1B39F /* XLTelnetServerLogger.m in Sources */,
+				E29DC8C119EA425700A1B39F /* XLLogRecord.m in Sources */,
+				E29DC8BD19EA425700A1B39F /* XLFileLogger.m in Sources */,
+				E29DC8B719EA425700A1B39F /* XLASLLogger.m in Sources */,
+				E2B03EC319F4C28A00D56CA6 /* GCDTCPPeer.m in Sources */,
+				E2BBC7FE19EAF0E90082CB48 /* XLUIKitOverlayLogger.m in Sources */,
+				E2B03EBE19F4C28A00D56CA6 /* GCDTCPConnection.m in Sources */,
+				E2B03EB919F4C28A00D56CA6 /* GCDTCPClient.m in Sources */,
+				E2B03EC819F4C28A00D56CA6 /* GCDTCPServer.m in Sources */,
+				E2B03EA819F4C27D00D56CA6 /* NSMutableString+ANSI.m in Sources */,
+				E2B03EA319F4C27D00D56CA6 /* GCDTelnetServer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E2168F9619EE04B200865350 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E298C46B19ED859F00C76821 /* XLFacility (Tests) */;
+			targetProxy = E2168F9519EE04B200865350 /* PBXContainerItemProxy */;
+		};
+		E2168F9819EE04B700865350 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2168F7D19EDF2C000865350 /* TCPServer */;
+			targetProxy = E2168F9719EE04B700865350 /* PBXContainerItemProxy */;
+		};
+		E26ABC2E19EC9FA400654D9F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E26ABC0919EC9E2D00654D9F /* XLFacility (Mac) */;
+			targetProxy = E26ABC2D19EC9FA400654D9F /* PBXContainerItemProxy */;
+		};
+		E2B3CEEB19E91784003ED065 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E26DC16619E8494700C68DDC /* XLFacility (CLT) */;
+			targetProxy = E2B3CEEA19E91784003ED065 /* PBXContainerItemProxy */;
+		};
+		E2B3CF2B19E9189C003ED065 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2B3CEEF19E917BB003ED065 /* XLFacility (iOS) */;
+			targetProxy = E2B3CF2A19E9189C003ED065 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		E26ABC1519EC9E2D00654D9F /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E26A79651A054354009BEF26 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		E2168F8319EDF2C000865350 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E2168F8419EDF2C000865350 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E26ABC2519EC9E2D00654D9F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Mac/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = XLFacility;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E26ABC2619EC9E2D00654D9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Mac/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = XLFacility;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E26DC16C19E8494700C68DDC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				ONLY_ACTIVE_ARCH = YES;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Weverything",
+					"-Wshadow",
+					"-Wshorten-64-to-32",
+					"-Wno-direct-ivar-access",
+					"-Wno-objc-missing-property-synthesis",
+					"-Wno-implicit-retain-self",
+					"-Wno-switch-enum",
+					"-Wno-assign-enum",
+					"-Wno-documentation-unknown-command",
+					"-Wno-gnu-statement-expression",
+				);
+			};
+			name = Debug;
+		};
+		E26DC16D19E8494700C68DDC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				WARNING_CFLAGS = "-Wall";
+			};
+			name = Release;
+		};
+		E26DC16F19E8494700C68DDC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = XLFacility;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E26DC17019E8494700C68DDC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = XLFacility;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E298C47419ED859F00C76821 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = Tests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E298C47519ED859F00C76821 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = Tests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E2B3CEE819E91770003ED065 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E2B3CEE919E91770003ED065 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		E2B3CF1119E917BC003ED065 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				PRODUCT_NAME = XLFacility;
+				PROVISIONING_PROFILE = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E2B3CF1219E917BC003ED065 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				PRODUCT_NAME = XLFacility;
+				PROVISIONING_PROFILE = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E2168F8219EDF2C000865350 /* Build configuration list for PBXNativeTarget "TCPServer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2168F8319EDF2C000865350 /* Debug */,
+				E2168F8419EDF2C000865350 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E26ABC2419EC9E2D00654D9F /* Build configuration list for PBXNativeTarget "XLFacility (Mac)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E26ABC2519EC9E2D00654D9F /* Debug */,
+				E26ABC2619EC9E2D00654D9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E26DC16219E8494700C68DDC /* Build configuration list for PBXProject "XLFacility" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E26DC16C19E8494700C68DDC /* Debug */,
+				E26DC16D19E8494700C68DDC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E26DC16E19E8494700C68DDC /* Build configuration list for PBXNativeTarget "XLFacility (CLT)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E26DC16F19E8494700C68DDC /* Debug */,
+				E26DC17019E8494700C68DDC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E298C47619ED859F00C76821 /* Build configuration list for PBXNativeTarget "XLFacility (Tests)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E298C47419ED859F00C76821 /* Debug */,
+				E298C47519ED859F00C76821 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2B3CEE719E91770003ED065 /* Build configuration list for PBXAggregateTarget "Build All" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2B3CEE819E91770003ED065 /* Debug */,
+				E2B3CEE919E91770003ED065 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2B3CF1019E917BC003ED065 /* Build configuration list for PBXNativeTarget "XLFacility (iOS)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2B3CF1119E917BC003ED065 /* Debug */,
+				E2B3CF1219E917BC003ED065 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E26DC15F19E8494700C68DDC /* Project object */;
+}
