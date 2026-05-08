@@ -257,12 +257,27 @@
   _documentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   [_contentView addSubview:_documentView];
   
-  _pageLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 140, 20)];
-  _pageLabel.font = [UIFont boldSystemFontOfSize:18];
+  _pageLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 160, 24)];
+  _pageLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
   _pageLabel.textColor = [UIColor whiteColor];
   _pageLabel.textAlignment = NSTextAlignmentCenter;
-  _pageLabel.backgroundColor = nil;
+  _pageLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.45];
+  _pageLabel.layer.cornerRadius = 12;
+  _pageLabel.layer.masksToBounds = YES;
   _pageLabel.opaque = NO;
+  
+  // Style comic reader nav bar
+  if (@available(iOS 15.0, *)) {
+    UINavigationBarAppearance* appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.85];
+    NSDictionary* titleAttr = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.titleTextAttributes = titleAttr;
+    _navigationBar.standardAppearance = appearance;
+    _navigationBar.scrollEdgeAppearance = appearance;
+    [appearance release];
+  }
+  _navigationBar.tintColor = [UIColor whiteColor];
 }
 
 

@@ -231,14 +231,21 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _toggleMenu:(id)sender {
-  if (_menuController.popoverVisible) {
-    [_menuController dismissPopoverAnimated:YES];
-    [_updateTimer setFireDate:[NSDate distantFuture]];
+  if (self.presentedViewController == _menuViewController) {
+    [self dismissViewControllerAnimated:YES completion:^{
+      [self->_updateTimer setFireDate:[NSDate distantFuture]];
+    }];
   } else {
     [self _updateTimer:nil];
     [self _updateStatistics];
     [self updatePurchase];
-    [_menuController presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionUp animated:YES];
+    _menuViewController.modalPresentationStyle = UIModalPresentationPopover;
+    _menuViewController.preferredContentSize = _menuView.frame.size;
+    UIPopoverPresentationController* pc = _menuViewController.popoverPresentationController;
+    pc.barButtonItem = (UIBarButtonItem*)sender;
+    pc.permittedArrowDirections = UIPopoverArrowDirectionUp;
+    pc.delegate = self;
+    [self presentViewController:_menuViewController animated:YES completion:nil];
     [_updateTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:kUpdateTimerInterval]];
   }
 }
@@ -390,12 +397,14 @@ static void __DisplayQueueCallBack(void* info) {
 - (void) viewDidLoad {
   [super viewDidLoad];
   
-    if (@available(iOS 13.0, *)) {
-        self.view.backgroundColor = UIColor.systemBackgroundColor;
-    } else {
-        // Fallback on earlier versions
-        self.view.backgroundColor = UIColor.whiteColor;
-    }  // Can't do this in Interface Builder
+  if (@available(iOS 13.0, *)) {
+    self.view.backgroundColor = [UIColor systemBackgroundColor];
+  } else {
+    self.view.backgroundColor = [UIColor whiteColor];
+  }
+
+  // Grid background (XIB has it red by mistake — fix here)
+  _gridView.backgroundColor = [UIColor clearColor];
   
   _gridView.contentBackgroundOffset = CGPointMake(0.0, kBackgroundOffset);
   _gridView.contentBackgroundColor = [UIColor colorWithPatternImage:[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Background" ofType:@"png"]]];
@@ -409,19 +418,25 @@ static void __DisplayQueueCallBack(void* info) {
   [pressRecognizer release];
   
   UINavigationItem* item = [_navigationBar.items objectAtIndex:0];
-  UIBarButtonItem* rightButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
-                                                                  style:UIBarButtonItemStyleBordered
-                                                                 target:self
-                                                                 action:@selector(_toggleMenu:)];
+  UIBarButtonItem* rightButton;
+  if (@available(iOS 13.0, *)) {
+    UIImage* gearIcon = [UIImage systemImageNamed:@"slider.horizontal.3"];
+    rightButton = [[UIBarButtonItem alloc] initWithImage:gearIcon
+                                                   style:UIBarButtonItemStylePlain
+                                                  target:self
+                                                  action:@selector(_toggleMenu:)];
+  } else {
+    rightButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
+                                                   style:UIBarButtonItemStylePlain
+                                                  target:self
+                                                  action:@selector(_toggleMenu:)];
+  }
   item.rightBarButtonItem = rightButton;
   [rightButton release];
   
-  UIViewController* viewController = [[UIViewController alloc] init];
-  viewController.view = _menuView;
-  _menuController = [[UIPopoverController alloc] initWithContentViewController:viewController];
-  _menuController.delegate = self;
-  _menuController.popoverContentSize = _menuView.frame.size;
-  [viewController release];
+  _menuViewController = [[UIViewController alloc] init];
+  _menuViewController.view = _menuView;
+  [self _applyMenuTheme];
   
   _infoLabel.text = nil;
   _versionLabel.text = [NSString stringWithFormat:NSLocalizedString(@"VERSION_FORMAT", nil),
@@ -433,15 +448,148 @@ static void __DisplayQueueCallBack(void* info) {
   _forceUpdateButton.enabled = !updating;
   _dimmingSwitch.on = [(AppDelegate*)[AppDelegate sharedInstance] isScreenDimmed];
   
-  if (kCFCoreFoundationVersionNumber < kCFCoreFoundationVersionNumber_iOS_7_0) {
-    //[_purchaseButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
-    //[_restoreButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
-  }
-  
   XLOG_DEBUG_CHECK(_updateTimer == nil);
   _updateTimer = [[NSTimer alloc] initWithFireDate:[NSDate distantFuture] interval:kUpdateTimerInterval target:self selector:@selector(_updateTimer:) userInfo:nil repeats:YES];
   [[NSRunLoop mainRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
     
+}
+
+- (void) _applyMenuTheme {
+  // ── Adaptive colours ─────────────────────────────────────────────────────
+  UIColor* menuBg;
+  UIColor* sectionBg;
+  UIColor* primaryText;
+  UIColor* secondaryText;
+  UIColor* separatorColor;
+  UIColor* accentColor;
+  UIColor* destructiveColor;
+
+  if (@available(iOS 13.0, *)) {
+    menuBg        = [UIColor systemGroupedBackgroundColor];
+    sectionBg     = [UIColor secondarySystemGroupedBackgroundColor];
+    primaryText   = [UIColor labelColor];
+    secondaryText = [UIColor secondaryLabelColor];
+    separatorColor = [UIColor separatorColor];
+    accentColor   = [UIColor systemBlueColor];
+    destructiveColor = [UIColor systemRedColor];
+  } else {
+    menuBg        = [UIColor colorWithRed:0.94 green:0.94 blue:0.96 alpha:1.0];
+    sectionBg     = [UIColor whiteColor];
+    primaryText   = [UIColor darkTextColor];
+    secondaryText = [UIColor grayColor];
+    separatorColor = [UIColor colorWithWhite:0.80 alpha:1.0];
+    accentColor   = [UIColor colorWithRed:0.20 green:0.55 blue:1.00 alpha:1.0];
+    destructiveColor = [UIColor colorWithRed:1.00 green:0.23 blue:0.19 alpha:1.0];
+  }
+
+  _menuView.backgroundColor = menuBg;
+
+  // ── Helper: add separator line beneath a view ─────────────────────────────
+  void (^addSeparator)(UIView*, UIColor*) = ^(UIView* below, UIColor* color) {
+    CGRect r = below.frame;
+    UIView* sep = [[UIView alloc] initWithFrame:CGRectMake(r.origin.x + 12,
+                                                            CGRectGetMaxY(r),
+                                                            r.size.width - 24, 0.5)];
+    sep.backgroundColor = color;
+    sep.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [_menuView addSubview:sep];
+    [sep release];
+  };
+
+  // ── Section header labels ─────────────────────────────────────────────────
+  void (^styleHeader)(UILabel*) = ^(UILabel* lbl) {
+    lbl.font = [UIFont systemFontOfSize:11 weight:UIFontWeightSemibold];
+    lbl.textColor = secondaryText;
+    lbl.text = [lbl.text uppercaseString];
+  };
+
+  // ── Style each button ─────────────────────────────────────────────────────
+  void (^styleButton)(UIButton*, UIColor*, BOOL) = ^(UIButton* btn, UIColor* tintColor, BOOL isSection) {
+    btn.backgroundColor = isSection ? menuBg : sectionBg;
+    btn.layer.cornerRadius = isSection ? 0 : 10;
+    btn.clipsToBounds = YES;
+    [btn setTitleColor:tintColor forState:UIControlStateNormal];
+    [btn setTitleColor:secondaryText forState:UIControlStateDisabled];
+    btn.titleLabel.font = [UIFont systemFontOfSize:17];
+    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+  };
+
+  // ── Walk the XIB subviews and apply styles ────────────────────────────────
+  for (UIView* v in _menuView.subviews) {
+    if ([v isKindOfClass:[UIButton class]]) {
+      UIButton* btn = (UIButton*)v;
+      NSString* title = [btn titleForState:UIControlStateNormal];
+      if ([title hasPrefix:@"Recreate"] || [title hasPrefix:@"Delete"]) {
+        styleButton(btn, destructiveColor, NO);
+      } else {
+        styleButton(btn, accentColor, NO);
+      }
+      // Add subtle hairline separator beneath each button row
+      addSeparator(btn, separatorColor);
+
+    } else if ([v isKindOfClass:[UILabel class]]) {
+      UILabel* lbl = (UILabel*)v;
+      if (lbl.font.pointSize >= 16) {
+        // Section header
+        styleHeader(lbl);
+      } else {
+        // Info / address / version secondary text
+        lbl.textColor = secondaryText;
+      }
+
+    } else if ([v isKindOfClass:[UISegmentedControl class]]) {
+      UISegmentedControl* sc = (UISegmentedControl*)v;
+      if (@available(iOS 13.0, *)) {
+        sc.selectedSegmentTintColor = accentColor;
+        NSDictionary* normal   = @{NSForegroundColorAttributeName: secondaryText};
+        NSDictionary* selected = @{NSForegroundColorAttributeName: [UIColor whiteColor],
+                                   NSFontAttributeName: [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold]};
+        [sc setTitleTextAttributes:normal   forState:UIControlStateNormal];
+        [sc setTitleTextAttributes:selected forState:UIControlStateSelected];
+        if (@available(iOS 13.0, *)) {
+          sc.backgroundColor = sectionBg;
+        }
+      } else {
+        sc.tintColor = accentColor;
+      }
+      // Give the web-server control a taller hit target
+      if (sc == _serverControl) {
+        CGRect f = sc.frame;
+        f.size.height = 36;
+        sc.frame = f;
+      }
+
+    } else if ([v isKindOfClass:[UISwitch class]]) {
+      UISwitch* sw = (UISwitch*)v;
+      sw.onTintColor = accentColor;
+    }
+  }
+
+  // ── Group visually – add a card background behind the server section ───────
+  UIView* serverCard = [[UIView alloc] initWithFrame:CGRectMake(10,
+                                                                 CGRectGetMinY(_serverControl.frame) - 44,
+                                                                 300, 44 + _serverControl.frame.size.height + 8)];
+  serverCard.backgroundColor = sectionBg;
+  serverCard.layer.cornerRadius = 12;
+  if (@available(iOS 13.0, *)) {
+    serverCard.layer.shadowColor = [UIColor labelColor].CGColor;
+  } else {
+    serverCard.layer.shadowColor = [UIColor blackColor].CGColor;
+  }
+  serverCard.layer.shadowOpacity = 0.06;
+  serverCard.layer.shadowRadius  = 6;
+  serverCard.layer.shadowOffset  = CGSizeMake(0, 2);
+  [_menuView insertSubview:serverCard belowSubview:_serverControl];
+  [serverCard release];
+
+  // ── Navigation bar: modern translucent style ──────────────────────────────
+  if (@available(iOS 15.0, *)) {
+    UINavigationBarAppearance* appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithDefaultBackground];
+    _navigationBar.standardAppearance = appearance;
+    _navigationBar.scrollEdgeAppearance = appearance;
+    [appearance release];
+  }
 }
 
 - (void) _reloadCurrentCollection {
@@ -701,7 +849,7 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) libraryUpdaterDidContinue:(LibraryUpdater*)library progress:(float)progress {
-  if (_menuController.popoverVisible) {
+  if (self.presentedViewController == _menuViewController) {
     [self _updateStatistics];
   }
 }
@@ -907,9 +1055,14 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (IBAction) showLog:(id)sender {
-  [_menuController dismissPopoverAnimated:YES];
-  [_updateTimer setFireDate:[NSDate distantFuture]];
-  [[AppDelegate sharedInstance] showLogViewController];
+  if (self.presentedViewController == _menuViewController) {
+    [self dismissViewControllerAnimated:YES completion:^{
+      [self->_updateTimer setFireDate:[NSDate distantFuture]];
+      [[AppDelegate sharedInstance] showLogViewController];
+    }];
+  } else {
+    [[AppDelegate sharedInstance] showLogViewController];
+  }
 }
 
 - (IBAction) toggleDimming:(id)sender {
@@ -939,7 +1092,12 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (void)safariViewControllerDidFinish:(SFSafariViewController *)controller {
-    [self dismissViewControllerAnimated:true completion:nil];
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+// UIPopoverPresentationControllerDelegate — fires when tapped outside popover
+- (void) presentationControllerDidDismiss:(UIPresentationController*)presentationController {
+  [_updateTimer setFireDate:[NSDate distantFuture]];
 }
 
 @end

@@ -18,7 +18,7 @@
 #import "GridView.h"
 #import "Library.h"
 
-@interface LibraryViewController : UIViewController <UINavigationBarDelegate, UIPopoverControllerDelegate> {
+@interface LibraryViewController : UIViewController <UINavigationBarDelegate, UIPopoverPresentationControllerDelegate> {
 @private
   GridView* _gridView;
   UINavigationBar* _navigationBar;
@@ -42,7 +42,7 @@
   UIImage* _newImage;
   UIImage* _ribbonImage;
   UIImage* _comicImage;
-  UIPopoverController* _menuController;
+  UIViewController* _menuViewController;
   Collection* _currentCollection;
   Comic* _currentComic;
   DatabaseObject* _selectedItem;
