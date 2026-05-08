@@ -144,7 +144,7 @@ static ApplicationDelegate* _sharedInstance = nil;
 }
 
 - (void) _logViewControllerDone:(id)sender {
-  [_viewController dismissModalViewControllerAnimated:YES];
+  [_viewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) showLogViewController {
@@ -168,7 +168,7 @@ static ApplicationDelegate* _sharedInstance = nil;
                                                                                                     target:self
                                                                                                     action:@selector(_logViewControllerDone:)] autorelease];
   UINavigationController* navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
-  [_viewController presentModalViewController:navigationController animated:YES];
+  [_viewController presentViewController:navigationController animated:YES completion:nil];
   [navigationController release];
   [viewController release];
   

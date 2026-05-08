@@ -27,7 +27,7 @@
 #import <SafariServices/SafariServices.h>
 #import <StoreKit/StoreKit.h>
 
-#define kAppStoreAppID @"409290355"
+#define kAppStoreAppID @"1597314495"
 #define kiOSAppStoreURLFormat @"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=%@"
 #define kiOS7AppStoreURLFormat @"itms-apps://itunes.apple.com/app/id%@"
 
@@ -530,7 +530,7 @@ static void __DisplayQueueCallBack(void* info) {
   if (viewController) {
     viewController.modalPresentationStyle = UIModalPresentationFullScreen;
     viewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-    [self presentModalViewController:viewController animated:YES];
+    [self presentViewController:viewController animated:YES completion:nil];
     [viewController release];
     
     if (comic != _currentComic) {
@@ -545,7 +545,8 @@ static void __DisplayQueueCallBack(void* info) {
 - (void) viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
   
-  if (UIInterfaceOrientationIsLandscape(self.interfaceOrientation)) {
+  BOOL isLandscape = self.view.bounds.size.width > self.view.bounds.size.height;
+  if (isLandscape) {
     _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin, kGridMargin + kGridMarginExtra_Landscape, kGridMargin, kGridMargin);
     _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing, kItemHorizontalSpacing_Landscape);
   } else {
@@ -557,34 +558,14 @@ static void __DisplayQueueCallBack(void* info) {
     [_gridView layoutSubviews];
     [self _setCurrentCollection:_currentCollection];
   }
-
-  // Launch screens are used on iOS 8 and later
-  if (kCFCoreFoundationVersionNumber < kCFCoreFoundationVersionNumber_iOS_8_0) {
-    if (_launched == NO) {
-      _launchView = [[UIImageView alloc] initWithFrame:self.view.bounds];
-      _launchView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-      NSString* path = [[NSBundle mainBundle] pathForResource:(UIInterfaceOrientationIsLandscape(self.interfaceOrientation) ? @"Default-Landscape" : @"Default-Portrait") ofType:@"png"];
-      UIImage* image = [[UIImage alloc] initWithContentsOfFile:path];
-      _launchView.image = image;
-      [image release];
-      [self.view addSubview:_launchView];
-      _launched = YES;
-    }
-  }
 }
 
 - (void) _rateNow:(id)argument {
   [[AppDelegate sharedDelegate] logEvent:@"rating.now"];
   [[NSUserDefaults standardUserDefaults] setInteger:-1 forKey:kDefaultKey_LaunchCount];
   
-  NSString* appURL;
-  float version = [[UIDevice currentDevice].systemVersion floatValue];
-  if (version >= 7.0 && version < 7.1) {
-    appURL = [NSString stringWithFormat:kiOS7AppStoreURLFormat, kAppStoreAppID];
-  } else {
-    appURL = [NSString stringWithFormat:kiOSAppStoreURLFormat, kAppStoreAppID];
-  }
-  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:appURL]];
+  NSString* appURL = [NSString stringWithFormat:kiOS7AppStoreURLFormat, kAppStoreAppID];
+  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:appURL] options:@{} completionHandler:nil];
 }
 
 - (void) _rateLater:(id)argument {
@@ -632,7 +613,7 @@ static void __DisplayQueueCallBack(void* info) {
     UIView* launchView = _launchView;
     [UIView animateWithDuration:0.5 animations:^{
       launchView.alpha = 0.0;
-      self.view.frame = [[UIScreen mainScreen] applicationFrame];
+      self.view.frame = [[UIScreen mainScreen] bounds];
     } completion:^(BOOL finished) {
       [launchView removeFromSuperview];
       [launchView release];
@@ -643,7 +624,7 @@ static void __DisplayQueueCallBack(void* info) {
   NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_LaunchCount];
   if (count >= 0) {
     [[NSUserDefaults standardUserDefaults] setInteger:(count + 1) forKey:kDefaultKey_LaunchCount];
-    if (!needLibraryUpdate && (count + 1 >= kLaunchCountBeforeRating) && !self.modalViewController && [[NetReachability sharedNetReachability] state]) {
+    if (!needLibraryUpdate && (count + 1 >= kLaunchCountBeforeRating) && !self.presentedViewController && [[NetReachability sharedNetReachability] state]) {
       [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
       [self performSelector:@selector(_showRatingScreen) withObject:nil afterDelay:kShowRatingDelay];
     } else {
@@ -667,8 +648,10 @@ static void __DisplayQueueCallBack(void* info) {
   [super viewDidAppear:animated];
   
   if (_launchView) {
-    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];  // Work around interface orientation not already set in -viewDidAppear before iOS 6.0 but instead set after -didRotateFromInterfaceOrientation gets called
-  }
+    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];  // Work around interface orientation not already set in -viewDidAppear before iOS 6.0 but instead set after -didRotateFromInterfaceOrientation gets called  } else if (!_launched) {
+    // On iOS 8+, the system provides the launch screen; call _viewDidReallyAppear directly
+    _launched = YES;
+    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];  }
     
     if ([[NSUserDefaults standardUserDefaults] integerForKey:@"LaunchCount"] % 10 == 0) {
         if (@available(iOS 10.3, *)) {
@@ -690,8 +673,8 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) saveState {
-  if ([self.modalViewController isKindOfClass:[ComicViewController class]]) {
-    [(ComicViewController*)self.modalViewController saveState];
+  if ([self.presentedViewController isKindOfClass:[ComicViewController class]]) {
+    [(ComicViewController*)self.presentedViewController saveState];
   }
   
   [self gridViewDidUpdateScrollingAmount:nil];

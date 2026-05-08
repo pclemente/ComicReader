@@ -586,9 +586,9 @@ static void _ZombieComicsRemoveFunction(const void* key, const void* value, void
 }
 
 static void _ZombieComicsMarkFunction(const void* key, const void* value, void* context) {
-  //if ([(Comic*)value collection] == (DatabaseSQLRowID)context) {
-    ///[(Comic*)value setTime:NAN];
-  //}
+  if ([(Comic*)value collection] == (DatabaseSQLRowID)(intptr_t)context) {
+    [(Comic*)value setTime:NAN];
+  }
 }
 
 // Called from GCD thread

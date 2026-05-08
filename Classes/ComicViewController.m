@@ -141,7 +141,7 @@
       return nil;
     }
     
-    self.wantsFullScreenLayout = YES;
+    // wantsFullScreenLayout was removed in iOS 7; fullscreen is controlled via modalPresentationStyle instead
     
     NSString* type = @"";
     switch (_type) {
@@ -182,11 +182,7 @@
 }
 
 - (BOOL) navigationBar:(UINavigationBar*)navigationBar shouldPopItem:(UINavigationItem*)item {
-  if ([self respondsToSelector:@selector(presentingViewController)]) {
-    [self.presentingViewController dismissModalViewControllerAnimated:YES];
-  } else {
-    [self.parentViewController dismissModalViewControllerAnimated:YES];
-  }
+  [self dismissViewControllerAnimated:YES completion:nil];
   return YES;
 }
 
@@ -234,19 +230,11 @@
 }
 
 - (void) documentViewDidReachFirstPage:(DocumentView*)documentView {
-  if ([self respondsToSelector:@selector(presentingViewController)]) {
-    [self.presentingViewController dismissModalViewControllerAnimated:YES];
-  } else {
-    [self.parentViewController dismissModalViewControllerAnimated:YES];
-  }
+  [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) documentViewDidReachLastPage:(DocumentView*)documentView {
-  if ([self respondsToSelector:@selector(presentingViewController)]) {
-    [self.presentingViewController dismissModalViewControllerAnimated:YES];
-  } else {
-    [self.parentViewController dismissModalViewControllerAnimated:YES];
-  }
+  [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) viewDidLoad {
@@ -338,6 +326,12 @@
   [super viewDidAppear:animated];
   
   [[AppDelegate sharedInstance] hideSpinner:YES];
+}
+
+- (void) viewWillDisappear:(BOOL)animated {
+  [super viewWillDisappear:animated];
+  
+  [self saveState];
 }
 
 - (void) viewDidDisappear:(BOOL)animated {

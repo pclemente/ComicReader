@@ -13,8 +13,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#import <sys/xattr.h>
-
 #import "AppDelegate.h"
 #import "Library.h"
 #import "LibraryViewController.h"
@@ -220,10 +218,10 @@
   
   // Prevent backup of Documents directory as it contains only "offline data" (iOS 5.0.1 and later)
   NSString* documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-  u_int8_t value = 1;
-  int result = setxattr([documentsPath fileSystemRepresentation], "com.apple.MobileBackup", &value, sizeof(value), 0, 0);
-  if (result) {
-    XLOG_ERROR(@"Failed setting do-not-backup attribute on \"%@\": %s (%i)", documentsPath, strerror(result), result);
+  NSURL* documentsURL = [NSURL fileURLWithPath:documentsPath];
+  NSError* backupError = nil;
+  if (![documentsURL setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:&backupError]) {
+    XLOG_ERROR(@"Failed setting do-not-backup attribute on \"%@\": %@", documentsPath, backupError);
   }
   
   // Create root view controller
