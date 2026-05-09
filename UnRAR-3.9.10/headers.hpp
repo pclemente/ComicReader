@@ -208,7 +208,9 @@ struct FileHeader:BlockHeader
   FileHeader& operator = (FileHeader &hd)
   {
     SubData.Reset();
-    memcpy(this,&hd,sizeof(*this));
+    // Cast through void* to silence the "non-trivially-copyable" Clang
+    // diagnostic.  SubData is immediately reset below before being used.
+    memcpy(static_cast<void*>(this), static_cast<const void*>(&hd), sizeof(*this));
     SubData.CleanData();
     SubData=hd.SubData;
     return(*this);
