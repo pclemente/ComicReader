@@ -307,7 +307,7 @@ typedef enum {
   
   CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
   CGContextRef context = CGBitmapContextCreate(NULL, contextWidth, contextHeight, 8, 0, colorspace,
-                                               kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+                                               (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
   CGContextClearRect(context, CGRectMake(0, 0, contextWidth, contextHeight));
   CGContextScaleCTM(context, _screenScale, _screenScale);
   
@@ -339,7 +339,7 @@ typedef enum {
   
   CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
   CGContextRef context = CGBitmapContextCreate(NULL, contextWidth, contextHeight, 8, 0, colorspace,
-                                               kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+                                               (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
   CGContextClearRect(context, CGRectMake(0, 0, contextWidth, contextHeight));
   CGContextScaleCTM(context, _screenScale, _screenScale);
   
@@ -366,7 +366,7 @@ typedef enum {
       [attributes setObject:(id)font forKey:(id)kCTFontAttributeName];
       CFRelease(font);
     }
-    CTTextAlignment alignment = kCTCenterTextAlignment;
+    CTTextAlignment alignment = kCTTextAlignmentCenter;
     CTLineBreakMode lineBreaking = kCTLineBreakByWordWrapping;
     CTParagraphStyleSetting settings[] = {
                                           {kCTParagraphStyleSpecifierAlignment, sizeof(alignment), &alignment},

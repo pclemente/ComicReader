@@ -23,7 +23,7 @@
   XLDatabaseLogger* _databaseLogger;
   UIWindow* _overlayWindow;
   
-  UIAlertView* _alertView;
+  UIViewController* _alertView;  // actually UIAlertController, typed as UIViewController
   id _alertDelegate;
   SEL _alertConfirmSelector;
   SEL _alertCancelSelector;

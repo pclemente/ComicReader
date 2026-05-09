@@ -437,6 +437,7 @@ static void __DisplayQueueCallBack(void* info) {
   _menuViewController = [[UIViewController alloc] init];
   _menuViewController.view = _menuView;
   [self _applyMenuTheme];
+  [self _buildEmptyStateView];
   
   _infoLabel.text = nil;
   _versionLabel.text = [NSString stringWithFormat:NSLocalizedString(@"VERSION_FORMAT", nil),
@@ -458,7 +459,6 @@ static void __DisplayQueueCallBack(void* info) {
   // ── Adaptive colours ─────────────────────────────────────────────────────
   UIColor* menuBg;
   UIColor* sectionBg;
-  UIColor* primaryText;
   UIColor* secondaryText;
   UIColor* separatorColor;
   UIColor* accentColor;
@@ -467,7 +467,6 @@ static void __DisplayQueueCallBack(void* info) {
   if (@available(iOS 13.0, *)) {
     menuBg        = [UIColor systemGroupedBackgroundColor];
     sectionBg     = [UIColor secondarySystemGroupedBackgroundColor];
-    primaryText   = [UIColor labelColor];
     secondaryText = [UIColor secondaryLabelColor];
     separatorColor = [UIColor separatorColor];
     accentColor   = [UIColor systemBlueColor];
@@ -475,7 +474,6 @@ static void __DisplayQueueCallBack(void* info) {
   } else {
     menuBg        = [UIColor colorWithRed:0.94 green:0.94 blue:0.96 alpha:1.0];
     sectionBg     = [UIColor whiteColor];
-    primaryText   = [UIColor darkTextColor];
     secondaryText = [UIColor grayColor];
     separatorColor = [UIColor colorWithWhite:0.80 alpha:1.0];
     accentColor   = [UIColor colorWithRed:0.20 green:0.55 blue:1.00 alpha:1.0];
@@ -592,6 +590,252 @@ static void __DisplayQueueCallBack(void* info) {
   }
 }
 
+- (void) _buildEmptyStateView {
+  // Positioned over the grid view (below the nav bar) so centering needs no
+  // nav-bar offset — frame is kept in sync in viewDidLayoutSubviews.
+  _emptyStateView = [[UIView alloc] initWithFrame:_gridView.frame];
+  _emptyStateView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _emptyStateView.hidden = YES;
+
+  // ── Scroll view (safety net when content is taller than the screen) ───────
+  UIScrollView* scroll = [[UIScrollView alloc] initWithFrame:_emptyStateView.bounds];
+  scroll.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  scroll.alwaysBounceVertical = YES;
+  if (@available(iOS 11.0, *)) {
+    scroll.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+  }
+  scroll.tag = 9901;
+  [_emptyStateView addSubview:scroll];
+  [scroll release];
+
+  // ── Single content view – everything goes in here ─────────────────────────
+  CGFloat w = _emptyStateView.bounds.size.width;
+  CGFloat cardW = MIN(w - 40, 600);   // cap card width for large iPad Pro
+  CGFloat cardX = (w - cardW) / 2.0;
+
+  UIView* contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, 0)];
+  contentView.tag = 9902;
+  [scroll addSubview:contentView];
+
+  CGFloat y = 0;
+
+  // ── Icon ──────────────────────────────────────────────────────────────────
+  UIImageView* iconView;
+  if (@available(iOS 13.0, *)) {
+    UIImageSymbolConfiguration* cfg = [UIImageSymbolConfiguration configurationWithPointSize:96
+                                                                                      weight:UIImageSymbolWeightThin
+                                                                                       scale:UIImageSymbolScaleLarge];
+    UIImage* icon = [UIImage systemImageNamed:@"books.vertical" withConfiguration:cfg];
+    iconView = [[UIImageView alloc] initWithImage:icon];
+    iconView.tintColor = [UIColor tertiaryLabelColor];
+  } else {
+    iconView = [[UIImageView alloc] init];
+    iconView.frame = CGRectMake(0, 0, 96, 96);
+  }
+  iconView.contentMode = UIViewContentModeScaleAspectFit;
+  CGFloat iconSize = 110;
+  iconView.frame = CGRectMake((w - iconSize) / 2.0, y, iconSize, iconSize);
+  [contentView addSubview:iconView];
+  [iconView release];
+  y = CGRectGetMaxY(iconView.frame) + 20;
+
+  // ── Title ─────────────────────────────────────────────────────────────────
+  UILabel* titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
+  titleLabel.text = @"Your Library is Empty";
+  titleLabel.font = [UIFont systemFontOfSize:28 weight:UIFontWeightBold];
+  titleLabel.textAlignment = NSTextAlignmentCenter;
+  titleLabel.numberOfLines = 0;
+  if (@available(iOS 13.0, *)) {
+    titleLabel.textColor = [UIColor labelColor];
+  } else {
+    titleLabel.textColor = [UIColor darkTextColor];
+  }
+  [titleLabel sizeToFit];
+  titleLabel.frame = CGRectMake((w - titleLabel.frame.size.width) / 2.0, y,
+                                 titleLabel.frame.size.width, titleLabel.frame.size.height);
+  [contentView addSubview:titleLabel];
+  y = CGRectGetMaxY(titleLabel.frame) + 8;
+  [titleLabel release];
+
+  // ── Subtitle ──────────────────────────────────────────────────────────────
+  UILabel* subtitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
+  subtitleLabel.text = @"Add .cbz, .cbr or .pdf comics using any of the methods below.";
+  subtitleLabel.font = [UIFont systemFontOfSize:17];
+  subtitleLabel.textAlignment = NSTextAlignmentCenter;
+  subtitleLabel.numberOfLines = 0;
+  if (@available(iOS 13.0, *)) {
+    subtitleLabel.textColor = [UIColor secondaryLabelColor];
+  } else {
+    subtitleLabel.textColor = [UIColor grayColor];
+  }
+  [subtitleLabel sizeToFit];
+  subtitleLabel.frame = CGRectMake((w - cardW) / 2.0, y, cardW, subtitleLabel.frame.size.height);
+  [contentView addSubview:subtitleLabel];
+  y = CGRectGetMaxY(subtitleLabel.frame) + 32;
+  [subtitleLabel release];
+
+  // ── Step cards ────────────────────────────────────────────────────────────
+  UIColor* cardBg;
+  UIColor* stepTitleColor;
+  UIColor* stepBodyColor;
+  UIColor* accentColor;
+  if (@available(iOS 13.0, *)) {
+    cardBg         = [UIColor secondarySystemGroupedBackgroundColor];
+    stepTitleColor = [UIColor labelColor];
+    stepBodyColor  = [UIColor secondaryLabelColor];
+    accentColor    = [UIColor systemBlueColor];
+  } else {
+    cardBg         = [UIColor whiteColor];
+    stepTitleColor = [UIColor darkTextColor];
+    stepBodyColor  = [UIColor grayColor];
+    accentColor    = [UIColor colorWithRed:0.20 green:0.55 blue:1.00 alpha:1.0];
+  }
+
+  struct { NSString* symbol; NSString* title; NSString* body; } steps[] = {
+    { @"square.and.arrow.down",
+      @"Files App",
+      @"Tap \"Add Files\" in the Settings panel (top-right). Browse the Files app and pick any comic file." },
+    { @"wifi",
+      @"Wi-Fi Upload",
+      @"Open Settings, enable the Web Server, then visit the URL in a browser on your Mac or PC to drag and drop files." },
+    { @"arrow.down.to.line",
+      @"iTunes / Finder",
+      @"Connect your iPad via USB. In Finder (or iTunes on Windows) select ComicReader under File Sharing and drag comics in." },
+  };
+
+  NSUInteger stepCount = sizeof(steps) / sizeof(steps[0]);
+  for (NSUInteger i = 0; i < stepCount; i++) {
+    UIView* card = [[UIView alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
+    card.backgroundColor = cardBg;
+    card.layer.cornerRadius = 14;
+    card.layer.masksToBounds = YES;
+
+    // Numbered badge
+    UIView* badge = [[UIView alloc] initWithFrame:CGRectMake(16, 16, 36, 36)];
+    badge.backgroundColor = accentColor;
+    badge.layer.cornerRadius = 18;
+    UILabel* numLabel = [[UILabel alloc] initWithFrame:badge.bounds];
+    numLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)];
+    numLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightBold];
+    numLabel.textColor = [UIColor whiteColor];
+    numLabel.textAlignment = NSTextAlignmentCenter;
+    [badge addSubview:numLabel];
+    [numLabel release];
+    [card addSubview:badge];
+    [badge release];
+
+    // SF Symbol icon (right side)
+    if (@available(iOS 13.0, *)) {
+      UIImageSymbolConfiguration* cfg = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightMedium];
+      UIImage* img = [UIImage systemImageNamed:steps[i].symbol withConfiguration:cfg];
+      UIImageView* symView = [[UIImageView alloc] initWithImage:img];
+      symView.tintColor = accentColor;
+      symView.frame = CGRectMake(cardW - 48, 22, 26, 26);
+      [card addSubview:symView];
+      [symView release];
+    }
+
+    // Text
+    CGFloat textX = 68;
+    CGFloat textW = cardW - textX - 56;
+    UILabel* stepTitle = [[UILabel alloc] initWithFrame:CGRectMake(textX, 14, textW, 0)];
+    stepTitle.text = steps[i].title;
+    stepTitle.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    stepTitle.textColor = stepTitleColor;
+    stepTitle.numberOfLines = 1;
+    [stepTitle sizeToFit];
+    stepTitle.frame = CGRectMake(textX, 14, textW, stepTitle.frame.size.height);
+    [card addSubview:stepTitle];
+
+    UILabel* stepBody = [[UILabel alloc] initWithFrame:CGRectMake(textX, CGRectGetMaxY(stepTitle.frame) + 4, textW, 0)];
+    stepBody.text = steps[i].body;
+    stepBody.font = [UIFont systemFontOfSize:14];
+    stepBody.textColor = stepBodyColor;
+    stepBody.numberOfLines = 0;
+    [stepBody sizeToFit];
+    stepBody.frame = CGRectMake(textX, CGRectGetMaxY(stepTitle.frame) + 4, textW, stepBody.frame.size.height);
+    [card addSubview:stepBody];
+
+    [stepTitle release];
+    [stepBody release];
+
+    CGFloat cardH = CGRectGetMaxY(stepBody.frame) + 16;
+    card.frame = CGRectMake(cardX, y, cardW, cardH);
+    [contentView addSubview:card];
+    [card release];
+    y += cardH + 10;
+  }
+
+  // ── Footer hint ───────────────────────────────────────────────────────────
+  y += 4;
+  UILabel* hint = [[UILabel alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
+  hint.text = @"Need free comics? Visit digitalcomicmuseum.com";
+  hint.font = [UIFont systemFontOfSize:13];
+  hint.textAlignment = NSTextAlignmentCenter;
+  hint.numberOfLines = 0;
+  if (@available(iOS 13.0, *)) {
+    hint.textColor = [UIColor tertiaryLabelColor];
+  } else {
+    hint.textColor = [UIColor lightGrayColor];
+  }
+  [hint sizeToFit];
+  hint.frame = CGRectMake((w - cardW) / 2.0, y, cardW, hint.frame.size.height);
+  [contentView addSubview:hint];
+  y = CGRectGetMaxY(hint.frame);
+  [hint release];
+
+  // Seal contentView height and scroll contentSize
+  contentView.frame = CGRectMake(0, 0, w, y);
+  scroll.contentSize = CGSizeMake(w, y);
+  [contentView release];
+
+  [_gridView.superview insertSubview:_emptyStateView belowSubview:_gridView];
+}
+
+- (void) _centerEmptyStateContent {
+  if (!_emptyStateView) return;
+  UIScrollView* scroll = (UIScrollView*)[_emptyStateView viewWithTag:9901];
+  UIView* contentView  = [_emptyStateView viewWithTag:9902];
+  if (!scroll || !contentView) return;
+
+  // _emptyStateView.frame == _gridView.frame (set in viewDidLayoutSubviews),
+  // so scroll.bounds.size.height is exactly the visible area below the nav bar.
+  CGFloat availH   = scroll.bounds.size.height;
+  CGFloat contentH = contentView.frame.size.height;
+  CGFloat topInset = MAX(0.0, floor((availH - contentH) / 2.0));
+  scroll.contentInset = UIEdgeInsetsMake(topInset, 0, 0, 0);
+}
+
+- (void) viewDidLayoutSubviews {
+  [super viewDidLayoutSubviews];
+  // Keep the empty-state overlay exactly over the grid (below the nav bar).
+  if (_emptyStateView) {
+    _emptyStateView.frame = _gridView.frame;
+    UIScrollView* scroll = (UIScrollView*)[_emptyStateView viewWithTag:9901];
+    if (scroll) scroll.frame = _emptyStateView.bounds;
+  }
+  [self _centerEmptyStateContent];
+}
+
+- (void) _updateEmptyStateVisibility {
+  BOOL showEmpty = _gridView.empty && (_currentCollection == nil);
+  if (_emptyStateView) {
+    if (showEmpty != !_emptyStateView.hidden) {
+      if (showEmpty) {
+        _emptyStateView.hidden = NO;
+        _emptyStateView.alpha  = 0.0;
+        [self _centerEmptyStateContent];
+      }
+      [UIView animateWithDuration:0.3 animations:^{
+        self->_emptyStateView.alpha = showEmpty ? 1.0 : 0.0;
+      } completion:^(BOOL finished) {
+        self->_emptyStateView.hidden = !showEmpty;
+        self->_emptyStateView.alpha  = 1.0;
+      }];
+    }
+  }
+}
+
 - (void) _reloadCurrentCollection {
   XLOG_VERBOSE(@"Reloading current collection");
   NSInteger scrolling = _currentCollection ? _currentCollection.scrolling
@@ -645,6 +889,7 @@ static void __DisplayQueueCallBack(void* info) {
   pthread_mutex_unlock(&_displayMutex);
   _gridView.extraVisibleRows = 6;
 #endif
+  [self _updateEmptyStateVisibility];
 }
 
 - (void) _setCurrentCollection:(Collection*)collection {
@@ -655,7 +900,7 @@ static void __DisplayQueueCallBack(void* info) {
   if (collection) {
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:collection.name];
     UIBarButtonItem* button = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
-                                                               style:UIBarButtonItemStyleBordered
+                                                               style:UIBarButtonItemStylePlain
                                                               target:self
                                                               action:@selector(_toggleMenu:)];
     item.rightBarButtonItem = button;

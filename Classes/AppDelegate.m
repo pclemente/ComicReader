@@ -271,7 +271,7 @@
   // Initialize StoreKit
   [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
     
-  int count = [[NSUserDefaults standardUserDefaults] integerForKey:@"LaunchCount"];
+  int count = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"LaunchCount"];
   if(count < 0) count = 0;
   [[NSUserDefaults standardUserDefaults] setInteger:count+1 forKey:@"LaunchCount"];
 

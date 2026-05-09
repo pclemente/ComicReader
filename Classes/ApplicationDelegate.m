@@ -61,18 +61,6 @@ static ApplicationDelegate* _sharedInstance = nil;
   return _sharedInstance;
 }
 
-- (void) __alertView:(UIAlertView*)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
-  if (alertView == _alertView) {
-    [self _dismissAlertWithButtonIndex:buttonIndex];
-  } else {
-    XLOG_DEBUG_UNREACHABLE();
-  }
-}
-
-+ (void) alertView:(UIAlertView*)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
-  [[ApplicationDelegate sharedInstance] __alertView:alertView didDismissWithButtonIndex:buttonIndex];
-}
-
 - (BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions {
   // Configure logging
   [XLSharedFacility setLogsUncaughtExceptions:YES];
@@ -184,7 +172,7 @@ static ApplicationDelegate* _sharedInstance = nil;
 }
 
 - (void) _dismissAlertWithButtonIndex:(NSInteger)index {
-  if (index == _alertView.cancelButtonIndex) {
+  if (index == 0) {  // cancel index
     if (_alertDelegate && _alertCancelSelector) {
       [_alertDelegate performSelector:_alertCancelSelector withObject:_alertArgument];
     }
@@ -230,23 +218,56 @@ static ApplicationDelegate* _sharedInstance = nil;
   XLOG_CHECK(title);
   XLOG_CHECK(confirmButton);
   [self dismissAlert:NO];
-  _alertView = [[UIAlertView alloc] initWithTitle:title
-                                          message:message
-                                         delegate:[ApplicationDelegate class]
-                                cancelButtonTitle:cancelButton
-                                otherButtonTitles:confirmButton, nil];
+
+  // Use UIAlertController (iOS 8+)
+  UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
+                                                                 message:message
+                                                          preferredStyle:UIAlertControllerStyleAlert];
+  // Keep a dummy retained object in _alertView slot to satisfy isAlertVisible
+  _alertView = [alert retain];
   _alertDelegate = [delegate retain];
   _alertConfirmSelector = confirmSelector;
   _alertCancelSelector = cancelSelector;
   _alertArgument = [argument retain];
-  [_alertView show];
+
+  if (cancelButton) {
+    UIAlertAction* cancel = [UIAlertAction actionWithTitle:cancelButton
+                                                     style:UIAlertActionStyleCancel
+                                                   handler:^(UIAlertAction* action) {
+      [self _dismissAlertWithButtonIndex:0];
+    }];
+    [alert addAction:cancel];
+  }
+
+  UIAlertAction* confirm = [UIAlertAction actionWithTitle:confirmButton
+                                                    style:UIAlertActionStyleDefault
+                                                  handler:^(UIAlertAction* action) {
+    [self _dismissAlertWithButtonIndex:1];
+  }];
+  [alert addAction:confirm];
+
+  UIViewController* top = _viewController;
+  while (top.presentedViewController) {
+    top = top.presentedViewController;
+  }
+  [top presentViewController:alert animated:YES completion:nil];
 }
 
 - (void) dismissAlert:(BOOL)animated {
   if (_alertView) {
-    [_alertView dismissWithClickedButtonIndex:_alertView.cancelButtonIndex animated:animated];  // Doesn't call delegate on 4.2?
-    if (_alertView) {
-      [self _dismissAlertWithButtonIndex:_alertView.cancelButtonIndex];
+    UIViewController* top = _viewController;
+    while (top.presentedViewController) {
+      top = top.presentedViewController;
+    }
+    if ([top isKindOfClass:[UIAlertController class]]) {
+      [top dismissViewControllerAnimated:animated completion:^{
+        [self _dismissAlertWithButtonIndex:0];
+      }];
+    } else {
+      [_alertArgument release];
+      [_alertDelegate release];
+      [_alertView release];
+      _alertView = nil;
     }
   }
 }

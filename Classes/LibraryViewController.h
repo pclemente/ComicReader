@@ -59,6 +59,7 @@
 #endif
 #endif
   NSTimer* _updateTimer;
+  UIView* _emptyStateView;
 }
 @property(nonatomic, retain) IBOutlet GridView* gridView;
 @property(nonatomic, retain) IBOutlet UINavigationBar* navigationBar;
