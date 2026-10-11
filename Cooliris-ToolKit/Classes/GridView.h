@@ -39,6 +39,7 @@
   UIEdgeInsets _itemSpacing;
   BOOL _itemsJustified;
   NSUInteger _extraRows;
+  BOOL _layoutMetricsDirty;
   
   UIScrollView* _scrollView;
   UIView* _contentView;

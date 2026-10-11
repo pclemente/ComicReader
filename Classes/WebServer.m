@@ -15,6 +15,7 @@
 
 #import "AppDelegate.h"
 #import "Defaults.h"
+#import <errno.h>
 
 #define kDisconnectLatency 1.0
 
@@ -99,7 +100,9 @@
       if (_webServer) {
         _webServer.delegate = self;
         NSMutableDictionary* options = [NSMutableDictionary dictionary];
-#if TARGET_IPHONE_SIMULATOR
+#if TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST
+        // Catalyst runs under the macOS app sandbox, where a user process cannot
+        // claim the privileged HTTP port used by the physical iOS app.
         [options setObject:[NSNumber numberWithInteger:8080] forKey:GCDWebServerOption_Port];
 #else
         [options setObject:[NSNumber numberWithInteger:80] forKey:GCDWebServerOption_Port];
@@ -112,8 +115,8 @@
         [options setObject:[NSNumber numberWithDouble:kDisconnectLatency] forKey:GCDWebServerOption_ConnectedStateCoalescingInterval];
         NSError* error = nil;
         BOOL success = [_webServer startWithOptions:options error:&error];
-#if !TARGET_IPHONE_SIMULATOR
-        if (!success && [error.domain isEqualToString:NSPOSIXErrorDomain] && (error.code == 48)) {
+#if !TARGET_OS_SIMULATOR && !TARGET_OS_MACCATALYST
+        if (!success && [error.domain isEqualToString:NSPOSIXErrorDomain] && (error.code == EADDRINUSE)) {
           XLOG_WARNING(@"Server port 80 is busy, trying alternate port 8080");
           [options setObject:@8080 forKey:GCDWebServerOption_Port];
           success = [_webServer startWithOptions:options error:&error];
@@ -132,7 +135,7 @@
 }
 
 - (NSURL*) serverURL {
-    return _webServer.serverURL;
+  return _webServer.serverURL;
 }
 
 - (NSString*) addressLabel {

@@ -1981,7 +1981,6 @@ UNLOCK_CONNECTION();
 - (DatabaseSQLRowID) hasObjectInSQLTable:(DatabaseSQLTable)table withUniqueSQLColumn:(DatabaseSQLColumn)column matchingValue:(id)value {
 LOCK_CONNECTION();
   DatabaseSQLRowID rowID = 0;
-  CHECK(value);
   
   NSString* string = value ? [NSString stringWithFormat:@"SELECT %@ FROM %@ WHERE %@=?1", kDatabaseColumnName_RowID, table->tableName, column->columnName]
                            : [NSString stringWithFormat:@"SELECT %@ FROM %@ WHERE %@ IS NULL", kDatabaseColumnName_RowID, table->tableName, column->columnName];
@@ -2008,7 +2007,6 @@ UNLOCK_CONNECTION();
 - (id) fetchObjectInSQLTable:(DatabaseSQLTable)table withUniqueSQLColumn:(DatabaseSQLColumn)column matchingValue:(id)value {
 LOCK_CONNECTION();
   DatabaseObject* object = nil;
-  CHECK(value);
   
   NSString* string = value ? [NSString stringWithFormat:@"%@ WHERE %@=?1", table->fetchStatement, column->columnName]
                            : [NSString stringWithFormat:@"%@ WHERE %@ IS NULL", table->fetchStatement, column->columnName];

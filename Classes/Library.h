@@ -47,7 +47,7 @@
 @property(nonatomic) int status;  // -1: new, 0: normal, 1+: reading
 @end
 
-@interface Collection : DatabaseObject
+@interface ComicCollection : DatabaseObject
 @property(nonatomic, copy) NSString* name;
 #if __STORE_THUMBNAILS_IN_DATABASE__
 @property(nonatomic) DatabaseSQLRowID thumbnail;
@@ -59,7 +59,7 @@
 @property(nonatomic) int scrolling;
 @end
 
-@interface Collection ()
+@interface ComicCollection ()
 @property(nonatomic, retain) NSArray* comics;
 @end
 
@@ -71,12 +71,12 @@
 - (NSArray*) fetchAllComicsByName;
 - (NSArray*) fetchAllComicsByDate;
 - (NSArray*) fetchAllComicsByStatus;
-- (NSArray*) fetchComicsInCollection:(Collection*)collection;
+- (NSArray*) fetchComicsInCollection:(ComicCollection*)collection;
 - (NSArray*) fetchAllCollectionsByName;
-- (BOOL) updateStatus:(int)status forComicsInCollection:(Collection*)collection;
+- (BOOL) updateStatus:(int)status forComicsInCollection:(ComicCollection*)collection;
 - (BOOL) updateStatusForAllComics:(int)status;
 - (NSString*) pathForComic:(Comic*)comic;
-- (NSString*) pathForCollection:(Collection*)collection;
+- (NSString*) pathForCollection:(ComicCollection*)collection;
 @end
 
 @interface LibraryUpdater : NSObject {

@@ -41,5 +41,6 @@ typedef enum {
 + (WebServer*) sharedWebServer;
 @property(nonatomic, assign) id<WebServerDelegate> delegate;
 @property(nonatomic) WebServerType type;
+@property(nonatomic, readonly) NSURL* serverURL;
 @property(nonatomic, readonly) NSString* addressLabel;
 @end

@@ -1,0 +1,24 @@
+# Local macOS and Xcode state
+.DS_Store
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Distribution and test build products
+*.xcarchive/
+*.xcresult/
+*.ipa
+*.dSYM/
+
+# Recreated by release/app-store/prepare_sample_library.py
+/release/app-store/sample-library/*.cbz
+/release/app-store/sample-library/covers/
+/release/app-store/sample-library/cover-contact-sheet.jpg
+
+# Downloaded scan outside the approved release fixture set
+/release/app-store/sample-comics/page-03.jpg
+
+# Local Python caches
+__pycache__/
+*.pyc

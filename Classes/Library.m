@@ -98,7 +98,7 @@ typedef enum {
 
 @end
 
-@implementation Collection
+@implementation ComicCollection
 
 @dynamic name, thumbnail, time, status, scrolling;
 @synthesize comics;
@@ -190,7 +190,7 @@ typedef enum {
   return [self fetchObjectsOfClass:[Comic class] withSQLWhereClause:@"1 ORDER BY status>0 DESC, status==-1 DESC, time DESC" limit:0];
 }
 
-- (NSArray*) fetchComicsInCollection:(Collection*)collection {
+- (NSArray*) fetchComicsInCollection:(ComicCollection*)collection {
   NSArray* results = [self fetchObjectsOfClass:[Comic class] withSQLWhereClause:[NSString stringWithFormat:@"collection=%i", collection.sqlRowID] limit:0];
   return [results sortedArrayUsingComparator:^NSComparisonResult(Comic* comic1, Comic* comic2) {
     return [comic1.name localizedStandardCompare:comic2.name];
@@ -198,13 +198,13 @@ typedef enum {
 }
 
 - (NSArray*) fetchAllCollectionsByName {
-  NSArray* results = [self fetchObjectsOfClass:[Collection class] withSQLWhereClause:@"1" limit:0];
-  return [results sortedArrayUsingComparator:^NSComparisonResult(Collection* collection1, Collection* collection2) {
+  NSArray* results = [self fetchObjectsOfClass:[ComicCollection class] withSQLWhereClause:@"1" limit:0];
+  return [results sortedArrayUsingComparator:^NSComparisonResult(ComicCollection* collection1, ComicCollection* collection2) {
     return [collection1.name localizedStandardCompare:collection2.name];
   }];
 }
 
-- (BOOL) updateStatus:(int)status forComicsInCollection:(Collection*)collection {
+- (BOOL) updateStatus:(int)status forComicsInCollection:(ComicCollection*)collection {
   NSString* statement = [NSString stringWithFormat:@"UPDATE comics SET status=%i WHERE collection=%i", status, collection.sqlRowID];
   return [self executeRawSQLStatements:statement];
 }
@@ -217,13 +217,13 @@ typedef enum {
 - (NSString*) pathForComic:(Comic*)comic {
   NSString* path = [LibraryConnection libraryRootPath];
   if (comic.collection) {
-    Collection* collection = [self fetchObjectOfClass:[Collection class] withSQLRowID:comic.collection];
+    ComicCollection* collection = [self fetchObjectOfClass:[ComicCollection class] withSQLRowID:comic.collection];
     path = [path stringByAppendingPathComponent:collection.name];
   }
   return [path stringByAppendingPathComponent:comic.name];
 }
 
-- (NSString*) pathForCollection:(Collection*)collection {
+- (NSString*) pathForCollection:(ComicCollection*)collection {
   NSString* path = [LibraryConnection libraryRootPath];
   return [path stringByAppendingPathComponent:collection.name];
 }
@@ -273,13 +273,14 @@ typedef enum {
       [[LibraryConnection mainConnection] deleteAllObjectsOfClass:[Thumbnail class]];
 #endif
       [[LibraryConnection mainConnection] deleteAllObjectsOfClass:[Comic class]];
-      [[LibraryConnection mainConnection] deleteAllObjectsOfClass:[Collection class]];
+      [[LibraryConnection mainConnection] deleteAllObjectsOfClass:[ComicCollection class]];
       [[LibraryConnection mainConnection] vacuum];
       XLOG_INFO(@"Reset library in %.1f seconds", CFAbsoluteTimeGetCurrent() - time);
     }
     
     _updating = YES;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    // Library controls stay disabled until this work finishes, so use user-initiated QoS.
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
       
       [self _updateLibrary:force];
@@ -473,7 +474,7 @@ typedef enum {
 // Called from GCD thread
 - (void) _updateComicForPath:(NSString*)path
                         type:(ArchiveType)type
-                  collection:(Collection*)collection  // May be nil
+                  collection:(ComicCollection*)collection  // May be nil
                 zombieComics:(CFMutableDictionaryRef)zombieComics
                   connection:(LibraryConnection*)connection
                        force:(BOOL)force {
@@ -489,7 +490,18 @@ typedef enum {
         XLOG_WARNING(@"Skipping comic \"%@\"", name);  // We started processing this comic but never finished - Assume it's corrupted
         return;
       } else {
-        comic = (Comic*)CFDictionaryGetValue(zombieComics, (void*)(long)rowID);
+        Comic* candidate = (Comic*)CFDictionaryGetValue(zombieComics, (void*)(long)rowID);
+        if (candidate) {
+          NSString* candidatePath = [[connection pathForComic:candidate] stringByStandardizingPath];
+          NSString* scannedPath = [path stringByStandardizingPath];
+          // Copies can preserve another comic's extended attribute. Only reuse that
+          // database row when this is the same path, or the old path disappeared
+          // because the comic was moved or renamed.
+          if ([candidatePath isEqualToString:scannedPath] ||
+              ![[NSFileManager defaultManager] fileExistsAtPath:candidatePath]) {
+            comic = candidate;
+          }
+        }
       }
     }
   }
@@ -574,7 +586,7 @@ static inline void _ZombieRemoveFunction(LibraryConnection* connection, Database
 }
 
 static void _ZombieCollectionsRemoveFunction(const void* key, const void* value, void* context) {
-  //XLOG_VERBOSE(@"Removed collection \"%@\" (%i)", [(Collection*)value name], (DatabaseSQLRowID)key);
+  //XLOG_VERBOSE(@"Removed collection \"%@\" (%i)", [(ComicCollection*)value name], (DatabaseSQLRowID)key);
   _ZombieRemoveFunction((LibraryConnection*)context, (DatabaseObject*)value);
 }
 
@@ -602,7 +614,7 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
   
   // Build list of all collections and comics currently in library as potential zombies
   CFMutableDictionaryRef zombieCollections = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL, NULL);
-  for (Collection* collection in [connection fetchAllObjectsOfClass:[Collection class]]) {
+  for (ComicCollection* collection in [connection fetchAllObjectsOfClass:[ComicCollection class]]) {
     CFDictionarySetValue(zombieCollections, (void*)(long)collection.sqlRowID, collection);
   }
   CFMutableDictionaryRef zombieComics = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL, NULL);
@@ -613,9 +625,15 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
   // Build list of all directories and files in root directory
   float maximumProgress = 0.0;
   NSMutableDictionary* directories = [[NSMutableDictionary alloc] init];
+  NSMutableDictionary* directoryTimes = [[NSMutableDictionary alloc] init];
   {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    for (NSString* path in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:rootPath error:NULL]) {
+    NSFileManager* manager = [NSFileManager defaultManager];
+    NSDate* rootTime = [[manager attributesOfItemAtPath:rootPath error:NULL] fileModificationDate];
+    if (rootTime) {
+      [directoryTimes setObject:rootTime forKey:@""];
+    }
+    for (NSString* path in [manager contentsOfDirectoryAtPath:rootPath error:NULL]) {
       if ([path hasPrefix:@"."]) {
         continue;
       }
@@ -623,7 +641,8 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
 #if TARGET_IPHONE_SIMULATOR
       fullPath = [fullPath stringByResolvingSymlinksInPath];
 #endif
-      NSString* type = [[[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:NULL] fileType];
+      NSDictionary* attributes = [manager attributesOfItemAtPath:fullPath error:NULL];
+      NSString* type = [attributes fileType];
       if ([type isEqualToString:NSFileTypeRegular]) {
         NSMutableArray* array = [directories objectForKey:@""];
         if (array == nil) {
@@ -634,8 +653,12 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
         [array addObject:path];
         maximumProgress += 1.0;
       } else if ([type isEqualToString:NSFileTypeDirectory] && ![path isEqualToString:kInboxDirectoryName]) {
+        NSDate* directoryTime = [attributes fileModificationDate];
+        if (directoryTime) {
+          [directoryTimes setObject:directoryTime forKey:path];
+        }
         NSMutableArray* array = [[NSMutableArray alloc] init];
-        for (NSString* subpath in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:fullPath error:NULL]) {
+        for (NSString* subpath in [manager contentsOfDirectoryAtPath:fullPath error:NULL]) {
           if ([subpath hasPrefix:@"."]) {
             continue;
           }
@@ -663,18 +686,17 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
 #if TARGET_IPHONE_SIMULATOR
       fullPath = [fullPath stringByResolvingSymlinksInPath];
 #endif
-      NSDictionary* attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:NULL];
-      NSTimeInterval time = [[attributes fileModificationDate] timeIntervalSinceReferenceDate];
+      NSTimeInterval time = [[directoryTimes objectForKey:directory] timeIntervalSinceReferenceDate];
       BOOL needsUpdate = NO;
       
       // Check if this collection has already been processed
-      Collection* collection = nil;
+      ComicCollection* collection = nil;
       if (directory.length && !force) {
         NSData* data = [[NSFileManager defaultManager] extendedAttributeDataWithName:kLibraryExtendedAttribute
                                                                        forFileAtPath:fullPath];
         if (data.length == sizeof(DatabaseSQLRowID)) {
           DatabaseSQLRowID rowID = *((DatabaseSQLRowID*)data.bytes);
-          collection = (Collection*)CFDictionaryGetValue(zombieCollections, (void*)(long)rowID);
+          collection = (ComicCollection*)CFDictionaryGetValue(zombieCollections, (void*)(long)rowID);
         }
       }
       
@@ -695,7 +717,7 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
       }
       // Otherwise add collection
       else if (directory.length) {
-        collection = [[[Collection alloc] init] autorelease];
+        collection = [[[ComicCollection alloc] init] autorelease];
         collection.name = directory;
         // collection.time = time;
         if ([connection insertObject:collection]) {
@@ -755,7 +777,7 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
           }
           
           currentProgress += 1.0;
-          float progress = currentProgress / maximumProgress;
+          float progress = maximumProgress > 0.0 ? currentProgress / maximumProgress : 1.0;
           if (roundf(progress * 250.0) != roundf(lastProgress * 250.0)) {
             dispatch_async(dispatch_get_main_queue(), ^{
               [_delegate libraryUpdaterDidContinue:self progress:progress];
@@ -801,7 +823,7 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
         CGImageRelease(imageRef);
       } else {
         currentProgress += files.count;
-        float progress = currentProgress / maximumProgress;
+        float progress = maximumProgress > 0.0 ? currentProgress / maximumProgress : 1.0;
         if (roundf(progress * 250.0) != roundf(lastProgress * 250.0)) {
           dispatch_async(dispatch_get_main_queue(), ^{
             [_delegate libraryUpdaterDidContinue:self progress:progress];
@@ -819,6 +841,7 @@ static void _ZombieComicsMarkFunction(const void* key, const void* value, void* 
   CFDictionaryApplyFunction(zombieCollections, _ZombieCollectionsRemoveFunction, connection);
   CFDictionaryApplyFunction(zombieComics, _ZombieComicsRemoveFunction, connection);
   
+  [directoryTimes release];
   [directories release];
   CFRelease(zombieComics);
   CFRelease(zombieCollections);

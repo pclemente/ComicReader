@@ -1,0 +1,36 @@
+{
+  "identifier": "B4650DC0-8D0A-4AE8-8CC8-54715BD1ADCB",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "1875588A-B085-4C8B-8E53-1AB46A7E49B9",
+      "localizations": [
+        {
+          "description": "Comic search, quotes, reading lists, bookmarks and filters.",
+          "displayName": "ComicReader Plus",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "com.pabloclementeperez.ComicFlow.plus",
+      "referenceName": "ComicReader Plus",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "F7D9FCAB-48AA-4895-9437-C0A99735FE04",
+    "_developerTeamID": "CEQU933V6W",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_GB",
+    "_storefront": "ESP",
+    "_storeKitErrors": [],
+    "_timeRate": 0
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

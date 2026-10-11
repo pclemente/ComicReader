@@ -14,10 +14,6 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #import <QuartzCore/QuartzCore.h>
-#if TARGET_IPHONE_SIMULATOR
-#import <unistd.h>
-#endif
-
 #import "AppDelegate.h"
 #import "ComicViewController.h"
 #import "ZoomView.h"
@@ -26,6 +22,8 @@
 #import "ImageDecompression.h"
 
 #import "Defaults.h"
+#import "CRLibrarySyncCoordinator.h"
+#import "ComicFlow-Swift.h"
 
 #define kMaxPageSize 1500.0
 #define kLeftZoneRatio 0.2
@@ -49,15 +47,10 @@
 // If we are zoomed out on a page, make sure the DocumentView built-in pan gesture recognizer is allowed to work simultaneously with the UIScrollView native one
 // This is required since iOS 8
 - (BOOL) gestureRecognizer:(UIGestureRecognizer*)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer*)otherGestureRecognizer {
-  if ([otherGestureRecognizer isKindOfClass:NSClassFromString(@"UIScrollViewPanGestureRecognizer")]) {
-    ComicPageView* pageView = (ComicPageView*)self.selectedPageView;
-    if (pageView) {
-      if (pageView.zoomScale <= pageView.minimumZoomScale) {
-        return YES;
-      }
-    } else {
-      XLOG_DEBUG_UNREACHABLE();
-    }
+  ComicPageView* pageView = (ComicPageView*)self.selectedPageView;
+  if (pageView && otherGestureRecognizer == pageView.panGestureRecognizer &&
+      pageView.zoomScale <= pageView.minimumZoomScale) {
+    return YES;
   }
   return NO;
 }
@@ -77,7 +70,7 @@
     self.alwaysBounceVertical = NO;
     
     UITapGestureRecognizer* recognizer = [[UITapGestureRecognizer alloc] initWithTarget:target action:action];
-    [recognizer requireGestureRecognizerToFail:[[self gestureRecognizers] lastObject]];
+    [recognizer requireGestureRecognizerToFail:self.doubleTapRecognizer];
     [self addGestureRecognizer:recognizer];
     [recognizer release];
   }
@@ -102,9 +95,50 @@
 
 @end
 
+@interface ComicViewController () <CRPageBookmarksViewControllerDelegate, CRReaderImageFiltersDelegate, CRComicTextViewControllerDelegate>
+- (void)_configureReaderChromeForCompactWidth:(BOOL)compact;
+- (void)_setReaderChromeHidden:(BOOL)hidden;
+- (void)_previousPageCommand:(UIKeyCommand*)command;
+- (void)_nextPageCommand:(UIKeyCommand*)command;
+@end
+
 @implementation ComicViewController
 
 @synthesize navigationBar=_navigationBar, navigationControl=_navigationControl, contentView=_contentView;
+
+- (BOOL) prefersStatusBarHidden {
+  return YES;
+}
+
+- (BOOL) canBecomeFirstResponder {
+  return YES;
+}
+
+- (NSArray<UIKeyCommand*>*) keyCommands {
+  UIKeyCommand* previous = [UIKeyCommand keyCommandWithInput:UIKeyInputLeftArrow
+                                               modifierFlags:0
+                                                      action:@selector(_previousPageCommand:)];
+  previous.discoverabilityTitle = @"Previous Page";
+  previous.wantsPriorityOverSystemBehavior = YES;
+  UIKeyCommand* next = [UIKeyCommand keyCommandWithInput:UIKeyInputRightArrow
+                                           modifierFlags:0
+                                                  action:@selector(_nextPageCommand:)];
+  next.discoverabilityTitle = @"Next Page";
+  next.wantsPriorityOverSystemBehavior = YES;
+  return @[previous, next];
+}
+
+- (void) _previousPageCommand:(UIKeyCommand*)command {
+  if (_readerReady && !self.presentedViewController) {
+    [_documentView goToPreviousPage:NO];
+  }
+}
+
+- (void) _nextPageCommand:(UIKeyCommand*)command {
+  if (_readerReady && !self.presentedViewController) {
+    [_documentView goToNextPage:NO];
+  }
+}
 
 - (id) initWithComic:(Comic*)comic {
   [CATransaction begin];
@@ -155,6 +189,7 @@
 }
 
 - (void) dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   _documentView.delegate = nil;
   _navigationControl.delegate = nil;
   
@@ -164,6 +199,10 @@
   
   [_pageLabel release];
   [_documentView release];
+  [_bookmarksButtonItem release];
+  [_filtersButtonItem release];
+  [_textButtonItem release];
+  [_toolsToolbar release];
   [_contents release];
   [_path release];
   [_comic release];
@@ -174,11 +213,15 @@
 }
 
 - (void) saveState {
+  if (!_readerReady || _documentView.pageViews.count == 0) {
+    return;
+  }
   NSInteger status = (_documentView.selectedPageIndex < _documentView.pageViews.count - 1 ? _documentView.selectedPageIndex : 0);
   if (status != _comic.status) {
     _comic.status = (int)status;
     [[LibraryConnection mainConnection] updateObject:_comic];
   }
+  [[CRLibrarySyncCoordinator sharedCoordinator] recordComic:_comic currentPage:_documentView.selectedPageIndex pageCount:_documentView.pageViews.count];
 }
 
 - (BOOL) navigationBar:(UINavigationBar*)navigationBar shouldPopItem:(UINavigationItem*)item {
@@ -212,16 +255,13 @@
   }
   if (imageRef) {
     UIImage* image = [[UIImage alloc] initWithCGImage:imageRef];
-    [(ComicPageView*)view displayImage:image];
+    [(ComicPageView*)view displayImage:[CRReaderImageFilters displayImage:image]];
     [image release];
     view.backgroundColor = [UIColor blackColor];
     CGImageRelease(imageRef);
   } else {
     view.backgroundColor = [UIColor redColor];
   }
-#if TARGET_IPHONE_SIMULATOR
-  usleep(250 * 1000);
-#endif
 }
 
 - (void) documentView:(DocumentView*)documentView didHidePageView:(UIView*)view {
@@ -243,13 +283,38 @@
   self.view.clipsToBounds = YES;  // Required on iOS 7
   
   UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:[_path lastPathComponent]];
+  _bookmarksButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"bookmark"]
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(_showPageBookmarks:)];
+  _bookmarksButtonItem.accessibilityLabel = @"Page bookmarks";
+  _bookmarksButtonItem.accessibilityIdentifier = @"reader.bookmarks.open";
+  _filtersButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"camera.filters"]
+                                                        style:UIBarButtonItemStylePlain
+                                                       target:self
+                                                       action:@selector(_showImageFilters:)];
+  _filtersButtonItem.accessibilityLabel = @"Image Filters";
+  _filtersButtonItem.accessibilityIdentifier = @"reader.filters.open";
+  _textButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"text.magnifyingglass"]
+                                                     style:UIBarButtonItemStylePlain
+                                                    target:self
+                                                    action:@selector(_showComicText:)];
+  _textButtonItem.accessibilityLabel = @"Comic text and search";
+  _textButtonItem.accessibilityIdentifier = @"reader.text.open";
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(readerImageFiltersDidChange) name:[CRPlusStore entitlementDidChangeNotification] object:[CRPlusStore sharedStore]];
   [_navigationBar pushNavigationItem:item animated:NO];
   [item release];
   _navigationBar.hidden = YES;
   _navigationControl.delegate = self;
   _navigationControl.continuous = NO;
   _navigationControl.margins = UIEdgeInsetsMake(0, 80, 20, 80);
+  _navigationControl.constrainOverlayToSuperview = YES;
   _navigationControl.hidden = YES;
+  _toolsToolbar = [[UIToolbar alloc] initWithFrame:CGRectZero];
+  _toolsToolbar.hidden = YES;
+  _toolsToolbar.tintColor = [UIColor whiteColor];
+  _toolsToolbar.accessibilityIdentifier = @"reader.compactTools";
+  [self.view addSubview:_toolsToolbar];
   _contentView.backgroundColor = nil;
   
   _documentView = [[ComicDocumentView alloc] initWithFrame:_contentView.bounds];
@@ -278,6 +343,50 @@
     [appearance release];
   }
   _navigationBar.tintColor = [UIColor whiteColor];
+  if (@available(iOS 15.0, *)) {
+    UIToolbarAppearance* toolbarAppearance = [[UIToolbarAppearance alloc] init];
+    [toolbarAppearance configureWithOpaqueBackground];
+    toolbarAppearance.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.85];
+    _toolsToolbar.standardAppearance = toolbarAppearance;
+    _toolsToolbar.scrollEdgeAppearance = toolbarAppearance;
+    [toolbarAppearance release];
+  }
+  BOOL startsCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                       CGRectGetWidth(self.view.bounds) < 600.0;
+  [self _configureReaderChromeForCompactWidth:startsCompact];
+}
+
+- (void) _configureReaderChromeForCompactWidth:(BOOL)compact {
+  _usingCompactLayout = compact;
+  _adaptiveLayoutConfigured = YES;
+
+  UINavigationItem* previousItem = _navigationBar.items.firstObject;
+  UINavigationItem* readerItem = _navigationBar.topItem;
+  if (compact) {
+    previousItem.backButtonDisplayMode = UINavigationItemBackButtonDisplayModeMinimal;
+    readerItem.rightBarButtonItems = nil;
+    UIBarButtonItem* flexible1 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    UIBarButtonItem* flexible2 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    UIBarButtonItem* flexible3 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    UIBarButtonItem* flexible4 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    _toolsToolbar.items = @[flexible1, _bookmarksButtonItem, flexible2, _filtersButtonItem,
+                            flexible3, _textButtonItem, flexible4];
+  } else {
+    _toolsToolbar.items = nil;
+    previousItem.backButtonDisplayMode = UINavigationItemBackButtonDisplayModeDefault;
+    readerItem.rightBarButtonItems = @[_bookmarksButtonItem, _filtersButtonItem, _textButtonItem];
+  }
+  _toolsToolbar.hidden = !compact || _navigationBar.hidden;
+}
+
+- (void) _setReaderChromeHidden:(BOOL)hidden {
+  _navigationBar.hidden = hidden;
+  _navigationControl.hidden = hidden;
+  _toolsToolbar.hidden = hidden || !_usingCompactLayout;
 }
 
 
@@ -295,14 +404,43 @@
     }
     // Center
     else {
-      _navigationBar.hidden = !_navigationBar.hidden;
-      _navigationControl.hidden = !_navigationControl.hidden;
+      [self _setReaderChromeHidden:!_navigationBar.hidden];
     }
+  }
+}
+
+- (void) viewDidLayoutSubviews {
+  [super viewDidLayoutSubviews];
+  _contentView.frame = self.view.bounds;
+  CGRect safeBounds = UIEdgeInsetsInsetRect(self.view.bounds, self.view.safeAreaInsets);
+  BOOL compact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                 CGRectGetWidth(safeBounds) < 600.0;
+  if (!_adaptiveLayoutConfigured || compact != _usingCompactLayout) {
+    [self _configureReaderChromeForCompactWidth:compact];
+  }
+  _navigationBar.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMinY(safeBounds),
+                                    CGRectGetWidth(safeBounds), 44.0);
+  _navigationControl.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMaxY(safeBounds) - 44.0,
+                                        CGRectGetWidth(safeBounds), 44.0);
+  if (compact) {
+    _toolsToolbar.frame = CGRectMake(CGRectGetMinX(safeBounds),
+                                     CGRectGetMinY(_navigationControl.frame) - 44.0,
+                                     CGRectGetWidth(safeBounds), 44.0);
+    _navigationControl.margins = UIEdgeInsetsMake(0.0, 24.0, 0.0, 24.0);
+  } else {
+    _navigationControl.margins = UIEdgeInsetsMake(0.0, 80.0, 20.0, 80.0);
   }
 }
 
 - (void) viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
+
+  // A compact-width sheet can cover the reader and trigger appearance callbacks.
+  // Keep the existing views and selected page instead of rebuilding the document.
+  if (_readerReady && _documentView.pageViews.count > 0) {
+    _navigationControl.currentPage = _documentView.selectedPageIndex;
+    return;
+  }
   
   NSMutableArray* array = [[NSMutableArray alloc] init];
   if (_type == kComicType_PDF) {
@@ -326,13 +464,15 @@
       }
     }
   }
-  [_documentView setPageViews:array initialPageIndex:MAX(_comic.status, 0)];
+  [[CRLibrarySyncCoordinator sharedCoordinator] beginReadingComic:_comic];
+  NSInteger initialPage = [[CRLibrarySyncCoordinator sharedCoordinator] initialPageForComic:_comic pageCount:array.count];
+  [_documentView setPageViews:array initialPageIndex:initialPage];
+  _readerReady = YES;
   _navigationControl.numberOfPages = array.count;
   _navigationControl.numberOfMarkers = MIN(array.count, 50);
   _navigationControl.currentPage = _documentView.selectedPageIndex;
   if (array.count == 0) {
-    _navigationBar.hidden = NO;
-    _navigationControl.hidden = NO;
+    [self _setReaderChromeHidden:NO];
   }
   [array release];
 }
@@ -341,6 +481,7 @@
   [super viewDidAppear:animated];
   
   [[AppDelegate sharedInstance] hideSpinner:YES];
+  [self becomeFirstResponder];
 }
 
 - (void) viewWillDisappear:(BOOL)animated {
@@ -351,11 +492,19 @@
 
 - (void) viewDidDisappear:(BOOL)animated {
   [super viewDidDisappear:animated];
+
+  if (_preservingReaderForToolsSheet && self.presentedViewController && !self.isBeingDismissed) {
+    return;
+  }
   
+  _preservingReaderForToolsSheet = NO;
+  _readerReady = NO;
+  [[CRLibrarySyncCoordinator sharedCoordinator] endReadingComic:_comic];
   _documentView.pageViews = nil;
 }
 
 - (void) documentViewDidChangePage:(DocumentView*)documentView {
+  if (_readerReady) [self saveState];
   _navigationControl.currentPage = _documentView.selectedPageIndex;
   
   if (_documentView.pageViews) {
@@ -371,6 +520,92 @@
 
 - (IBAction) selectPage:(id)sender {
   _documentView.selectedPageIndex = _navigationControl.currentPage;
+}
+
+- (void) _showImageFilters:(id)sender {
+  if (!_readerReady || self.presentedViewController) return;
+  CRReaderImageFiltersViewController* controller = [[CRReaderImageFiltersViewController alloc] init];
+  controller.delegate = self;
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  navigation.modalInPresentation = YES;
+  _preservingReaderForToolsSheet = YES;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) _showComicText:(id)sender {
+  if (!_readerReady || !_documentView.pageViews.count || self.presentedViewController) return;
+  CRComicTextViewController* controller = [[CRComicTextViewController alloc] initWithComicPath:_path currentPageIndex:_documentView.selectedPageIndex];
+  controller.delegate = self;
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  navigation.modalInPresentation = YES;
+  _preservingReaderForToolsSheet = YES;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) comicTextViewControllerDidRequestClose:(CRComicTextViewController*)controller {
+  [self dismissViewControllerAnimated:YES completion:^{ self->_preservingReaderForToolsSheet = NO; }];
+}
+
+- (void) comicTextViewController:(CRComicTextViewController*)controller didSelectPageIndex:(NSInteger)pageIndex {
+  if (pageIndex >= 0 && pageIndex < _documentView.pageViews.count) {
+    _documentView.selectedPageIndex = pageIndex;
+    _navigationControl.currentPage = pageIndex;
+    [self saveState];
+  }
+  [self dismissViewControllerAnimated:YES completion:^{ self->_preservingReaderForToolsSheet = NO; }];
+}
+
+- (void) readerImageFiltersDidChange {
+  for (ComicPageView* page in _documentView.pageViews) {
+    if (page.displayView) [self documentView:_documentView willShowPageView:page];
+  }
+}
+
+- (void) readerImageFiltersDidRequestClose {
+  [self dismissViewControllerAnimated:YES completion:^{ self->_preservingReaderForToolsSheet = NO; }];
+}
+
+- (void) _showPageBookmarks:(id)sender {
+  if (!_readerReady || _documentView.pageViews.count == 0 || self.presentedViewController) {
+    return;
+  }
+
+  CRPageBookmarksViewController* controller =
+    [[CRPageBookmarksViewController alloc] initWithComicPath:_path
+                                           currentPageIndex:_documentView.selectedPageIndex
+                                                    pageCount:_documentView.pageViews.count];
+  controller.delegate = self;
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  navigation.modalInPresentation = YES;
+  _preservingReaderForToolsSheet = YES;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) pageBookmarksViewControllerDidRequestClose:(CRPageBookmarksViewController*)viewController {
+  [self dismissViewControllerAnimated:YES completion:^{
+    self->_preservingReaderForToolsSheet = NO;
+  }];
+}
+
+- (void) pageBookmarksViewController:(CRPageBookmarksViewController*)viewController
+                   didSelectPageIndex:(NSInteger)pageIndex {
+  if (pageIndex >= 0 && pageIndex < _documentView.pageViews.count) {
+    _documentView.selectedPageIndex = pageIndex;
+    _navigationControl.currentPage = pageIndex;
+    [self saveState];
+  }
+  [self dismissViewControllerAnimated:YES completion:^{
+    self->_preservingReaderForToolsSheet = NO;
+  }];
 }
 
 @end

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdint.h>
+
 #import "DocumentView.h"
 #import "BasicAnimation.h"
 #import "Logging.h"
@@ -235,9 +237,8 @@
   [self didDisplayCurrentPage:YES];
 }
 
-- (void) _didFadeIn:(NSString*)animationID finished:(NSNumber*)finished context:(void*)number {
-  _pageIndex = [(NSNumber*)number integerValue];
-  [(NSNumber*)number release];
+- (void) _didFadeIn:(NSString*)animationID finished:(NSNumber*)finished context:(void*)context {
+  _pageIndex = (NSUInteger)(uintptr_t)context;
   [self _updatePageViewsVisibility];
   _contentView.layer.position = CGPointMake(-(CGFloat)_pageIndex * (_pageSize.width + _pageMargin), 0.0);
   
@@ -259,7 +260,7 @@
     
     if (animate) {  // Disables user interaction during the animation
       _overlayView.hidden = NO;
-      [UIView beginAnimations:nil context:[[NSNumber alloc] initWithInteger:index]];
+      [UIView beginAnimations:nil context:(void*)(uintptr_t)index];
       [UIView setAnimationDuration:_animationDuration / 2.0];
       [UIView setAnimationDelegate:self];
       [UIView setAnimationDidStopSelector:@selector(_didFadeIn:finished:context:)];

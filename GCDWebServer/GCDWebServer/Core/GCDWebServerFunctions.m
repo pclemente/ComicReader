@@ -305,3 +305,18 @@ NSString* GCDWebServerComputeMD5Digest(NSString* format, ...) {
   buffer[2 * CC_MD5_DIGEST_LENGTH] = 0;
   return [NSString stringWithUTF8String:buffer];
 }
+
+NSString* GCDWebServerNormalizePath(NSString* path) {
+  NSMutableArray* components = [[NSMutableArray alloc] init];
+  for (NSString* component in [path componentsSeparatedByString:@"/"]) {
+    if ([component isEqualToString:@".."]) {
+      [components removeLastObject];
+    } else if (component.length && ![component isEqualToString:@"."]) {
+      [components addObject:component];
+    }
+  }
+  if (path.length && ([path characterAtIndex:0] == '/')) {
+    return [@"/" stringByAppendingString:[components componentsJoinedByString:@"/"]];
+  }
+  return [components componentsJoinedByString:@"/"];
+}

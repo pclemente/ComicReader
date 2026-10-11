@@ -1,0 +1,110 @@
+{
+  "release": "1.4",
+  "locale": "en-GB",
+  "iphone": {
+    "status": "partial",
+    "required_output_size": [1206, 2622],
+    "screenshots": [
+      {
+        "role": "plus",
+        "display_number": "01",
+        "source_capture": "../../captures/iphone/03-plus.png",
+        "source_size": [1170, 2532],
+        "source_sha256": "9e63e044d12e1918d1fc500eaf896d6ac1cea171ecc5bc86b1cabbc77f6f1e60",
+        "output": "iphone/03-plus.png",
+        "output_size": [1206, 2622],
+        "output_mode": "RGB",
+        "output_has_alpha": false,
+        "output_sha256": "600789a36d86f519e04f13dae2283a74dd2e97c253a80072ffe4622f249b596f",
+        "capture_evidence": {
+          "result_bundle": "/tmp/ComicReader-1.4-phone-layout.xcresult",
+          "test": "ComicReaderUITests/testAdaptiveNavigationAndFreeFilterPreview",
+          "result": "passed",
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "device": "iPhone 17e",
+          "device_id": "2BF5F93F-1497-4C4D-8818-FF4C3954B99B",
+          "os": "iOS 27.0 (24A434)",
+          "attachment": "2B7AEA8E-A9C5-4DFE-944B-881FE00ECACC.png",
+          "attachment_name": "Plus one-time offer portrait",
+          "captured_at": "2026-10-11T12:58:53+02:00"
+        }
+      }
+    ],
+    "missing_roles": ["library", "reader"]
+  },
+  "macos": {
+    "status": "complete",
+    "required_output_size": [1440, 900],
+    "source_normalization": {
+      "original_payload_format": "JPEG",
+      "stored_format": "PNG",
+      "dimensions_changed": false,
+      "decoded_rgb_pixels_changed": false
+    },
+    "screenshots": [
+      {
+        "role": "library",
+        "display_number": "01",
+        "source_capture": "../../captures/macos/01-library.png",
+        "source_size": [2048, 1536],
+        "original_payload_sha256": "b0d645df82070697aeb2869c640e0862de72bd219e0de86448b517bc400ab51a",
+        "source_sha256": "607261bfda136b83a5f9e3bad1eee4b61d9f8ac4f96fc0fd1a1128bc2840d160",
+        "decoded_rgb_sha256": "db2b013cd5eeb02ba34fc9cd77b0065327d035964ff0ea3f5c8169ab21dcbda9",
+        "output": "macos/01-library.png",
+        "output_size": [1440, 900],
+        "output_mode": "RGB",
+        "output_has_alpha": false,
+        "output_sha256": "b1e55ba4a420339a99e9e43c661ed9a8b82e7a19bebc5be3557b9235fc3063d7",
+        "capture_evidence": "Actual Mac Catalyst library with nine imported sample comics"
+      },
+      {
+        "role": "reader",
+        "display_number": "02",
+        "source_capture": "../../captures/macos/02-reader.png",
+        "source_size": [2048, 1536],
+        "original_payload_sha256": "ab696ca58feb058552b0289140e9460fd54a156494c4a12d218b7e95c4a6f97a",
+        "source_sha256": "0d8a708b177f10b480ce2c9930c457f63201674caa0ac095879ca8ae8b8c58cf",
+        "decoded_rgb_sha256": "5a9570107fb0fe372b048e63c55741daf370448af13cee586d1c4b61be7b4f1f",
+        "output": "macos/02-reader.png",
+        "output_size": [1440, 900],
+        "output_mode": "RGB",
+        "output_has_alpha": false,
+        "output_sha256": "8dce960a5231fd1db0c27146fd3bdd3c7f84e7e421e5d5736dc929e1bc1ca19f",
+        "capture_evidence": "Actual Mac Catalyst full-screen reader after right-arrow navigation"
+      },
+      {
+        "role": "icloud",
+        "display_number": "03",
+        "source_capture": "../../captures/macos/03-icloud.png",
+        "source_size": [894, 986],
+        "original_payload_sha256": "39731a0a40b78357123b02cf36c570232230ac2632a0064cd3c5bcec3fd4994f",
+        "source_sha256": "3a0296f3ddc91115cd89a47b31ba60cb0f8d28e1cdcbb897a01d2ecbe9e6651d",
+        "decoded_rgb_sha256": "71f55026d8cf070d3605622d3c3c023b9ee9bb8a0738a3cb7bda6c51736deebf",
+        "output": "macos/03-icloud.png",
+        "output_size": [1440, 900],
+        "output_mode": "RGB",
+        "output_has_alpha": false,
+        "output_sha256": "2259475d71d4371fdcc68d281371383200669677f1987df435a517adf46888cc",
+        "capture_evidence": "Actual Mac Catalyst free optional iCloud Sync sheet"
+      }
+    ]
+  },
+  "excluded_evidence": [
+    {
+      "result_bundle": "/tmp/ComicReader-1.4-iphone18-layout-recovered.xcresult",
+      "device": "iPhone 18 Pro",
+      "device_id": "1770E64E-7AE5-4F85-94DA-F4D4823C4C9A",
+      "os": "iOS 27.0 (24A434)",
+      "started_at": "2026-10-11T13:48:17+02:00",
+      "finished_at": "2026-10-11T13:53:18+02:00",
+      "result": "infrastructure-cancelled",
+      "reason": "The app and UI runner never launched; testing was cancelled after 287 seconds.",
+      "attachments_used": 0
+    }
+  ],
+  "ipad": {
+    "status": "existing screenshots retained",
+    "in_scope_for_1_4_compositor": false
+  }
+}

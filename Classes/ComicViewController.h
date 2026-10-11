@@ -35,6 +35,14 @@ typedef enum {
   id _contents;
   DocumentView* _documentView;
   UILabel* _pageLabel;
+  BOOL _readerReady;
+  BOOL _preservingReaderForToolsSheet;
+  UIBarButtonItem* _bookmarksButtonItem;
+  UIBarButtonItem* _filtersButtonItem;
+  UIBarButtonItem* _textButtonItem;
+  UIToolbar* _toolsToolbar;
+  BOOL _usingCompactLayout;
+  BOOL _adaptiveLayoutConfigured;
 }
 @property(nonatomic, retain) IBOutlet UINavigationBar* navigationBar;
 @property(nonatomic, retain) IBOutlet NavigationControl* navigationControl;

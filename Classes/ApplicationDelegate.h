@@ -23,7 +23,8 @@
   XLDatabaseLogger* _databaseLogger;
   UIWindow* _overlayWindow;
   
-  UIViewController* _alertView;  // actually UIAlertController, typed as UIViewController
+  UIAlertController* _alertView;
+  NSUInteger _alertGeneration;
   id _alertDelegate;
   SEL _alertConfirmSelector;
   SEL _alertCancelSelector;
@@ -34,6 +35,9 @@
 @property(nonatomic, retain) IBOutlet UIViewController* viewController;
 + (id) sharedInstance;
 - (void) saveState;  // Called when app terminates or is suspended - Default implementation does nothing
+- (void) configureOverlayForWindowScene:(UIWindowScene*)scene;
+- (void) enterBackground;
+- (void) enterForeground;
 @end
 
 @interface ApplicationDelegate (Logging)
@@ -62,6 +66,7 @@
              cancelSelector:(SEL)cancelSelector  // -didCancel:(id)argument
                    argument:(id)argument;
 - (void) dismissAlert:(BOOL)animated;  // Does nothing if alert is not visible
+- (void) presentPendingAlert;
 @end
 
 // Spinner is shown in an overlay window

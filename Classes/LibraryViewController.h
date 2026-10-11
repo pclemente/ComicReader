@@ -18,7 +18,7 @@
 #import "GridView.h"
 #import "Library.h"
 
-@interface LibraryViewController : UIViewController <UINavigationBarDelegate, UIPopoverPresentationControllerDelegate> {
+@interface LibraryViewController : UIViewController <UINavigationBarDelegate, UIPopoverPresentationControllerDelegate, UIDocumentPickerDelegate, UIContextMenuInteractionDelegate> {
 @private
   GridView* _gridView;
   UINavigationBar* _navigationBar;
@@ -43,9 +43,8 @@
   UIImage* _ribbonImage;
   UIImage* _comicImage;
   UIViewController* _menuViewController;
-  Collection* _currentCollection;
+  ComicCollection* _currentCollection;
   Comic* _currentComic;
-  DatabaseObject* _selectedItem;
   UIImageView* _launchView;
 #if __DISPLAY_THUMBNAILS_IN_BACKGROUND__
   pthread_mutex_t _displayMutex;
@@ -60,6 +59,21 @@
 #endif
   NSTimer* _updateTimer;
   UIView* _emptyStateView;
+  BOOL _comicPresentationActive;
+  BOOL _startupPresentationsPending;
+  BOOL _libraryUpdatePromptPending;
+  BOOL _releaseNewsDismissed;
+  UIView* _whatsNewBanner;
+  UIBarButtonItem* _sortBarButtonItem;
+  UIBarButtonItem* _compactSortButtonItem;
+  UIBarButtonItem* _settingsButtonItem;
+  UIBarButtonItem* _plusButtonItem;
+  UIBarButtonItem* _cloudButtonItem;
+  UIBarButtonItem* _readingListsButtonItem;
+  UIToolbar* _compactToolbar;
+  BOOL _usingCompactLayout;
+  BOOL _adaptiveLayoutConfigured;
+  CGFloat _emptyStateLayoutWidth;
 }
 @property(nonatomic, retain) IBOutlet GridView* gridView;
 @property(nonatomic, retain) IBOutlet UINavigationBar* navigationBar;

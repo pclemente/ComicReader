@@ -1,0 +1,45 @@
+IPHONE SCREENSHOT STATUS: PARTIAL
+
+The retained Plus image is a real full-screen app capture from the successful
+ComicReaderUITests/testAdaptiveNavigationAndFreeFilterPreview run in
+/tmp/ComicReader-1.4-phone-layout.xcresult. That run passed one test with zero
+failures on iPhone 17e, iOS 27.0 (24A434). The retained attachment is
+2B7AEA8E-A9C5-4DFE-944B-881FE00ECACC.png, captured at 1170 x 2532.
+
+The compositor preserved the complete capture and its aspect ratio. The output
+is an opaque RGB PNG at exactly 1206 x 2622. It was visually inspected with no
+caption overlap or cropped app UI. Its visible sequence number is 01 because it
+is currently the only iPhone store image. The marketing caption contains no
+price and says “One purchase. No subscription.” The localized StoreKit price
+visible inside the real app UI is supplied by the App Store.
+
+The later iPhone 18 Pro attempt in
+/tmp/ComicReader-1.4-iphone18-layout-recovered.xcresult did not create this
+image. Its build succeeded, but ComicFlow and the UI runner never launched. The
+run was cancelled after 287 seconds and produced no usable attachment.
+
+No populated-library or reader capture is currently validated for iPhone. The
+empty-library onboarding attachment was not presented as a populated library,
+and no reader image was fabricated.
+
+MACOS SCREENSHOT STATUS: COMPLETE
+
+The three retained inputs are actual Mac Catalyst UI: a library with nine
+imported sample comics, the reader showing the actual page after right-arrow
+navigation, and the free optional iCloud Sync sheet. The supplied files had
+JPEG payloads despite .png names. They were decoded and stored as true RGB PNGs
+at the same dimensions. A byte hash of each decoded RGB pixel buffer matched
+before and after normalization; no pixel content or dimensions changed.
+
+The compositor used aspect-ratio-preserving containment. Every source edge and
+all app UI remain visible, including the reader cursor and natural blank library
+space. No source was stretched or cropped. Captions occupy a separate left
+column. All three outputs were visually inspected and verified as opaque RGB
+PNGs at exactly 1440 x 900:
+
+01-library.png — populated library and free iCloud/Plus announcement.
+02-reader.png — full-screen public-domain sample comic page.
+03-icloud.png — free, optional sync for comic files, read status and current page.
+
+Existing iPad screenshots are retained unchanged and are outside this
+compositor’s scope.

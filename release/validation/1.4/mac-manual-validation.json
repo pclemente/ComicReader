@@ -1,0 +1,37 @@
+{
+  "version": "1.4",
+  "build": "11",
+  "recordedAt": "2026-10-11T12:28:30.661484+00:00",
+  "platform": "Mac Catalyst on macOS 27.0.1",
+  "fixes": [
+    {
+      "path": "Classes/LibraryViewController.m",
+      "change": "Use UIDocumentPicker asCopy:YES with existing user-selected.read-only sandbox entitlement",
+      "evidence": [
+        "Debugger confirmed selected local-copy URL reaches plural delegate and importer",
+        "Single selected CBZ imported and visible in library",
+        "Seven selected CBZs imported in one action; all nine sample comics visible",
+        "Imported comic opened and decoded"
+      ]
+    },
+    {
+      "path": "Classes/ComicViewController.m",
+      "change": "Reader arrow key commands want priority over system focus behavior",
+      "evidence": [
+        "Before fix, debugger confirmed Right left page index0 and correct cover geometry unchanged",
+        "After fix, Right visibly changes cover to first comic page",
+        "After fix, Left visibly returns to cover"
+      ]
+    }
+  ],
+  "screenshots": [
+    "release/app-store/1.4/captures/macos/01-library.png",
+    "release/app-store/1.4/captures/macos/02-reader.png",
+    "release/app-store/1.4/captures/macos/03-icloud.png"
+  ],
+  "limitations": [
+    "Live two-device iCloud sync not validated",
+    "Cross-platform production App Store purchase propagation not validated",
+    "Minimum supported OS versions not available for runtime checks"
+  ]
+}

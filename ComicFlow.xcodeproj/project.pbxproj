@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		07DBFC17D7C3CDAB72EAC294 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E5A886E2BB61406AE2B140E /* Foundation.framework */; };
 		1B236502154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364F9154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png */; };
 		1B236503154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364FA154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png */; };
 		1B236504154FABBA00A13B0D /* NavigationControl-Marker@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364FB154FABBA00A13B0D /* NavigationControl-Marker@2x.png */; };
@@ -20,17 +21,21 @@
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
+		20FAF9572426FFB95FB35410 /* ReaderRegressionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A238D91C82CD263BE639B483 /* ReaderRegressionTests.m */; };
 		288765A50DF7441C002DB57D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765A40DF7441C002DB57D /* CoreGraphics.framework */; };
 		350F10CF275133720037E3C7 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 350F10CE275133720037E3C7 /* CoreServices.framework */; };
 		350F10D1275133B30037E3C7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 350F10D0275133B30037E3C7 /* Assets.xcassets */; };
 		35E31199274B9D7B009D02EE /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35E31198274B9D7B009D02EE /* SafariServices.framework */; };
 		35E311A6274BF713009D02EE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35E311A5274BF713009D02EE /* StoreKit.framework */; };
 		35E311A7274BFDDB009D02EE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35E311A5274BF713009D02EE /* StoreKit.framework */; };
+		3C3C33D378E02FF0C3A6E288 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F677B6BEC0FB07DCE7F0F4E7 /* UniformTypeIdentifiers.framework */; };
+		4DB49182193176D8EB91234C /* ComicReaderUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9D88E59B321768943C3F95D4 /* ComicReaderUITests.m */; };
+		58F7305C2D57A36619A87110 /* ComicReaderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = D9D188482710834B074158AC /* ComicReaderTests.m */; };
+		73FDD0A50B377AAE20458B78 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 460ED202DF56D3D398A63719 /* PrivacyInfo.xcprivacy */; };
 		E20590BE121E294B00A271CC /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E20590BD121E294B00A271CC /* libsqlite3.dylib */; };
 		E20590C0121E295000A271CC /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20590BF121E295000A271CC /* CFNetwork.framework */; };
 		E2059155121E2F3B00A271CC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E2059154121E2F3B00A271CC /* libz.dylib */; };
 		E2059499121E66A300A271CC /* Library.m in Sources */ = {isa = PBXBuildFile; fileRef = E2059498121E66A300A271CC /* Library.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		E205992A121EE21400A271CC /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = E2059928121EE21400A271CC /* MainWindow.xib */; };
 		E2059D67121F7D7C00A271CC /* ComicViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2059D65121F7D7C00A271CC /* ComicViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		E2059D74121F7E0E00A271CC /* LibraryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E2059D73121F7E0E00A271CC /* LibraryViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		E205A102121FB0E100A271CC /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E205A101121FB0E100A271CC /* QuartzCore.framework */; };
@@ -56,7 +61,6 @@
 		E27C003B168CA7A200021417 /* cmddata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFBF168CA7A200021417 /* cmddata.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C003D168CA7A200021417 /* consio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFC4168CA7A200021417 /* consio.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C003E168CA7A200021417 /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFC6168CA7A200021417 /* crc.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
-		E27C003F168CA7A200021417 /* crypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFC8168CA7A200021417 /* crypt.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0040168CA7A200021417 /* dll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFCA168CA7A200021417 /* dll.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything -fexceptions"; }; };
 		E27C0043168CA7A200021417 /* encname.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFCE168CA7A200021417 /* encname.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0044168CA7A200021417 /* errhnd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27CFFD0168CA7A200021417 /* errhnd.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything -fexceptions"; }; };
@@ -79,11 +83,9 @@
 		E27C0062168CA7A200021417 /* rdwrfn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0009168CA7A200021417 /* rdwrfn.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0064168CA7A200021417 /* recvol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C000C168CA7A200021417 /* recvol.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0065168CA7A200021417 /* resource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C000E168CA7A200021417 /* resource.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
-		E27C0066168CA7A200021417 /* rijndael.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0010168CA7A200021417 /* rijndael.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0067168CA7A200021417 /* rs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0012168CA7A200021417 /* rs.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0068168CA7A200021417 /* savepos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0014168CA7A200021417 /* savepos.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C0069168CA7A200021417 /* scantree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0016168CA7A200021417 /* scantree.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
-		E27C006A168CA7A200021417 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C0018168CA7A200021417 /* sha1.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C006B168CA7A200021417 /* smallfn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C001A168CA7A200021417 /* smallfn.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C006C168CA7A200021417 /* strfn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C001C168CA7A200021417 /* strfn.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
 		E27C006D168CA7A200021417 /* strlist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27C001E168CA7A200021417 /* strlist.cpp */; settings = {COMPILER_FLAGS = "-Wno-everything"; }; };
@@ -152,9 +154,52 @@
 		E2E50D3C18920DEC00908424 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2E50D3818920DEC00908424 /* Localizable.strings */; };
 		E2F8960D1C3C944300FC8891 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = E2F8960C1C3C944300FC8891 /* LaunchScreen.xib */; };
 		E2F896171C3C997000FC8891 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2F896161C3C997000FC8891 /* Images.xcassets */; };
+		F6778C45039015F7B8A18B50 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E5A886E2BB61406AE2B140E /* Foundation.framework */; };
+		22C61AD13860B7AFF8954757 /* CRPlusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB638C43668C7D347527A8F0 /* CRPlusStore.swift */; };
+		4DD82037605E47A104B5E211 /* CRCloudSyncModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90A9B4A129C757D5AF393AD8 /* CRCloudSyncModel.swift */; };
+		5C7C2841B8AB018A9C98BD60 /* CRCloudSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAFA6E9E1B826EB6C2B534D3 /* CRCloudSyncManager.swift */; };
+		2BF77407EECBDEC870C69A7C /* CRPlusViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA26BC707C7B18639B14092E /* CRPlusViewController.swift */; };
+		20A7402B036BD0C4B1135C75 /* CRLibrarySyncCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = A7DEF12C164E4B5909138CFD /* CRLibrarySyncCoordinator.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		32B90DC1BFA2406ED322B173 /* CRPlusStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4AAD47664A4462DED86072 /* CRPlusStoreTests.swift */; };
+		330E4A8EAB8252EA8ED25A41 /* ComicReader.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */; };
+		BC193F61FBC64B81AD409B80 /* ComicReader.storekit in UI Resources */ = {isa = PBXBuildFile; fileRef = FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */; };
+		CA8822000000000000000002 /* CRWhatsNewBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8822000000000000000001 /* CRWhatsNewBannerView.swift */; };
+		515C29371B4F74DD55CE909D /* CRReadingLists.m in Sources */ = {isa = PBXBuildFile; fileRef = ED3C12B388EF36C4FBF98806 /* CRReadingLists.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D8D523104D5F785F9ED675D4 /* CRReadingListsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6BF0C01FE835736B099BEB /* CRReadingListsViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		C2645AF76228A01BDA614759 /* CRReadingListsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = BFEF98492680F7F5CB8DCB9F /* CRReadingListsTests.m */; };
+		F45744BDB9C0F98F6E431C75 /* CRPageBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15468FB22CD63A4BB4FA1654 /* CRPageBookmarks.swift */; };
+		B346D916BCE58C772772A923 /* CRPageBookmarksViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8B9F1B0E3BF93A902DFC5E /* CRPageBookmarksViewController.swift */; };
+		527C512122AFDF7B2D06075E /* CRPageBookmarksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E09BB68D567A9E7AAE608E0 /* CRPageBookmarksTests.swift */; };
+		62007C52CAAF47CAB5032DC9 /* CRReaderImageFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858FFEBE0850F236F5840EF1 /* CRReaderImageFilters.swift */; };
+		04026F047B584913FBF9CCFE /* CRReaderImageFiltersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA2089F5C8057E6A0C49BD2 /* CRReaderImageFiltersTests.swift */; };
+		E86A2D6A971F6E0FF04377E3 /* CRComicPageSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 6E875D66C39FCF8D4E0E92E1 /* CRComicPageSource.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		796B4F66A3C29425D91F258D /* CRComicTextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C751BDAA6EAF1E17304DD77 /* CRComicTextEngine.swift */; };
+		BADA3D16275CD3363260E95A /* CRComicTextViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDD4672D062ACC24C1E9A03 /* CRComicTextViewController.swift */; };
+		0509EF1213398D5FEC608517 /* CRSavedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E61054F4E9C1FC87502803C /* CRSavedQuotes.swift */; };
+		DE5F64F84E26BF0D0B4E00AF /* CRComicTextEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7CC1A26E10743C99E587A2 /* CRComicTextEngineTests.swift */; };
+		95165F35231A8611169E2A09 /* CRSavedQuotesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E694EA5B5F6F0D4341E3B2 /* CRSavedQuotesTests.swift */; };
+		D150F3914C4549D1ACD29F01 /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D150F3914C4549D1ACD29F02 /* PDFKit.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5CBCF81FCF8315ED17CB6CDD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1D6058900D05DD3D006BFB54;
+			remoteInfo = ComicFlow;
+		};
+		DE502B51D23F714787B4A457 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1D6058900D05DD3D006BFB54;
+			remoteInfo = ComicFlow;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0E5A886E2BB61406AE2B140E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1B2364F9154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DocumentView-Shadow-Left@2x.png"; sourceTree = "<group>"; };
 		1B2364FA154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DocumentView-Shadow-Right@2x.png"; sourceTree = "<group>"; };
 		1B2364FB154FABBA00A13B0D /* NavigationControl-Marker@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "NavigationControl-Marker@2x.png"; sourceTree = "<group>"; };
@@ -182,6 +227,12 @@
 		35E31198274B9D7B009D02EE /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		35E3119A274BF2A3009D02EE /* ComicFlow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ComicFlow.entitlements; sourceTree = "<group>"; };
 		35E311A5274BF713009D02EE /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		460ED202DF56D3D398A63719 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5C2169DE5E7609F93063FD6F /* ComicReaderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ComicReaderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D88E59B321768943C3F95D4 /* ComicReaderUITests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = ComicReaderUITests.m; sourceTree = "<group>"; };
+		A238D91C82CD263BE639B483 /* ReaderRegressionTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = ReaderRegressionTests.m; sourceTree = "<group>"; };
+		C4DD04AAB057593E365B9C83 /* ComicReaderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ComicReaderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D9D188482710834B074158AC /* ComicReaderTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = ComicReaderTests.m; sourceTree = "<group>"; };
 		E20590BD121E294B00A271CC /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		E20590BF121E295000A271CC /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		E2059154121E2F3B00A271CC /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
@@ -448,6 +499,34 @@
 		E2F896161C3C997000FC8891 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		E2FE180A128ADD67005B17EC /* Database.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Database.h; sourceTree = "<group>"; };
 		E2FE180B128ADD67005B17EC /* Database.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Database.m; sourceTree = "<group>"; };
+		F677B6BEC0FB07DCE7F0F4E7 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		CB638C43668C7D347527A8F0 /* CRPlusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRPlusStore.swift; sourceTree = SOURCE_ROOT; };
+		90A9B4A129C757D5AF393AD8 /* CRCloudSyncModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRCloudSyncModel.swift; sourceTree = SOURCE_ROOT; };
+		AAFA6E9E1B826EB6C2B534D3 /* CRCloudSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRCloudSyncManager.swift; sourceTree = SOURCE_ROOT; };
+		BA26BC707C7B18639B14092E /* CRPlusViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRPlusViewController.swift; sourceTree = SOURCE_ROOT; };
+		7E0F27AC3E0ACA43BD403D11 /* CRLibrarySyncCoordinator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/CRLibrarySyncCoordinator.h; sourceTree = SOURCE_ROOT; };
+		A7DEF12C164E4B5909138CFD /* CRLibrarySyncCoordinator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRLibrarySyncCoordinator.m; sourceTree = SOURCE_ROOT; };
+		7D4AAD47664A4462DED86072 /* CRPlusStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRPlusStoreTests.swift; sourceTree = SOURCE_ROOT; };
+		FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Resources/ComicReader.storekit; sourceTree = SOURCE_ROOT; };
+		CA8822000000000000000001 /* CRWhatsNewBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRWhatsNewBannerView.swift; sourceTree = SOURCE_ROOT; };
+		3752411CB7D49405CB870A08 /* CRReadingLists.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/CRReadingLists.h; sourceTree = SOURCE_ROOT; };
+		ED3C12B388EF36C4FBF98806 /* CRReadingLists.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRReadingLists.m; sourceTree = SOURCE_ROOT; };
+		1D6BF0C01FE835736B099BEB /* CRReadingListsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRReadingListsViewController.m; sourceTree = SOURCE_ROOT; };
+		BFEF98492680F7F5CB8DCB9F /* CRReadingListsTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests/CRReadingListsTests.m; sourceTree = SOURCE_ROOT; };
+		15468FB22CD63A4BB4FA1654 /* CRPageBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRPageBookmarks.swift; sourceTree = SOURCE_ROOT; };
+		5A8B9F1B0E3BF93A902DFC5E /* CRPageBookmarksViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRPageBookmarksViewController.swift; sourceTree = SOURCE_ROOT; };
+		1E09BB68D567A9E7AAE608E0 /* CRPageBookmarksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRPageBookmarksTests.swift; sourceTree = SOURCE_ROOT; };
+		858FFEBE0850F236F5840EF1 /* CRReaderImageFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRReaderImageFilters.swift; sourceTree = SOURCE_ROOT; };
+		8BA2089F5C8057E6A0C49BD2 /* CRReaderImageFiltersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRReaderImageFiltersTests.swift; sourceTree = SOURCE_ROOT; };
+		195DA82D984DC589E30074D2 /* CRComicPageSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/CRComicPageSource.h; sourceTree = SOURCE_ROOT; };
+		6E875D66C39FCF8D4E0E92E1 /* CRComicPageSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRComicPageSource.m; sourceTree = SOURCE_ROOT; };
+		5E5B69DC8D6E98F44EBBE292 /* ComicFlow-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/ComicFlow-Bridging-Header.h; sourceTree = SOURCE_ROOT; };
+		4C751BDAA6EAF1E17304DD77 /* CRComicTextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRComicTextEngine.swift; sourceTree = SOURCE_ROOT; };
+		2DDD4672D062ACC24C1E9A03 /* CRComicTextViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRComicTextViewController.swift; sourceTree = SOURCE_ROOT; };
+		1E61054F4E9C1FC87502803C /* CRSavedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRSavedQuotes.swift; sourceTree = SOURCE_ROOT; };
+		9F7CC1A26E10743C99E587A2 /* CRComicTextEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRComicTextEngineTests.swift; sourceTree = SOURCE_ROOT; };
+		61E694EA5B5F6F0D4341E3B2 /* CRSavedQuotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRSavedQuotesTests.swift; sourceTree = SOURCE_ROOT; };
+		D150F3914C4549D1ACD29F02 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -458,6 +537,7 @@
 				E21F982418060E3000A9B745 /* Security.framework in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
 				1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */,
+				D150F3914C4549D1ACD29F01 /* PDFKit.framework in Frameworks */,
 				35E311A7274BFDDB009D02EE /* StoreKit.framework in Frameworks */,
 				288765A50DF7441C002DB57D /* CoreGraphics.framework in Frameworks */,
 				E20590C0121E295000A271CC /* CFNetwork.framework in Frameworks */,
@@ -471,6 +551,23 @@
 				35E311A6274BF713009D02EE /* StoreKit.framework in Frameworks */,
 				E2059155121E2F3B00A271CC /* libz.dylib in Frameworks */,
 				35E31199274B9D7B009D02EE /* SafariServices.framework in Frameworks */,
+				3C3C33D378E02FF0C3A6E288 /* UniformTypeIdentifiers.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		830B3440F78FD50DDD1415CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F6778C45039015F7B8A18B50 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B41F3E77B91FC2C60E427607 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07DBFC17D7C3CDAB72EAC294 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -506,13 +603,41 @@
 			isa = PBXGroup;
 			children = (
 				1D6058910D05DD3D006BFB54 /* ComicFlow.app */,
+				5C2169DE5E7609F93063FD6F /* ComicReaderTests.xctest */,
+				C4DD04AAB057593E365B9C83 /* ComicReaderUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
+		29B97314FDCFA39411CA2CEA = {
 			isa = PBXGroup;
 			children = (
+				FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */,
+				7D4AAD47664A4462DED86072 /* CRPlusStoreTests.swift */,
+				A7DEF12C164E4B5909138CFD /* CRLibrarySyncCoordinator.m */,
+				7E0F27AC3E0ACA43BD403D11 /* CRLibrarySyncCoordinator.h */,
+				CA8822000000000000000001 /* CRWhatsNewBannerView.swift */,
+				3752411CB7D49405CB870A08 /* CRReadingLists.h */,
+				ED3C12B388EF36C4FBF98806 /* CRReadingLists.m */,
+				1D6BF0C01FE835736B099BEB /* CRReadingListsViewController.m */,
+				BFEF98492680F7F5CB8DCB9F /* CRReadingListsTests.m */,
+				15468FB22CD63A4BB4FA1654 /* CRPageBookmarks.swift */,
+				5A8B9F1B0E3BF93A902DFC5E /* CRPageBookmarksViewController.swift */,
+				1E09BB68D567A9E7AAE608E0 /* CRPageBookmarksTests.swift */,
+				195DA82D984DC589E30074D2 /* CRComicPageSource.h */,
+				6E875D66C39FCF8D4E0E92E1 /* CRComicPageSource.m */,
+				5E5B69DC8D6E98F44EBBE292 /* ComicFlow-Bridging-Header.h */,
+				4C751BDAA6EAF1E17304DD77 /* CRComicTextEngine.swift */,
+				2DDD4672D062ACC24C1E9A03 /* CRComicTextViewController.swift */,
+				1E61054F4E9C1FC87502803C /* CRSavedQuotes.swift */,
+				9F7CC1A26E10743C99E587A2 /* CRComicTextEngineTests.swift */,
+				61E694EA5B5F6F0D4341E3B2 /* CRSavedQuotesTests.swift */,
+				858FFEBE0850F236F5840EF1 /* CRReaderImageFilters.swift */,
+				8BA2089F5C8057E6A0C49BD2 /* CRReaderImageFiltersTests.swift */,
+				BA26BC707C7B18639B14092E /* CRPlusViewController.swift */,
+				AAFA6E9E1B826EB6C2B534D3 /* CRCloudSyncManager.swift */,
+				90A9B4A129C757D5AF393AD8 /* CRCloudSyncModel.swift */,
+				CB638C43668C7D347527A8F0 /* CRPlusStore.swift */,
 				35E3119A274BF2A3009D02EE /* ComicFlow.entitlements */,
 				E209D2111221154300B1077B /* Defaults.h */,
 				E229344C121E285200484F9F /* Info.plist */,
@@ -532,6 +657,7 @@
 				29B97323FDCFA39411CA2CEA /* Frameworks and Libraries */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
 				35620CDD274566B200E9C979 /* Frameworks */,
+				D2F7C4D2DE7762115BC8F6C8 /* Tests */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";
@@ -543,6 +669,7 @@
 				E20893E012FA1657001F1D2F /* SystemConfiguration.framework */,
 				E20593B5121E4E3E00A271CC /* MobileCoreServices.framework */,
 				1DF5F4DF0D08C38300B7A737 /* UIKit.framework */,
+				D150F3914C4549D1ACD29F02 /* PDFKit.framework */,
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
 				288765A40DF7441C002DB57D /* CoreGraphics.framework */,
 				E20590BF121E295000A271CC /* CFNetwork.framework */,
@@ -563,8 +690,29 @@
 				35E311A5274BF713009D02EE /* StoreKit.framework */,
 				35E31198274B9D7B009D02EE /* SafariServices.framework */,
 				35620CDE274566F900E9C979 /* libc++.tbd */,
+				6564463A709CDC0FA8B40146 /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6564463A709CDC0FA8B40146 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				0E5A886E2BB61406AE2B140E /* Foundation.framework */,
+				F677B6BEC0FB07DCE7F0F4E7 /* UniformTypeIdentifiers.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		D2F7C4D2DE7762115BC8F6C8 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				D9D188482710834B074158AC /* ComicReaderTests.m */,
+				9D88E59B321768943C3F95D4 /* ComicReaderUITests.m */,
+				A238D91C82CD263BE639B483 /* ReaderRegressionTests.m */,
+			);
+			name = Tests;
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		E2059814121ED28000A271CC /* Resources */ = {
@@ -602,6 +750,7 @@
 				E2F8960C1C3C944300FC8891 /* LaunchScreen.xib */,
 				E2F896161C3C997000FC8891 /* Images.xcassets */,
 				350F10D0275133B30037E3C7 /* Assets.xcassets */,
+				460ED202DF56D3D398A63719 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -971,6 +1120,42 @@
 			productReference = 1D6058910D05DD3D006BFB54 /* ComicFlow.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4985A16593B47D41BFF4EC04 /* ComicReaderUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5EDFBB6A41FA54369AD299E /* Build configuration list for PBXNativeTarget "ComicReaderUITests" */;
+			buildPhases = (
+				17A34A090AF249C0D96CFA91 /* Sources */,
+				830B3440F78FD50DDD1415CE /* Frameworks */,
+				7379D8B1530EDA718DCE5FA9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC31191F6D1279A62BC036B5 /* PBXTargetDependency */,
+			);
+			name = ComicReaderUITests;
+			productName = ComicReaderUITests;
+			productReference = C4DD04AAB057593E365B9C83 /* ComicReaderUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		61945109548D78C1E147AD2F /* ComicReaderTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E69193BA80366B1A90C4E96E /* Build configuration list for PBXNativeTarget "ComicReaderTests" */;
+			buildPhases = (
+				40D751A375C305880D374BE1 /* Sources */,
+				B41F3E77B91FC2C60E427607 /* Frameworks */,
+				75F0882F0784E333BA594624 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8F19925A76A61E3ADE896499 /* PBXTargetDependency */,
+			);
+			name = ComicReaderTests;
+			productName = ComicReaderTests;
+			productReference = 5C2169DE5E7609F93063FD6F /* ComicReaderTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -981,6 +1166,10 @@
 				TargetAttributes = {
 					1D6058900D05DD3D006BFB54 = {
 						DevelopmentTeam = CEQU933V6W;
+						SystemCapabilities = {
+							com.apple.iCloud = {enabled = 1;};
+							com.apple.InAppPurchase = {enabled = 1;};
+						};
 					};
 				};
 			};
@@ -996,11 +1185,14 @@
 				fr,
 				de,
 			);
-			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
+			mainGroup = 29B97314FDCFA39411CA2CEA;
+			productRefGroup = 19C28FACFE9D520D11CA2CBB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				1D6058900D05DD3D006BFB54 /* ComicFlow */,
+				61945109548D78C1E147AD2F /* ComicReaderTests */,
+				4985A16593B47D41BFF4EC04 /* ComicReaderUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1010,7 +1202,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E205992A121EE21400A271CC /* MainWindow.xib in Resources */,
 				E2CAA9E4122295F800A4D85A /* DocumentView-Shadow-Left.png in Resources */,
 				E2CAA9E5122295F800A4D85A /* DocumentView-Shadow-Right.png in Resources */,
 				E2E50D3C18920DEC00908424 /* Localizable.strings in Resources */,
@@ -1036,16 +1227,56 @@
 				1B236509154FABBA00A13B0D /* OverlayView-Arrow-Top@2x.png in Resources */,
 				1B23650A154FABBA00A13B0D /* OverlayView-Contents@2x.png in Resources */,
 				E22A08FF18EB5E6700A4FF82 /* GCDWebUploader.bundle in Resources */,
+				73FDD0A50B377AAE20458B78 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7379D8B1530EDA718DCE5FA9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC193F61FBC64B81AD409B80 /* ComicReader.storekit in UI Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		75F0882F0784E333BA594624 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				330E4A8EAB8252EA8ED25A41 /* ComicReader.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		17A34A090AF249C0D96CFA91 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DB49182193176D8EB91234C /* ComicReaderUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1D60588E0D05DD3D006BFB54 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22C61AD13860B7AFF8954757 /* CRPlusStore.swift in Sources */,
+				4DD82037605E47A104B5E211 /* CRCloudSyncModel.swift in Sources */,
+				5C7C2841B8AB018A9C98BD60 /* CRCloudSyncManager.swift in Sources */,
+				CA8822000000000000000002 /* CRWhatsNewBannerView.swift in Sources */,
+				515C29371B4F74DD55CE909D /* CRReadingLists.m in Sources */,
+				D8D523104D5F785F9ED675D4 /* CRReadingListsViewController.m in Sources */,
+				F45744BDB9C0F98F6E431C75 /* CRPageBookmarks.swift in Sources */,
+				B346D916BCE58C772772A923 /* CRPageBookmarksViewController.swift in Sources */,
+				E86A2D6A971F6E0FF04377E3 /* CRComicPageSource.m in Sources */,
+				796B4F66A3C29425D91F258D /* CRComicTextEngine.swift in Sources */,
+				BADA3D16275CD3363260E95A /* CRComicTextViewController.swift in Sources */,
+				0509EF1213398D5FEC608517 /* CRSavedQuotes.swift in Sources */,
+				62007C52CAAF47CAB5032DC9 /* CRReaderImageFilters.swift in Sources */,
+				2BF77407EECBDEC870C69A7C /* CRPlusViewController.swift in Sources */,
+				20A7402B036BD0C4B1135C75 /* CRLibrarySyncCoordinator.m in Sources */,
 				E2704CAF19F2D090003CA755 /* GCDWebServer.m in Sources */,
 				E2A73D311A0C6C160052B750 /* GCDTCPServer.m in Sources */,
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
@@ -1092,7 +1323,6 @@
 				E286903518FC943E003F9EAE /* GCDWebServerResponse.m in Sources */,
 				E27C003D168CA7A200021417 /* consio.cpp in Sources */,
 				E27C003E168CA7A200021417 /* crc.cpp in Sources */,
-				E27C003F168CA7A200021417 /* crypt.cpp in Sources */,
 				E27C0040168CA7A200021417 /* dll.cpp in Sources */,
 				E27C0043168CA7A200021417 /* encname.cpp in Sources */,
 				E2A73D151A0C6BE40052B750 /* XLASLLogger.m in Sources */,
@@ -1125,14 +1355,12 @@
 				E27C0062168CA7A200021417 /* rdwrfn.cpp in Sources */,
 				E27C0064168CA7A200021417 /* recvol.cpp in Sources */,
 				E27C0065168CA7A200021417 /* resource.cpp in Sources */,
-				E27C0066168CA7A200021417 /* rijndael.cpp in Sources */,
 				E27C0067168CA7A200021417 /* rs.cpp in Sources */,
 				E27C0068168CA7A200021417 /* savepos.cpp in Sources */,
 				E2A73D1B1A0C6BE40052B750 /* XLLogRecord.m in Sources */,
 				E286903318FC943E003F9EAE /* GCDWebServerFunctions.m in Sources */,
 				E2A73D301A0C6C160052B750 /* GCDTCPPeer.m in Sources */,
 				E27C0069168CA7A200021417 /* scantree.cpp in Sources */,
-				E27C006A168CA7A200021417 /* sha1.cpp in Sources */,
 				E286903B18FC943E003F9EAE /* GCDWebServerErrorResponse.m in Sources */,
 				E27C006B168CA7A200021417 /* smallfn.cpp in Sources */,
 				E2A73D1D1A0C6BE40052B750 /* XLDatabaseLogger.m in Sources */,
@@ -1152,7 +1380,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		40D751A375C305880D374BE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2645AF76228A01BDA614759 /* CRReadingListsTests.m in Sources */,
+				527C512122AFDF7B2D06075E /* CRPageBookmarksTests.swift in Sources */,
+				DE5F64F84E26BF0D0B4E00AF /* CRComicTextEngineTests.swift in Sources */,
+				95165F35231A8611169E2A09 /* CRSavedQuotesTests.swift in Sources */,
+				04026F047B584913FBF9CCFE /* CRReaderImageFiltersTests.swift in Sources */,
+				32B90DC1BFA2406ED322B173 /* CRPlusStoreTests.swift in Sources */,
+				58F7305C2D57A36619A87110 /* ComicReaderTests.m in Sources */,
+				20FAF9572426FFB95FB35410 /* ReaderRegressionTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8F19925A76A61E3ADE896499 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ComicFlow;
+			target = 1D6058900D05DD3D006BFB54 /* ComicFlow */;
+			targetProxy = 5CBCF81FCF8315ED17CB6CDD /* PBXContainerItemProxy */;
+		};
+		EC31191F6D1279A62BC036B5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ComicFlow;
+			target = 1D6058900D05DD3D006BFB54 /* ComicFlow */;
+			targetProxy = DE502B51D23F714787B4A457 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		E2E50D3418920DEC00908424 /* ComicViewController.xib */ = {
@@ -1187,10 +1445,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1198,23 +1455,26 @@
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					USE_FILE32API,
 					RARDLL,
+					NOCRYPT,
 				);
-				HEADER_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/include/libxml2",
-					"libwebp/$(PLATFORM_NAME)/include",
-				);
+				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LIBRARY_SEARCH_PATHS = "libwebp/$(PLATFORM_NAME)/lib";
-				MARKETING_VERSION = 1.1;
-				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-lwebp",
-				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.4;
+				OTHER_LDFLAGS = "-Wl,-search_paths_first";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
 				PRODUCT_NAME = ComicFlow;
-				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 2;
+				PRODUCT_MODULE_NAME = ComicFlow;
+				SWIFT_VERSION = 5.0;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "ComicFlow-Swift.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Classes/ComicFlow-Bridging-Header.h";
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ComicFlow-Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -1223,10 +1483,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1234,23 +1493,91 @@
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					USE_FILE32API,
 					RARDLL,
+					NOCRYPT,
 				);
-				HEADER_SEARCH_PATHS = (
-					"$(SDKROOT)/usr/include/libxml2",
-					"libwebp/$(PLATFORM_NAME)/include",
-				);
+				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
-				LIBRARY_SEARCH_PATHS = "libwebp/$(PLATFORM_NAME)/lib";
-				MARKETING_VERSION = 1.1;
-				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-lwebp",
-				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.4;
+				OTHER_LDFLAGS = "-Wl,-search_paths_first";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
 				PRODUCT_NAME = ComicFlow;
-				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 2;
+				PRODUCT_MODULE_NAME = ComicFlow;
+				SWIFT_VERSION = 5.0;
+				SWIFT_OBJC_INTERFACE_HEADER_NAME = "ComicFlow-Swift.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Classes/ComicFlow-Bridging-Header.h";
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ComicFlow-Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		35785735A1CEE18A4D46B0DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				DEVELOPMENT_TEAM = CEQU933V6W;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"__STORE_THUMBNAILS_IN_DATABASE__=1",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Classes",
+					"$(SRCROOT)/Cooliris-ToolKit/Classes",
+					"$(SRCROOT)/XLFacility/XLFacility",
+					"$(SRCROOT)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderTests;
+				SWIFT_VERSION = 5.0;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ComicFlow.app/ComicFlow";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/ComicFlow.app/Contents/MacOS/ComicFlow";
+			};
+			name = Debug;
+		};
+		41BD751CE2BFA0544291350B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"__STORE_THUMBNAILS_IN_DATABASE__=1",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Classes",
+					"$(SRCROOT)/Cooliris-ToolKit/Classes",
+					"$(SRCROOT)/XLFacility/XLFacility",
+					"$(SRCROOT)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ComicFlow;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -1292,10 +1619,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
@@ -1305,6 +1632,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -1340,14 +1668,79 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wno-deprecated-declarations",
 				);
+			};
+			name = Release;
+		};
+		D8860BBCC2B8A836E85F50C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"__STORE_THUMBNAILS_IN_DATABASE__=1",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Classes",
+					"$(SRCROOT)/Cooliris-ToolKit/Classes",
+					"$(SRCROOT)/XLFacility/XLFacility",
+					"$(SRCROOT)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ComicFlow;
+			};
+			name = Debug;
+		};
+		F1660085D4532EF4B17143F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				DEVELOPMENT_TEAM = CEQU933V6W;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"__STORE_THUMBNAILS_IN_DATABASE__=1",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Classes",
+					"$(SRCROOT)/Cooliris-ToolKit/Classes",
+					"$(SRCROOT)/XLFacility/XLFacility",
+					"$(SRCROOT)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderTests;
+				SWIFT_VERSION = 5.0;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ComicFlow.app/ComicFlow";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/ComicFlow.app/Contents/MacOS/ComicFlow";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -1363,11 +1756,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B5EDFBB6A41FA54369AD299E /* Build configuration list for PBXNativeTarget "ComicReaderUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41BD751CE2BFA0544291350B /* Release */,
+				D8860BBCC2B8A836E85F50C1 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ComicFlow" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
 				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E69193BA80366B1A90C4E96E /* Build configuration list for PBXNativeTarget "ComicReaderTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1660085D4532EF4B17143F2 /* Release */,
+				35785735A1CEE18A4D46B0DA /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

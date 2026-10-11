@@ -3,11 +3,11 @@
 "INFO_FORMAT" = "%i Comics | %i Series | %.0f MB Database";
 "VERSION_FORMAT" = "ComicReader Version %@";
 
-"ADDRESS_UNAVAILABLE" = "Enable ComicReader Web Server to import comics over WiFi using your computer";
-"ADDRESS_WEBSITE_IP" = "Using your web browser go to\n%@";
-"ADDRESS_WEBSITE_BONJOUR" = "Using your web browser go to\n%@\n(or %@)";
-"ADDRESS_WEBDAV_IP" = "Using a WebDAV client connect to\n%@";
-"ADDRESS_WEBDAV_BONJOUR" = "Using a WebDAV client connect to\n%@\n(or %@)";
+"ADDRESS_UNAVAILABLE" = "Enable the ComicReader Web Server to import comics through a web browser on your local network";
+"ADDRESS_WEBSITE_IP" = "In a web browser, go to\n%@";
+"ADDRESS_WEBSITE_BONJOUR" = "In a web browser, go to\n%@\n(or %@)";
+"ADDRESS_WEBDAV_IP" = "In a WebDAV client, connect to\n%@";
+"ADDRESS_WEBDAV_BONJOUR" = "In a WebDAV client, connect to\n%@\n(or %@)";
 
 "SPINNER_MESSAGE" = "Please Wait…";
 
@@ -73,6 +73,11 @@
 
 "SERVER_NAME_FORMAT" = "ComicReader Web Server %@ (%@)";
 "SERVER_TITLE" = "ComicReader Web Server";
-"SERVER_CONTENT" = "<div class=\"alert alert-success alert-dismissable\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button><strong>You are successfully connected to the ComicReader app on your iPad.</strong> Drag &amp; drop comic files (%@) on this window or use the \"Upload Files&hellip;\" button to import them in ComicReader. Create top-level folders and import comics into them to create Series (subfolders are not supported).<br/>Please leave the app running in the foreground on your iPad while uploading or downloading comics.</div>";
+"SERVER_CONTENT" = "<div class=\"alert alert-success alert-dismissable\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button><strong>You are connected to ComicReader.</strong> Drag &amp; drop comic files (%@) on this window or use the \"Upload Files&hellip;\" button to import them in ComicReader. Create top-level folders and import comics into them to create Series (subfolders are not supported).<br/>Please keep ComicReader running in the foreground while uploading or downloading comics.</div>";
 "SERVER_LIMITED_CONTENT" = "<div class=\"alert alert-danger alert-dismissable\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button><strong>Uploading comics using ComicReader Web Server is initially limited to %i files after which you will see &quot;Forbidden&quot; errors.</strong> Tap the Purchase button in the Settings window of the app to enable unlimited use of this feature. You will see the price and be prompted for confirmation before the purchase is processed by the App Store.</div>";
 "SERVER_FOOTER_FORMAT" = "%@ &mdash; ComicReader Version %@";
+
+"IMPORT_FAILED_TITLE" = "Unable to Import Comic";
+"IMPORT_FAILED_MESSAGE" = "The selected file could not be copied into your library.";
+"COMIC_OPEN_FAILED_TITLE" = "Unable to Open Comic";
+"COMIC_OPEN_FAILED_MESSAGE" = "The file may be damaged, encrypted, or use an unsupported archive format.";

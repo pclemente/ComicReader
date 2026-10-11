@@ -179,6 +179,22 @@ static BOOL _showBorders = NO;
   return _contentView.backgroundColor;
 }
 
+- (void) setContentMargins:(UIEdgeInsets)margins {
+  if (!UIEdgeInsetsEqualToEdgeInsets(_contentMargins, margins)) {
+    _contentMargins = margins;
+    _layoutMetricsDirty = YES;
+    [self setNeedsLayout];
+  }
+}
+
+- (void) setItemSpacing:(UIEdgeInsets)spacing {
+  if (!UIEdgeInsetsEqualToEdgeInsets(_itemSpacing, spacing)) {
+    _itemSpacing = spacing;
+    _layoutMetricsDirty = YES;
+    [self setNeedsLayout];
+  }
+}
+
 - (void) setExtraVisibleRows:(NSUInteger)rows {
   if (rows != _extraRows) {
     _extraRows = rows;
@@ -450,8 +466,12 @@ static BOOL _showBorders = NO;
 }
 
 - (void) layoutSubviews {
-  if (!CGRectEqualToRect(_scrollView.frame, self.bounds)) {
+  BOOL frameChanged = !CGRectEqualToRect(_scrollView.frame, self.bounds);
+  if (frameChanged) {
     _scrollView.frame = self.bounds;
+  }
+  if (frameChanged || _layoutMetricsDirty) {
+    _layoutMetricsDirty = NO;
     [self _updateSubviews];
   }
 }

@@ -96,6 +96,12 @@ NSString* GCDWebServerFormatISO8601(NSDate* date);
  */
 NSDate* GCDWebServerParseISO8601(NSString* string);
 
+/**
+ *  Removes duplicate separators, ".", and ".." components from a path,
+ *  while preserving an initial slash.
+ */
+NSString* GCDWebServerNormalizePath(NSString* path);
+
 #ifdef __cplusplus
 }
 #endif

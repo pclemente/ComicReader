@@ -41,3 +41,6 @@ typedef enum {
 } SortingMode;
 
 #define kDefaultKey_LaunchCount @"launchCount"
+#define kDefaultKey_PlusIntroductionShown @"plusIntroductionShown"
+
+#define kDefaultKey_ReleaseNewsDismissed @"releaseNews1_4Shown"

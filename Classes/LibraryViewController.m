@@ -19,13 +19,68 @@
 #import "LibraryViewController.h"
 #import "ComicViewController.h"
 #import "AppDelegate.h"
+#import "CRLibrarySyncCoordinator.h"
+#import "CRReadingLists.h"
+#import "ComicFlow-Swift.h"
 #import "Defaults.h"
 #import "Extensions_Foundation.h"
 #import "Extensions_UIKit.h"
 #import "NetReachability.h"
 
-#import <SafariServices/SafariServices.h>
-#import <StoreKit/StoreKit.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
+@class ThumbnailView;
+
+@interface LibraryViewController () <CRWhatsNewBannerDelegate>
+- (void)_activateThumbnail:(ThumbnailView*)thumbnail;
+- (void)_configureNavigationForCompactWidth:(BOOL)compact;
+- (void)_updateCompactSortMenu;
+- (void)_openComicFilesCommand:(UIKeyCommand*)command;
+- (void)_refreshLibraryCommand:(UIKeyCommand*)command;
+@end
+
+@interface CRSettingsScrollView : UIScrollView {
+@private
+  UIView* _settingsContentView;
+  CGSize _settingsContentSize;
+}
+- (id)initWithSettingsContentView:(UIView*)contentView;
+@end
+
+@implementation CRSettingsScrollView
+
+- (id)initWithSettingsContentView:(UIView*)contentView {
+  if ((self = [super initWithFrame:contentView.bounds])) {
+    _settingsContentView = [contentView retain];
+    _settingsContentSize = contentView.bounds.size;
+    self.alwaysBounceVertical = YES;
+    self.backgroundColor = contentView.backgroundColor;
+    if (@available(iOS 11.0, *)) {
+      self.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    }
+    [self addSubview:_settingsContentView];
+  }
+  return self;
+}
+
+- (void)layoutSubviews {
+  [super layoutSubviews];
+  UIEdgeInsets safeInsets = self.safeAreaInsets;
+  CGFloat availableWidth = MAX(0.0, CGRectGetWidth(self.bounds) - safeInsets.left - safeInsets.right);
+  CGFloat x = safeInsets.left + MAX(0.0, floor((availableWidth - _settingsContentSize.width) / 2.0));
+  _settingsContentView.frame = CGRectMake(x, safeInsets.top,
+                                          _settingsContentSize.width, _settingsContentSize.height);
+  self.contentSize = CGSizeMake(CGRectGetWidth(self.bounds),
+                                MAX(CGRectGetHeight(self.bounds) + 1.0,
+                                    CGRectGetMaxY(_settingsContentView.frame) + safeInsets.bottom));
+}
+
+- (void)dealloc {
+  [_settingsContentView release];
+  [super dealloc];
+}
+
+@end
 
 #define kAppStoreAppID @"1597314495"
 #define kiOSAppStoreURLFormat @"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=%@"
@@ -65,14 +120,26 @@
 @private
   UIView* _noteView;
   UIView* _ribbonView;
+  DatabaseObject* _item;
 }
 @property(nonatomic, assign) UIView* noteView;
 @property(nonatomic, assign) UIView* ribbonView;
+@property(nonatomic, retain) DatabaseObject* item;
+@property(nonatomic, assign) id activationTarget;
 @end
 
 @implementation ThumbnailView
 
-@synthesize noteView=_noteView, ribbonView=_ribbonView;
+@synthesize noteView=_noteView, ribbonView=_ribbonView, item=_item;
+
+- (BOOL) accessibilityActivate {
+  return [[UIApplication sharedApplication] sendAction:@selector(_activateThumbnail:) to:self.activationTarget from:self forEvent:nil];
+}
+
+- (void) dealloc {
+  [_item release];
+  [super dealloc];
+}
 
 @end
 
@@ -88,6 +155,64 @@
   BOOL enabled = YES;
   _purchaseButton.enabled = enabled;
   _restoreButton.enabled = enabled;
+  _plusButtonItem.title = [CRPlusStore sharedStore].isUnlocked ? @"Plus" : @"Get Plus";
+}
+
+- (void) _plusEntitlementChanged:(NSNotification*)notification {
+  [self updatePurchase];
+}
+
+- (void) _updateCompactSortMenu {
+  if (!_compactSortButtonItem) return;
+
+  NSArray<NSString*>* fallbackTitles = @[@"By Series", @"By Name", @"By Date", @"By State"];
+  NSMutableArray<UIMenuElement*>* actions = [NSMutableArray arrayWithCapacity:4];
+  __block LibraryViewController* controller = self;
+  for (NSInteger index = 0; index < 4; index++) {
+    NSString* title = [_segmentedControl titleForSegmentAtIndex:index] ?: fallbackTitles[index];
+    UIAction* action = [UIAction actionWithTitle:title
+                                           image:nil
+                                      identifier:[NSString stringWithFormat:@"library.sort.%ld", (long)index]
+                                         handler:^(UIAction* selectedAction) {
+      controller->_segmentedControl.selectedSegmentIndex = index;
+      [controller resort:controller->_segmentedControl];
+      [controller _updateCompactSortMenu];
+    }];
+    action.state = (_segmentedControl.selectedSegmentIndex == index ? UIMenuElementStateOn : UIMenuElementStateOff);
+    [actions addObject:action];
+  }
+  _compactSortButtonItem.menu = [UIMenu menuWithTitle:@"Sort Library" children:actions];
+}
+
+- (void) _configureNavigationForCompactWidth:(BOOL)compact {
+  _usingCompactLayout = compact;
+  _adaptiveLayoutConfigured = YES;
+
+  UINavigationItem* rootItem = _navigationBar.items.firstObject;
+  if (compact) {
+    rootItem.leftBarButtonItem = nil;
+    for (UINavigationItem* item in _navigationBar.items) {
+      item.rightBarButtonItems = @[_compactSortButtonItem];
+    }
+    UIBarButtonItem* flexible1 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    UIBarButtonItem* flexible2 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    UIBarButtonItem* flexible3 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                                                 target:nil action:nil] autorelease];
+    _compactToolbar.items = @[_readingListsButtonItem, flexible1, _cloudButtonItem, flexible2,
+                              _plusButtonItem, flexible3, _settingsButtonItem];
+    _compactToolbar.hidden = NO;
+    [self _updateCompactSortMenu];
+  } else {
+    _compactToolbar.items = nil;
+    _compactToolbar.hidden = YES;
+    rootItem.leftBarButtonItem = _sortBarButtonItem;
+    NSArray* rightItems = @[_settingsButtonItem, _plusButtonItem, _cloudButtonItem, _readingListsButtonItem];
+    for (UINavigationItem* item in _navigationBar.items) {
+      item.rightBarButtonItems = rightItems;
+    }
+  }
 }
 
 - (void) _updateStatistics {
@@ -95,7 +220,7 @@
                                                                               error:nil];
   _infoLabel.text = [NSString stringWithFormat:NSLocalizedString(@"INFO_FORMAT", nil),
                                                [[LibraryConnection mainConnection] countObjectsOfClass:[Comic class]],
-                                               [[LibraryConnection mainConnection] countObjectsOfClass:[Collection class]],
+                                               [[LibraryConnection mainConnection] countObjectsOfClass:[ComicCollection class]],
                                                ceil((double)[attributes fileSize] / (1024.0 * 1024.0))];
 }
 
@@ -185,6 +310,7 @@ static void __DisplayQueueCallBack(void* info) {
 - (id) initWithWindow:(UIWindow*)window {
   if ((self = [super init])) {
     _window = window;
+    _releaseNewsDismissed = [[NSUserDefaults standardUserDefaults] boolForKey:kDefaultKey_ReleaseNewsDismissed];
     
     _comicImage = [[UIImage imageNamed: @"Comic-Background"] retain];
     XLOG_CHECK(_comicImage);
@@ -197,7 +323,7 @@ static void __DisplayQueueCallBack(void* info) {
     
     DatabaseSQLRowID collectionID = (int)[[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_CurrentCollection];
     if (collectionID) {
-      _currentCollection = [[[LibraryConnection mainConnection] fetchObjectOfClass:[Collection class] withSQLRowID:collectionID] retain];
+      _currentCollection = [[[LibraryConnection mainConnection] fetchObjectOfClass:[ComicCollection class] withSQLRowID:collectionID] retain];
     }
     DatabaseSQLRowID comicID = (int)[[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_CurrentComic];
     if (comicID) {
@@ -230,12 +356,36 @@ static void __DisplayQueueCallBack(void* info) {
   return YES;
 }
 
+- (NSArray<UIKeyCommand*>*) keyCommands {
+  UIKeyCommand* open = [UIKeyCommand keyCommandWithInput:@"o"
+                                           modifierFlags:UIKeyModifierCommand
+                                                  action:@selector(_openComicFilesCommand:)];
+  open.discoverabilityTitle = @"Open Comic Files";
+  UIKeyCommand* refresh = [UIKeyCommand keyCommandWithInput:@"r"
+                                              modifierFlags:UIKeyModifierCommand
+                                                     action:@selector(_refreshLibraryCommand:)];
+  refresh.discoverabilityTitle = @"Refresh Library";
+  return @[open, refresh];
+}
+
+- (void) _openComicFilesCommand:(UIKeyCommand*)command {
+  if (!self.presentedViewController) {
+    [self purchase:nil];
+  }
+}
+
+- (void) _refreshLibraryCommand:(UIKeyCommand*)command {
+  if (!self.presentedViewController && ![[LibraryUpdater sharedUpdater] isUpdating]) {
+    [self update:nil];
+  }
+}
+
 - (void) _toggleMenu:(id)sender {
   if (self.presentedViewController == _menuViewController) {
     [self dismissViewControllerAnimated:YES completion:^{
       [self->_updateTimer setFireDate:[NSDate distantFuture]];
     }];
-  } else {
+  } else if (self.presentedViewController == nil) {
     [self _updateTimer:nil];
     [self _updateStatistics];
     [self updatePurchase];
@@ -243,7 +393,7 @@ static void __DisplayQueueCallBack(void* info) {
     _menuViewController.preferredContentSize = _menuView.frame.size;
     UIPopoverPresentationController* pc = _menuViewController.popoverPresentationController;
     pc.barButtonItem = (UIBarButtonItem*)sender;
-    pc.permittedArrowDirections = UIPopoverArrowDirectionUp;
+    pc.permittedArrowDirections = _usingCompactLayout ? UIPopoverArrowDirectionDown : UIPopoverArrowDirectionUp;
     pc.delegate = self;
     [self presentViewController:_menuViewController animated:YES completion:nil];
     [_updateTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:kUpdateTimerInterval]];
@@ -255,17 +405,27 @@ static void __DisplayQueueCallBack(void* info) {
     DatabaseObject* item = [_gridView itemAtLocation:[recognizer locationInView:_gridView] view:NULL];
     if ([item isKindOfClass:[Comic class]]) {
       [self _presentComic:(Comic*)item];
-    } else if ([item isKindOfClass:[Collection class]]) {
+    } else if ([item isKindOfClass:[ComicCollection class]]) {
       [self gridViewDidUpdateScrollingAmount:nil];
-      [self _setCurrentCollection:(Collection*)item];
+      [self _setCurrentCollection:(ComicCollection*)item];
     }
+  }
+}
+
+- (void) _activateThumbnail:(ThumbnailView*)view {
+  if (self.presentedViewController) return;
+  if ([view.item isKindOfClass:[Comic class]]) {
+    [self _presentComic:(Comic*)view.item];
+  } else if ([view.item isKindOfClass:[ComicCollection class]]) {
+    [self gridViewDidUpdateScrollingAmount:nil];
+    [self _setCurrentCollection:(ComicCollection*)view.item];
   }
 }
 
 - (void) _updateThumbnailViewForItem:(DatabaseObject*)item {
   ThumbnailView* view = (ThumbnailView*)[_gridView viewForItem:item];
   if (view && !view.hidden) {
-    NSInteger status = [(id)item status];
+    NSInteger status = ([item isKindOfClass:[Comic class]] ? [(Comic*)item status] : [(ComicCollection*)item status]);
     [view.noteView removeFromSuperview];
     [view.ribbonView removeFromSuperview];
     if (status > 0) {
@@ -289,109 +449,200 @@ static void __DisplayQueueCallBack(void* info) {
   }
 }
 
-- (void) _setStatus:(int)status {
-  if (_selectedItem) {
-    if ([_selectedItem isKindOfClass:[Comic class]]) {
-      [(Comic*)_selectedItem setStatus:status];
-      [[LibraryConnection mainConnection] updateObject:_selectedItem];
-      [self _updateThumbnailViewForItem:_selectedItem];
-      if ([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_SortingMode] == kSortingMode_ByStatus) {
-        [self _reloadCurrentCollection];
-      }
-    } else {
-      [[LibraryConnection mainConnection] updateStatus:status forComicsInCollection:(Collection*)_selectedItem];
-      [[LibraryConnection mainConnection] refetchObject:_selectedItem];
-      [self _updateThumbnailViewForItem:_selectedItem];
+- (void) _setStatus:(int)status forItem:(DatabaseObject*)item {
+  if ([item isKindOfClass:[Comic class]]) {
+    [[CRLibrarySyncCoordinator sharedCoordinator] markComics:@[item] status:status];
+    [self _updateThumbnailViewForItem:item];
+    if ([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_SortingMode] == kSortingMode_ByStatus) {
+      [self _reloadCurrentCollection];
     }
-    [_selectedItem release];
-    _selectedItem = nil;
-  } else {
-    XLOG_DEBUG_UNREACHABLE();
+  } else if ([item isKindOfClass:[ComicCollection class]]) {
+    [[CRLibrarySyncCoordinator sharedCoordinator] markComics:[[LibraryConnection mainConnection] fetchComicsInCollection:(ComicCollection*)item] status:status];
+    [[LibraryConnection mainConnection] refetchObject:item];
+    [self _updateThumbnailViewForItem:item];
   }
 }
 
-- (void) _setRead:(id)sender {
-  [self _setStatus:0];
+- (void) _cloudReadingChanged:(NSNotification*)notification {
+  [self _reloadCurrentCollection];
+}
+
+- (void) _showPlus:(id)sender {
+  if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed) {
+    return;
+  }
+  CRPlusViewController* controller = [[CRPlusViewController alloc] init];
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) _showReadingLists:(id)sender {
+  if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed) return;
+  CRReadingListsViewController* controller = [[CRReadingListsViewController alloc]
+    initWithLibraryConnection:[LibraryConnection mainConnection]
+    openComicHandler:^(Comic* comic, UIViewController* source) {
+      self->_startupPresentationsPending = NO;
+      NSString* path = [[LibraryConnection mainConnection] pathForComic:comic];
+      NSDictionary* attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
+      [self dismissViewControllerAnimated:YES completion:^{
+        BOOL valid = [[LibraryConnection mainConnection] refetchObject:comic] &&
+          [path isEqualToString:[[LibraryConnection mainConnection] pathForComic:comic]];
+        NSDictionary* current = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
+        for (NSString* key in @[NSFileSystemNumber, NSFileSystemFileNumber, NSFileSize, NSFileModificationDate]) {
+          valid = valid && attributes[key] && [attributes[key] isEqual:current[key]];
+        }
+        if (valid) {
+          [self _presentComic:comic];
+        } else {
+          [[AppDelegate sharedDelegate] showAlertWithTitle:@"Comic Unavailable" message:@"The comic changed or was removed. Please select it again from your library." button:@"OK"];
+        }
+      }];
+    }];
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) _showCloud:(id)sender {
+  if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed) return;
+  CRPlusViewController* controller = [[CRPlusViewController alloc] init];
+  controller.showsOnlyCloud = YES;
+  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFormSheet;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
+}
+
+- (void) whatsNewDidDismiss {
+  _releaseNewsDismissed = YES;
+  [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kDefaultKey_ReleaseNewsDismissed];
+  _whatsNewBanner.hidden = YES;
+  [self.view setNeedsLayout];
+}
+
+- (void) whatsNewDidRequestCloud {
+  [self whatsNewDidDismiss];
+  [self _showCloud:nil];
+}
+
+- (void) whatsNewDidRequestPlus {
+  [self whatsNewDidDismiss];
+  [self _showPlus:nil];
+}
+
+- (void) _setReadForItem:(DatabaseObject*)item {
+  [self _setStatus:0 forItem:item];
   [[AppDelegate sharedDelegate] logEvent:@"menu.read"];
 }
 
-- (void) _setNew:(id)sender {
-  [self _setStatus:-1];
+- (void) _setNewForItem:(DatabaseObject*)item {
+  [self _setStatus:-1 forItem:item];
   [[AppDelegate sharedDelegate] logEvent:@"menu.new"];
 }
 
-- (void) _delete:(id)sender {
-  if (_selectedItem) {
-    if ([_selectedItem isKindOfClass:[Comic class]]) {
-      NSError* error = nil;
-      if ([[NSFileManager defaultManager] removeItemAtPath:[[LibraryConnection mainConnection] pathForComic:(Comic*)_selectedItem] error:&error]) {
-        [(AppDelegate*)[AppDelegate sharedInstance] updateLibrary];
-      } else {
-        XLOG_ERROR(@"Failed deleting comic \"%@\": %@", [(Comic*)_selectedItem name], error);
-      }
+- (void) _deleteItem:(DatabaseObject*)item {
+  if ([item isKindOfClass:[Comic class]]) {
+    NSString* path = [[LibraryConnection mainConnection] pathForComic:(Comic*)item];
+    NSError* error = nil;
+    if ([[NSFileManager defaultManager] removeItemAtPath:path error:&error]) {
+      [[CRLibrarySyncCoordinator sharedCoordinator] didDeleteComics:@[item] paths:@[path]];
+      [(AppDelegate*)[AppDelegate sharedInstance] updateLibrary];
     } else {
-      NSError* error = nil;
-      if ([[NSFileManager defaultManager] removeItemAtPath:[[LibraryConnection mainConnection] pathForCollection:(Collection*)_selectedItem] error:&error]) {
-        [(AppDelegate*)[AppDelegate sharedInstance] updateLibrary];
-      } else {
-        XLOG_ERROR(@"Failed deleting comic \"%@\": %@", [(Collection*)_selectedItem name], error);
-      }
+      XLOG_ERROR(@"Failed deleting comic \"%@\": %@", [(Comic*)item name], error);
     }
-    [_selectedItem release];
-    _selectedItem = nil;
-  } else {
-    XLOG_DEBUG_UNREACHABLE();
+  } else if ([item isKindOfClass:[ComicCollection class]]) {
+    NSArray* comics = [[LibraryConnection mainConnection] fetchComicsInCollection:(ComicCollection*)item];
+    NSMutableArray* paths = [NSMutableArray array];
+    for (Comic* comic in comics) [paths addObject:[[LibraryConnection mainConnection] pathForComic:comic]];
+    NSError* error = nil;
+    if ([[NSFileManager defaultManager] removeItemAtPath:[[LibraryConnection mainConnection] pathForCollection:(ComicCollection*)item] error:&error]) {
+      [[CRLibrarySyncCoordinator sharedCoordinator] didDeleteComics:comics paths:paths];
+      [(AppDelegate*)[AppDelegate sharedInstance] updateLibrary];
+    } else {
+      XLOG_ERROR(@"Failed deleting collection \"%@\": %@", [(ComicCollection*)item name], error);
+    }
   }
   [[AppDelegate sharedDelegate] logEvent:@"menu.delete"];
 }
 
-- (void) _press:(UILongPressGestureRecognizer*)recognizer {
-  if (recognizer.state == UIGestureRecognizerStateBegan) {
-    [_selectedItem release];
-    _selectedItem = [[_gridView itemAtLocation:[recognizer locationInView:_gridView] view:NULL] retain];
-    if (_selectedItem) {
-      NSInteger status = [(id)_selectedItem status];
-      NSMutableArray* items = [[NSMutableArray alloc] init];
-      if ([_selectedItem isKindOfClass:[Comic class]]) {
-        if (status != 0) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"MARK_READ", nil) action:@selector(_setRead:)];
-          [items addObject:item];
-          [item release];
-        }
-        if (status >= 0) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"MARK_NEW", nil) action:@selector(_setNew:)];
-          [items addObject:item];
-          [item release];
-        }
-        if (1) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"DELETE", nil) action:@selector(_delete:)];
-          [items addObject:item];
-          [item release];
-        }
-      } else {
-        if (status != 0) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"MARK_ALL_READ", nil) action:@selector(_setRead:)];
-          [items addObject:item];
-          [item release];
-        }
-        if (status >= 0) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"MARK_ALL_NEW", nil) action:@selector(_setNew:)];
-          [items addObject:item];
-          [item release];
-        }
-        if (1) {
-          UIMenuItem* item = [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"DELETE_ALL", nil) action:@selector(_delete:)];
-          [items addObject:item];
-          [item release];
-        }
-      }
-      CGPoint location = [recognizer locationInView:_gridView];
-      [[UIMenuController sharedMenuController] setMenuItems:items];
-      [[UIMenuController sharedMenuController] setTargetRect:CGRectMake(location.x, location.y, 1.0, 1.0) inView:_gridView];
-      [[UIMenuController sharedMenuController] setMenuVisible:YES animated:YES];
-      [items release];
-    }
+- (UIContextMenuConfiguration*) contextMenuInteraction:(UIContextMenuInteraction*)interaction
+                            configurationForMenuAtLocation:(CGPoint)location {
+  if (![interaction.view isKindOfClass:[ThumbnailView class]]) {
+    return nil;
   }
+
+  DatabaseObject* selectedItem = [((ThumbnailView*)interaction.view).item retain];
+  BOOL isComic = [selectedItem isKindOfClass:[Comic class]];
+  if (!isComic && ![selectedItem isKindOfClass:[ComicCollection class]]) {
+    [selectedItem release];
+    return nil;
+  }
+
+  NSInteger status = (isComic ? [(Comic*)selectedItem status] : [(ComicCollection*)selectedItem status]);
+  NSString* identifier = [NSString stringWithFormat:@"%@:%i", isComic ? @"Comic" : @"Collection", selectedItem.sqlRowID];
+  UIContextMenuConfiguration* configuration = [UIContextMenuConfiguration configurationWithIdentifier:identifier
+                                                                                       previewProvider:nil
+                                                                                        actionProvider:^UIMenu* (NSArray<UIMenuElement*>* suggestedActions) {
+    NSMutableArray<UIMenuElement*>* actions = [NSMutableArray array];
+    if (status != 0) {
+      UIAction* read = [UIAction actionWithTitle:NSLocalizedString(isComic ? @"MARK_READ" : @"MARK_ALL_READ", nil)
+                                           image:[UIImage systemImageNamed:@"checkmark.circle"]
+                                      identifier:nil
+                                         handler:^(UIAction* action) { [self _setReadForItem:selectedItem]; }];
+      [actions addObject:read];
+    }
+    if (status >= 0) {
+      UIAction* markNew = [UIAction actionWithTitle:NSLocalizedString(isComic ? @"MARK_NEW" : @"MARK_ALL_NEW", nil)
+                                              image:[UIImage systemImageNamed:@"sparkles"]
+                                         identifier:nil
+                                            handler:^(UIAction* action) { [self _setNewForItem:selectedItem]; }];
+      [actions addObject:markNew];
+    }
+    UIAction* delete = [UIAction actionWithTitle:([[CRCloudSyncManager sharedManager] optedIn] ? @"Remove from This Device" : NSLocalizedString(isComic ? @"DELETE" : @"DELETE_ALL", nil))
+                                           image:[UIImage systemImageNamed:@"trash"]
+                                      identifier:nil
+                                         handler:^(UIAction* action) { [self _deleteItem:selectedItem]; }];
+    delete.attributes = UIMenuElementAttributesDestructive;
+    [actions addObject:delete];
+    return [UIMenu menuWithTitle:@"" children:actions];
+  }];
+  [selectedItem release];
+  return configuration;
+}
+
+- (UITargetedPreview*) _contextMenuPreviewForInteraction:(UIContextMenuInteraction*)interaction {
+  if (![interaction.view isKindOfClass:[ThumbnailView class]] || interaction.view.window == nil) {
+    return nil;
+  }
+  return [[[UITargetedPreview alloc] initWithView:interaction.view] autorelease];
+}
+
+- (UITargetedPreview*) contextMenuInteraction:(UIContextMenuInteraction*)interaction
+                                configuration:(UIContextMenuConfiguration*)configuration
+        highlightPreviewForItemWithIdentifier:(id<NSCopying>)identifier API_AVAILABLE(ios(16.0)) {
+  return [self _contextMenuPreviewForInteraction:interaction];
+}
+
+- (UITargetedPreview*) contextMenuInteraction:(UIContextMenuInteraction*)interaction
+                                configuration:(UIContextMenuConfiguration*)configuration
+        dismissalPreviewForItemWithIdentifier:(id<NSCopying>)identifier API_AVAILABLE(ios(16.0)) {
+  return [self _contextMenuPreviewForInteraction:interaction];
+}
+
+- (UITargetedPreview*) contextMenuInteraction:(UIContextMenuInteraction*)interaction
+  previewForHighlightingMenuWithConfiguration:(UIContextMenuConfiguration*)configuration {
+  return [self _contextMenuPreviewForInteraction:interaction];
+}
+
+- (UITargetedPreview*) contextMenuInteraction:(UIContextMenuInteraction*)interaction
+     previewForDismissingMenuWithConfiguration:(UIContextMenuConfiguration*)configuration {
+  return [self _contextMenuPreviewForInteraction:interaction];
 }
 
 - (void) viewDidLoad {
@@ -412,32 +663,76 @@ static void __DisplayQueueCallBack(void* info) {
   UITapGestureRecognizer* tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tap:)];
   [_gridView addGestureRecognizer:tapRecognizer];
   [tapRecognizer release];
-  UILongPressGestureRecognizer* pressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
-  pressRecognizer.minimumPressDuration = 0.3;  // Default is 0.5
-  [_gridView addGestureRecognizer:pressRecognizer];
-  [pressRecognizer release];
   
   UINavigationItem* item = [_navigationBar.items objectAtIndex:0];
-  UIBarButtonItem* rightButton;
+  _sortBarButtonItem = [item.leftBarButtonItem retain];
+  _segmentedControl.accessibilityIdentifier = @"library.sort.segmented";
   if (@available(iOS 13.0, *)) {
     UIImage* gearIcon = [UIImage systemImageNamed:@"slider.horizontal.3"];
-    rightButton = [[UIBarButtonItem alloc] initWithImage:gearIcon
-                                                   style:UIBarButtonItemStylePlain
-                                                  target:self
-                                                  action:@selector(_toggleMenu:)];
+    _settingsButtonItem = [[UIBarButtonItem alloc] initWithImage:gearIcon
+                                                           style:UIBarButtonItemStylePlain
+                                                          target:self
+                                                          action:@selector(_toggleMenu:)];
   } else {
-    rightButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
-                                                   style:UIBarButtonItemStylePlain
-                                                  target:self
-                                                  action:@selector(_toggleMenu:)];
+    _settingsButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
+                                                           style:UIBarButtonItemStylePlain
+                                                          target:self
+                                                          action:@selector(_toggleMenu:)];
   }
-  item.rightBarButtonItem = rightButton;
-  [rightButton release];
+  _settingsButtonItem.accessibilityIdentifier = @"library.settings";
+  _settingsButtonItem.accessibilityLabel = NSLocalizedString(@"SETTINGS_BUTTON", nil);
+  _plusButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Get Plus"
+                                                     style:UIBarButtonItemStylePlain
+                                                    target:self
+                                                    action:@selector(_showPlus:)];
+  _plusButtonItem.accessibilityIdentifier = @"library.plus";
+  _plusButtonItem.accessibilityLabel = @"ComicReader Plus";
+  _cloudButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"icloud"]
+                                                      style:UIBarButtonItemStylePlain
+                                                     target:self
+                                                     action:@selector(_showCloud:)];
+  _cloudButtonItem.accessibilityIdentifier = @"library.icloud";
+  _cloudButtonItem.accessibilityLabel = @"Free iCloud Sync";
+  _readingListsButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"list.bullet.rectangle"]
+                                                              style:UIBarButtonItemStylePlain
+                                                             target:self
+                                                             action:@selector(_showReadingLists:)];
+  _readingListsButtonItem.accessibilityIdentifier = @"library.readingLists";
+  _readingListsButtonItem.accessibilityLabel = @"Reading Lists";
+  _compactSortButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arrow.up.arrow.down"]
+                                                            style:UIBarButtonItemStylePlain
+                                                           target:nil
+                                                           action:nil];
+  _compactSortButtonItem.accessibilityIdentifier = @"library.sort";
+  _compactSortButtonItem.accessibilityLabel = @"Sort Library";
+  _compactToolbar = [[UIToolbar alloc] initWithFrame:CGRectZero];
+  _compactToolbar.hidden = YES;
+  _compactToolbar.accessibilityIdentifier = @"library.compactToolbar";
+  [self.view addSubview:_compactToolbar];
+  [self updatePurchase];
+  BOOL startsCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                       CGRectGetWidth(self.view.bounds) < 600.0;
+  [self _configureNavigationForCompactWidth:startsCompact];
   
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_cloudReadingChanged:) name:@"CRLibraryReadingStateDidChangeNotification" object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_sceneDidActivate:) name:UISceneDidActivateNotification object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_plusEntitlementChanged:)
+                                               name:[CRPlusStore entitlementDidChangeNotification]
+                                             object:[CRPlusStore sharedStore]];
+
   _menuViewController = [[UIViewController alloc] init];
-  _menuViewController.view = _menuView;
   [self _applyMenuTheme];
+  CRSettingsScrollView* menuScrollView = [[CRSettingsScrollView alloc] initWithSettingsContentView:_menuView];
+  _menuViewController.view = menuScrollView;
+  [menuScrollView release];
   [self _buildEmptyStateView];
+  if (!_releaseNewsDismissed) {
+    CRWhatsNewBannerView* banner = [[CRWhatsNewBannerView alloc] init];
+    banner.delegate = self;
+    _whatsNewBanner = banner;
+    [self.view addSubview:banner];
+    [banner release];
+  }
   
   _infoLabel.text = nil;
   _versionLabel.text = [NSString stringWithFormat:NSLocalizedString(@"VERSION_FORMAT", nil),
@@ -448,6 +743,7 @@ static void __DisplayQueueCallBack(void* info) {
   _updateButton.enabled = !updating;
   _forceUpdateButton.enabled = !updating;
   _dimmingSwitch.on = [(AppDelegate*)[AppDelegate sharedInstance] isScreenDimmed];
+  _purchaseButton.accessibilityIdentifier = @"library.addFiles";
   
   XLOG_DEBUG_CHECK(_updateTimer == nil);
   _updateTimer = [[NSTimer alloc] initWithFireDate:[NSDate distantFuture] interval:kUpdateTimerInterval target:self selector:@selector(_updateTimer:) userInfo:nil repeats:YES];
@@ -516,8 +812,7 @@ static void __DisplayQueueCallBack(void* info) {
   for (UIView* v in _menuView.subviews) {
     if ([v isKindOfClass:[UIButton class]]) {
       UIButton* btn = (UIButton*)v;
-      NSString* title = [btn titleForState:UIControlStateNormal];
-      if ([title hasPrefix:@"Recreate"] || [title hasPrefix:@"Delete"]) {
+      if (btn == _forceUpdateButton) {
         styleButton(btn, destructiveColor, NO);
       } else {
         styleButton(btn, accentColor, NO);
@@ -591,11 +886,16 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _buildEmptyStateView {
+  if (_emptyStateView) {
+    [_emptyStateView removeFromSuperview];
+    [_emptyStateView release];
+    _emptyStateView = nil;
+  }
   // Positioned over the grid view (below the nav bar) so centering needs no
   // nav-bar offset — frame is kept in sync in viewDidLayoutSubviews.
   _emptyStateView = [[UIView alloc] initWithFrame:_gridView.frame];
   _emptyStateView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  _emptyStateView.hidden = YES;
+  _emptyStateView.hidden = !(_gridView.empty && (_currentCollection == nil));
 
   // ── Scroll view (safety net when content is taller than the screen) ───────
   UIScrollView* scroll = [[UIScrollView alloc] initWithFrame:_emptyStateView.bounds];
@@ -610,10 +910,12 @@ static void __DisplayQueueCallBack(void* info) {
 
   // ── Single content view – everything goes in here ─────────────────────────
   CGFloat w = _emptyStateView.bounds.size.width;
+  _emptyStateLayoutWidth = w;
   CGFloat cardW = MIN(w - 40, 600);   // cap card width for large iPad Pro
   CGFloat cardX = (w - cardW) / 2.0;
 
   UIView* contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, 0)];
+  contentView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
   contentView.tag = 9902;
   [scroll addSubview:contentView];
 
@@ -633,6 +935,7 @@ static void __DisplayQueueCallBack(void* info) {
     iconView.frame = CGRectMake(0, 0, 96, 96);
   }
   iconView.contentMode = UIViewContentModeScaleAspectFit;
+  iconView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
   CGFloat iconSize = 110;
   iconView.frame = CGRectMake((w - iconSize) / 2.0, y, iconSize, iconSize);
   [contentView addSubview:iconView];
@@ -645,6 +948,7 @@ static void __DisplayQueueCallBack(void* info) {
   titleLabel.font = [UIFont systemFontOfSize:28 weight:UIFontWeightBold];
   titleLabel.textAlignment = NSTextAlignmentCenter;
   titleLabel.numberOfLines = 0;
+  titleLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
   if (@available(iOS 13.0, *)) {
     titleLabel.textColor = [UIColor labelColor];
   } else {
@@ -663,6 +967,7 @@ static void __DisplayQueueCallBack(void* info) {
   subtitleLabel.font = [UIFont systemFontOfSize:17];
   subtitleLabel.textAlignment = NSTextAlignmentCenter;
   subtitleLabel.numberOfLines = 0;
+  subtitleLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
   if (@available(iOS 13.0, *)) {
     subtitleLabel.textColor = [UIColor secondaryLabelColor];
   } else {
@@ -692,20 +997,33 @@ static void __DisplayQueueCallBack(void* info) {
   }
 
   struct { NSString* symbol; NSString* title; NSString* body; } steps[] = {
+#if TARGET_OS_MACCATALYST
+    { @"folder",
+      @"Import from Finder",
+      @"Choose Add Files in Settings or press ⌘O. Select any .cbz, .cbr or .pdf comic." },
+    { @"icloud",
+      @"Free iCloud Sync",
+      @"Turn on iCloud Sync to keep comic files and reading progress available across your iPhone, iPad and Mac. No Plus purchase is needed." },
+    { @"wifi",
+      @"Wi-Fi Upload",
+      @"Open Settings, enable the Web Server, then visit the displayed address in a browser to drag and drop files." },
+#else
     { @"square.and.arrow.down",
       @"Files App",
-      @"Tap \"Add Files\" in the Settings panel (top-right). Browse the Files app and pick any comic file." },
+      @"Choose Add Files in Settings, then browse the Files app and pick any comic file." },
     { @"wifi",
       @"Wi-Fi Upload",
       @"Open Settings, enable the Web Server, then visit the URL in a browser on your Mac or PC to drag and drop files." },
     { @"arrow.down.to.line",
       @"iTunes / Finder",
-      @"Connect your iPad via USB. In Finder (or iTunes on Windows) select ComicReader under File Sharing and drag comics in." },
+      @"Connect your iPhone or iPad via USB. In Finder (or iTunes on Windows) select ComicReader under File Sharing and drag comics in." },
+#endif
   };
 
   NSUInteger stepCount = sizeof(steps) / sizeof(steps[0]);
   for (NSUInteger i = 0; i < stepCount; i++) {
     UIView* card = [[UIView alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
+    card.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
     card.backgroundColor = cardBg;
     card.layer.cornerRadius = 14;
     card.layer.masksToBounds = YES;
@@ -773,6 +1091,7 @@ static void __DisplayQueueCallBack(void* info) {
   hint.font = [UIFont systemFontOfSize:13];
   hint.textAlignment = NSTextAlignmentCenter;
   hint.numberOfLines = 0;
+  hint.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
   if (@available(iOS 13.0, *)) {
     hint.textColor = [UIColor tertiaryLabelColor];
   } else {
@@ -789,7 +1108,7 @@ static void __DisplayQueueCallBack(void* info) {
   scroll.contentSize = CGSizeMake(w, y);
   [contentView release];
 
-  [_gridView.superview insertSubview:_emptyStateView belowSubview:_gridView];
+  [_gridView.superview insertSubview:_emptyStateView aboveSubview:_gridView];
 }
 
 - (void) _centerEmptyStateContent {
@@ -802,13 +1121,79 @@ static void __DisplayQueueCallBack(void* info) {
   // so scroll.bounds.size.height is exactly the visible area below the nav bar.
   CGFloat availH   = scroll.bounds.size.height;
   CGFloat contentH = contentView.frame.size.height;
+  contentView.frame = CGRectMake(0.0, 0.0, scroll.bounds.size.width, contentH);
+  scroll.contentSize = CGSizeMake(scroll.bounds.size.width, contentH);
   CGFloat topInset = MAX(0.0, floor((availH - contentH) / 2.0));
   scroll.contentInset = UIEdgeInsetsMake(topInset, 0, 0, 0);
 }
 
 - (void) viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
+
+  CGRect safeBounds = UIEdgeInsetsInsetRect(self.view.bounds, self.view.safeAreaInsets);
+  BOOL isLandscape = CGRectGetWidth(safeBounds) > CGRectGetHeight(safeBounds);
+  BOOL isCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                   CGRectGetWidth(safeBounds) < 600.0;
+  if (!_adaptiveLayoutConfigured || isCompact != _usingCompactLayout) {
+    [self _configureNavigationForCompactWidth:isCompact];
+  }
+
+  CGFloat navigationHeight = 44.0;
+  _navigationBar.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMinY(safeBounds),
+                                    CGRectGetWidth(safeBounds), navigationHeight);
+  CGFloat contentBottom = CGRectGetMaxY(safeBounds);
+  if (isCompact) {
+    CGFloat toolbarHeight = 44.0;
+    _compactToolbar.frame = CGRectMake(CGRectGetMinX(self.view.bounds), contentBottom - toolbarHeight,
+                                       CGRectGetWidth(self.view.bounds),
+                                       toolbarHeight + self.view.safeAreaInsets.bottom);
+    contentBottom = CGRectGetMinY(_compactToolbar.frame);
+  }
+
+  CGFloat contentTop = CGRectGetMaxY(_navigationBar.frame);
+  BOOL showBanner = _whatsNewBanner && !_releaseNewsDismissed && !(isCompact && isLandscape);
+  if (_whatsNewBanner) _whatsNewBanner.hidden = !showBanner;
+  if (showBanner) {
+    CGFloat width = MAX(1, CGRectGetWidth(safeBounds) - 20);
+    CGFloat height = [(CRWhatsNewBannerView*)_whatsNewBanner preferredHeightForWidth:width];
+    height = MIN(height, MAX(130, CGRectGetHeight(safeBounds) * 0.45));
+    _whatsNewBanner.frame = CGRectMake(CGRectGetMinX(safeBounds) + 10, contentTop + 6, width, height);
+    contentTop = CGRectGetMaxY(_whatsNewBanner.frame) + 6;
+  }
+  _gridView.frame = CGRectMake(CGRectGetMinX(safeBounds), contentTop,
+                               CGRectGetWidth(safeBounds),
+                               MAX(0.0, contentBottom - contentTop));
+
+  if (isCompact) {
+    CGFloat width = CGRectGetWidth(_gridView.bounds);
+    CGFloat minimumGap = isLandscape ? 12.0 : 16.0;
+    CGFloat availableWidth = MAX(0.0, width - 2.0 * kGridMargin);
+    NSUInteger columns = MAX(1, (NSUInteger)floor((availableWidth + minimumGap) /
+                                                  (kLibraryThumbnailWidth + minimumGap)));
+    CGFloat gap = 0.0;
+    if (columns > 1) {
+      CGFloat maximumGap = (availableWidth - columns * kLibraryThumbnailWidth) / (columns - 1);
+      gap = MAX(0.0, MIN(isLandscape ? 16.0 : 20.0, maximumGap));
+    }
+    CGFloat groupWidth = columns * kLibraryThumbnailWidth + (columns - 1) * gap;
+    CGFloat leftMargin = MAX(kGridMargin, floor((width - groupWidth) / 2.0));
+    CGFloat rightMargin = MAX(kGridMargin, width - groupWidth - leftMargin);
+    _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin, leftMargin, kGridMargin, rightMargin);
+    _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing, gap);
+  } else {
+    _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin,
+                                                kGridMargin + (isLandscape ? kGridMarginExtra_Landscape : kGridMarginExtra_Portrait),
+                                                kGridMargin,
+                                                kGridMargin);
+    _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing,
+                                             isLandscape ? kItemHorizontalSpacing_Landscape : kItemHorizontalSpacing_Portrait);
+  }
+  [_gridView setNeedsLayout];
+
   // Keep the empty-state overlay exactly over the grid (below the nav bar).
+  if (fabs(_emptyStateLayoutWidth - CGRectGetWidth(_gridView.bounds)) > 0.5) {
+    [self _buildEmptyStateView];
+  }
   if (_emptyStateView) {
     _emptyStateView.frame = _gridView.frame;
     UIScrollView* scroll = (UIScrollView*)[_emptyStateView viewWithTag:9901];
@@ -890,26 +1275,23 @@ static void __DisplayQueueCallBack(void* info) {
   _gridView.extraVisibleRows = 6;
 #endif
   [self _updateEmptyStateVisibility];
+  [self _updateCompactSortMenu];
 }
 
-- (void) _setCurrentCollection:(Collection*)collection {
+- (void) _setCurrentCollection:(ComicCollection*)collection {
   NSMutableArray* barItems = [[NSMutableArray alloc] initWithArray:_navigationBar.items];
   if (barItems.count == 2) {
     [barItems removeObjectAtIndex:1];
   }
   if (collection) {
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:collection.name];
-    UIBarButtonItem* button = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS_BUTTON", nil)
-                                                               style:UIBarButtonItemStylePlain
-                                                              target:self
-                                                              action:@selector(_toggleMenu:)];
-    item.rightBarButtonItem = button;
-    [button release];
+    item.rightBarButtonItems = [(UINavigationItem*)barItems.firstObject rightBarButtonItems];
     [barItems addObject:item];
     [item release];
   }
   _navigationBar.items = barItems;
   [barItems release];
+  [self _configureNavigationForCompactWidth:_usingCompactLayout];
   
   if (collection != _currentCollection) {
     [_currentCollection release];
@@ -924,11 +1306,41 @@ static void __DisplayQueueCallBack(void* info) {
     viewController.modalPresentationStyle = UIModalPresentationFullScreen;
     viewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     [self presentViewController:viewController animated:YES completion:nil];
+    _comicPresentationActive = YES;
     [viewController release];
     
     if (comic != _currentComic) {
       [_currentComic release];
       _currentComic = [comic retain];
+    }
+  } else {
+    [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"COMIC_OPEN_FAILED_TITLE", nil)
+                                            message:NSLocalizedString(@"COMIC_OPEN_FAILED_MESSAGE", nil)
+                                             button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
+  }
+}
+
+- (void) _refreshComicAfterDismissal {
+  if (!_comicPresentationActive || self.presentedViewController) {
+    return;
+  }
+  _comicPresentationActive = NO;
+
+  Comic* comic = [[_currentComic retain] autorelease];
+  [_currentComic release];
+  _currentComic = nil;
+  if (comic == nil) {
+    return;
+  }
+
+  if ([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_SortingMode] == kSortingMode_ByStatus) {
+    [self _reloadCurrentCollection];
+  } else {
+    Comic* visibleComic = [_gridView itemForItem:comic];
+    if (visibleComic && [[LibraryConnection mainConnection] refetchObject:visibleComic]) {
+      [self _updateThumbnailViewForItem:visibleComic];
+    } else {
+      [self _reloadCurrentCollection];
     }
   }
 }
@@ -967,6 +1379,11 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _showRatingScreen {
+  if (_startupPresentationsPending || self.presentedViewController ||
+      [[AppDelegate sharedDelegate] isAlertVisible] ||
+      _window.windowScene.activationState != UISceneActivationStateForegroundActive) {
+    return;
+  }
   [[AppDelegate sharedDelegate] logEvent:@"rating.prompt"];
   [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"RATE_ALERT_TITLE", nil)
                                            message:NSLocalizedString(@"RATE_ALERT_MESSAGE", nil)
@@ -976,12 +1393,64 @@ static void __DisplayQueueCallBack(void* info) {
                                    confirmSelector:@selector(_rateNow:)
                                     cancelSelector:@selector(_rateLater:)
                                           argument:nil];
-  [[UIApplication sharedApplication] endIgnoringInteractionEvents];
 }
 
 - (void) _requireUpdate {
   [self _forceUpdate];
   [[NSUserDefaults standardUserDefaults] setInteger:kLibraryVersion forKey:kDefaultKey_LibraryVersion];
+}
+
+- (void) _sceneDidActivate:(NSNotification*)notification {
+  if (notification.object == _window.windowScene && _startupPresentationsPending) {
+    // Let scene setup enqueue any import errors before considering the announcement.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_continueStartupPresentations) object:nil];
+    [self performSelector:@selector(_continueStartupPresentations) withObject:nil afterDelay:0.0];
+  }
+}
+
+- (void) _continueStartupPresentations {
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_continueStartupPresentations) object:nil];
+  if (!_startupPresentationsPending || !self.view.window ||
+      _window.windowScene.activationState != UISceneActivationStateForegroundActive) {
+    return;
+  }
+
+  // Startup alerts, import scans, and modal dismissals take priority. Some alert and
+  // form-sheet dismissals do not call the library's viewDidAppear, so retry while
+  // startup work remains; scene activation restarts this after backgrounding.
+  AppDelegate* delegate = [AppDelegate sharedDelegate];
+  if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed ||
+      [delegate isAlertVisible] || [delegate isSpinnerVisible] ||
+      [[LibraryUpdater sharedUpdater] isUpdating]) {
+    [self performSelector:@selector(_continueStartupPresentations) withObject:nil afterDelay:0.25];
+    return;
+  }
+
+  if (_libraryUpdatePromptPending) {
+    _libraryUpdatePromptPending = NO;
+    [delegate showAlertWithTitle:NSLocalizedString(@"REQUIRE_UPDATE_TITLE", nil)
+                        message:NSLocalizedString(@"REQUIRE_UPDATE_MESSAGE", nil)
+                  confirmButton:NSLocalizedString(@"REQUIRE_UPDATE_CONTINUE", nil)
+                   cancelButton:NSLocalizedString(@"REQUIRE_UPDATE_CANCEL", nil)
+                       delegate:self
+                confirmSelector:@selector(_requireUpdate)
+                 cancelSelector:NULL
+                       argument:nil];
+    [self performSelector:@selector(_continueStartupPresentations) withObject:nil afterDelay:0.25];
+    return;
+  }
+
+  _startupPresentationsPending = NO;
+  if (_currentComic && !_comicPresentationActive) {
+    // Keep the saved comic until all startup UI is finished, including settings. An
+    // import scan may have removed it or updated its saved reading state meanwhile.
+    Comic* comic = [[_currentComic retain] autorelease];
+    [_currentComic release];
+    _currentComic = nil;
+    if ([[LibraryConnection mainConnection] refetchObject:comic]) {
+      [self _presentComic:comic];
+    }
+  }
 }
 
 - (void) _viewDidReallyAppear {
@@ -992,21 +1461,12 @@ static void __DisplayQueueCallBack(void* info) {
     _currentComic = nil;
   }
   
-  if (_currentComic) {
-    Comic* comic = [[_currentComic retain] autorelease];
-    [_currentComic release];
-    _currentComic = nil;
-    
-    [self _presentComic:comic];
-  }
-  
   [CATransaction flush];
 
   if (_launchView) {
     UIView* launchView = _launchView;
     [UIView animateWithDuration:0.5 animations:^{
       launchView.alpha = 0.0;
-      self.view.frame = [[UIScreen mainScreen] bounds];
     } completion:^(BOOL finished) {
       [launchView removeFromSuperview];
       [launchView release];
@@ -1017,40 +1477,28 @@ static void __DisplayQueueCallBack(void* info) {
   NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_LaunchCount];
   if (count >= 0) {
     [[NSUserDefaults standardUserDefaults] setInteger:(count + 1) forKey:kDefaultKey_LaunchCount];
-    if (!needLibraryUpdate && (count + 1 >= kLaunchCountBeforeRating) && !self.presentedViewController && [[NetReachability sharedNetReachability] state]) {
-      [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+    if (_releaseNewsDismissed && !needLibraryUpdate && !_currentComic && (count + 1 >= kLaunchCountBeforeRating) && !self.presentedViewController && [[NetReachability sharedNetReachability] state]) {
       [self performSelector:@selector(_showRatingScreen) withObject:nil afterDelay:kShowRatingDelay];
     } else {
       XLOG_VERBOSE(@"Launch count is now %i", (int)[[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_LaunchCount]);
     }
   }
   
-  if (needLibraryUpdate) {
-    [[AppDelegate sharedInstance] showAlertWithTitle:NSLocalizedString(@"REQUIRE_UPDATE_TITLE", nil)
-                                             message:NSLocalizedString(@"REQUIRE_UPDATE_MESSAGE", nil)
-                                       confirmButton:NSLocalizedString(@"REQUIRE_UPDATE_CONTINUE", nil)
-                                        cancelButton:NSLocalizedString(@"REQUIRE_UPDATE_CANCEL", nil)
-                                            delegate:self
-                                     confirmSelector:@selector(_requireUpdate)
-                                      cancelSelector:NULL
-                                            argument:nil];
-  }
+  _libraryUpdatePromptPending = needLibraryUpdate;
+  _startupPresentationsPending = YES;
+  [self _continueStartupPresentations];
 }
 
 - (void) viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
-  
-  if (_launchView) {
-    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];  // Work around interface orientation not already set in -viewDidAppear before iOS 6.0 but instead set after -didRotateFromInterfaceOrientation gets called  } else if (!_launched) {
-    // On iOS 8+, the system provides the launch screen; call _viewDidReallyAppear directly
+
+  [self _refreshComicAfterDismissal];
+  if (!_launched) {
     _launched = YES;
-    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];  }
-    
-    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"LaunchCount"] % 10 == 0) {
-        if (@available(iOS 10.3, *)) {
-            [SKStoreReviewController requestReview];
-        }
-     }
+    [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];
+  } else if (_startupPresentationsPending) {
+    [self _continueStartupPresentations];
+  }
   
   [self becomeFirstResponder];
 }
@@ -1100,6 +1548,10 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) libraryUpdaterDidFinish:(LibraryUpdater*)library {
+  // The updater clears isUpdating immediately after this delegate returns.
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[CRLibrarySyncCoordinator sharedCoordinator] libraryDidUpdate];
+  });
   if (_currentCollection && ![[LibraryConnection mainConnection] refetchObject:_currentCollection]) {
     [self _setCurrentCollection:nil];
   } else {
@@ -1118,6 +1570,16 @@ static void __DisplayQueueCallBack(void* info) {
 
 - (UIView*) gridView:(GridView*)gridView viewForItem:(id)item {
   ThumbnailView* view = [[ThumbnailView alloc] initWithFrame:CGRectMake(0, 0, kLibraryThumbnailWidth, kLibraryThumbnailHeight)];
+  view.item = item;
+  view.activationTarget = self;
+  view.isAccessibilityElement = YES;
+  view.accessibilityTraits = UIAccessibilityTraitButton;
+  view.accessibilityLabel = [item name];
+  view.accessibilityIdentifier = [NSString stringWithFormat:@"library.%@.%@", [item isKindOfClass:[Comic class]] ? @"comic" : @"collection", [item name]];
+  view.userInteractionEnabled = YES;
+  UIContextMenuInteraction* contextMenu = [[UIContextMenuInteraction alloc] initWithDelegate:self];
+  [view addInteraction:contextMenu];
+  [contextMenu release];
   return [view autorelease];
 }
 
@@ -1173,7 +1635,7 @@ static void __DisplayQueueCallBack(void* info) {
   }
 #endif
   
-  int status = [item status];
+  int status = [item isKindOfClass:[Comic class]] ? [(Comic*)item status] : [(ComicCollection*)item status];
   if (status > 0) {
     UIImageView* subview = [[UIImageView alloc] initWithImage:_ribbonImage];
     subview.frame = CGRectMake(kRibbonImageX, kRibbonImageY, kRibbonImageWidth, kRibbonImageHeight);
@@ -1268,7 +1730,7 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (void) _markAllRead {
-  [[LibraryConnection mainConnection] updateStatusForAllComics:0];
+  [[CRLibrarySyncCoordinator sharedCoordinator] markComics:[[LibraryConnection mainConnection] fetchAllComicsByName] status:0];
   [self _reloadCurrentCollection];
 }
 
@@ -1284,7 +1746,7 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (void) _markAllNew {
-  [[LibraryConnection mainConnection] updateStatusForAllComics:-1];
+  [[CRLibrarySyncCoordinator sharedCoordinator] markComics:[[LibraryConnection mainConnection] fetchAllComicsByName] status:-1];
   [self _reloadCurrentCollection];
 }
 
@@ -1315,32 +1777,50 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (IBAction) purchase:(id)sender {
-    NSString *urlString = _addressLabel.text;
-    //NSLog(@"URL STRING");
-    //NSLog(urlString);
-    NSDataDetector *detect = [[NSDataDetector alloc] initWithTypes:NSTextCheckingTypeLink error:nil];
-    NSArray *matches = [detect matchesInString:urlString options:0 range:NSMakeRange(0, [urlString length])];
-    //NSLog(@"%@", [matches objectAtIndex:1]);
-    NSRange addressMatchRange = [[matches objectAtIndex:0] range];
-    NSString *matchString = [urlString substringWithRange:addressMatchRange];
-    //NSLog(@"%@", matchString);
-    NSURL *myUrl = [NSURL URLWithString: matchString];
-    SFSafariViewController *svc = [[SFSafariViewController alloc] initWithURL: myUrl];
-    //svc.delegate = self;
-    [self dismissViewControllerAnimated:true completion:nil];
-    [self presentViewController:svc animated:YES completion:nil];
-  //[(AppDelegate*)[AppDelegate sharedInstance] purchase];
+  NSMutableArray<UTType*>* types = [NSMutableArray arrayWithObject:UTTypePDF];
+  for (NSString* extension in @[@"cbz", @"zip", @"cbr", @"rar"]) {
+    UTType* type = [UTType typeWithFilenameExtension:extension];
+    if (type) {
+      [types addObject:type];
+    }
+  }
+  // Import a local copy; Catalyst open-in-place requests write access to the original.
+  UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:types asCopy:YES];
+  picker.delegate = self;
+  picker.allowsMultipleSelection = YES;
+
+  void (^presentPicker)(void) = ^{
+    [self presentViewController:picker animated:YES completion:nil];
+    [picker release];
+  };
+  [_updateTimer setFireDate:[NSDate distantFuture]];
+  if (self.presentedViewController == _menuViewController) {
+    [self dismissViewControllerAnimated:YES completion:presentPicker];
+  } else {
+    presentPicker();
+  }
 }
 
 - (IBAction) restore:(id)sender {
-  [(AppDelegate*)[AppDelegate sharedInstance] restore];
+  [[CRPlusStore sharedStore] restoreWithCompletion:^(BOOL unlocked, NSError* error) {
+    if (error) [[AppDelegate sharedDelegate] showAlertWithTitle:@"Restore Purchases" message:error.localizedDescription button:@"OK"];
+  }];
 }
 
-- (void)safariViewControllerDidFinish:(SFSafariViewController *)controller {
-    [self dismissViewControllerAnimated:YES completion:nil];
+- (void) documentPicker:(UIDocumentPickerViewController*)controller didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls {
+  for (NSURL* url in urls) {
+    [[AppDelegate sharedDelegate] importComicAtURL:url];
+  }
 }
 
 // UIPopoverPresentationControllerDelegate — fires when tapped outside popover
+- (UIModalPresentationStyle) adaptivePresentationStyleForPresentationController:(UIPresentationController*)controller {
+  if (controller.presentedViewController == _menuViewController) {
+    return UIModalPresentationPageSheet;
+  }
+  return UIModalPresentationNone;
+}
+
 - (void) presentationControllerDidDismiss:(UIPresentationController*)presentationController {
   [_updateTimer setFireDate:[NSDate distantFuture]];
 }

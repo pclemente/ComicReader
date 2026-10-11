@@ -65,9 +65,17 @@ typedef NS_ENUM(NSInteger, DAVProperties) {
 
 @implementation GCDWebDAVServer (Methods)
 
-// Must match implementation in GCDWebUploader
-- (BOOL)_checkSandboxedPath:(NSString*)path {
-  return [[path stringByStandardizingPath] hasPrefix:_uploadDirectory];
+- (NSString*)_absolutePathForRelativePath:(NSString*)relativePath allowRoot:(BOOL)allowRoot {
+  if (![relativePath isKindOfClass:[NSString class]] ||
+      ([relativePath rangeOfCharacterFromSet:[NSCharacterSet controlCharacterSet]].location != NSNotFound)) {
+    return nil;
+  }
+  NSString* rootPath = [_uploadDirectory stringByStandardizingPath];
+  NSString* normalizedPath = GCDWebServerNormalizePath(relativePath);
+  NSString* absolutePath = [[rootPath stringByAppendingPathComponent:normalizedPath] stringByStandardizingPath];
+  BOOL isRoot = [absolutePath isEqualToString:rootPath];
+  BOOL isInsideRoot = isRoot || [rootPath isEqualToString:@"/"] || [absolutePath hasPrefix:[rootPath stringByAppendingString:@"/"]];
+  return (isInsideRoot && (allowRoot || !isRoot)) ? absolutePath : nil;
 }
 
 - (BOOL)_checkFileExtension:(NSString*)fileName {
@@ -94,9 +102,9 @@ static inline BOOL _IsMacFinder(GCDWebServerRequest* request) {
 
 - (GCDWebServerResponse*)performGET:(GCDWebServerRequest*)request {
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:YES];
   BOOL isDirectory = NO;
-  if (![self _checkSandboxedPath:absolutePath] || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
+  if (!absolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   
@@ -129,8 +137,8 @@ static inline BOOL _IsMacFinder(GCDWebServerRequest* request) {
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
-  if (![self _checkSandboxedPath:absolutePath]) {
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:NO];
+  if (!absolutePath) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   BOOL isDirectory;
@@ -173,9 +181,9 @@ static inline BOOL _IsMacFinder(GCDWebServerRequest* request) {
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:NO];
   BOOL isDirectory = NO;
-  if (![self _checkSandboxedPath:absolutePath] || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
+  if (!absolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   
@@ -207,8 +215,8 @@ static inline BOOL _IsMacFinder(GCDWebServerRequest* request) {
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
-  if (![self _checkSandboxedPath:absolutePath]) {
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:NO];
+  if (!absolutePath) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   BOOL isDirectory;
@@ -256,33 +264,47 @@ static inline BOOL _IsMacFinder(GCDWebServerRequest* request) {
   }
   
   NSString* srcRelativePath = request.path;
-  NSString* srcAbsolutePath = [_uploadDirectory stringByAppendingPathComponent:srcRelativePath];
-  if (![self _checkSandboxedPath:srcAbsolutePath]) {
+  NSString* srcAbsolutePath = [self _absolutePathForRelativePath:srcRelativePath allowRoot:NO];
+
+  BOOL sourceIsDirectory = NO;
+  if (!srcAbsolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:srcAbsolutePath isDirectory:&sourceIsDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", srcRelativePath];
   }
   
   NSString* dstRelativePath = [request.headers objectForKey:@"Destination"];
-  NSRange range = [dstRelativePath rangeOfString:[request.headers objectForKey:@"Host"]];
-  if ((dstRelativePath == nil) || (range.location == NSNotFound)) {
+  NSString* host = [request.headers objectForKey:@"Host"];
+  NSRange range = host.length ? [dstRelativePath rangeOfString:host options:NSCaseInsensitiveSearch] : NSMakeRange(NSNotFound, 0);
+  if (!dstRelativePath.length || (range.location == NSNotFound)) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_BadRequest message:@"Malformed 'Destination' header: %@", dstRelativePath];
   }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   dstRelativePath = [[dstRelativePath substringFromIndex:(range.location + range.length)] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
 #pragma clang diagnostic pop
-  NSString* dstAbsolutePath = [_uploadDirectory stringByAppendingPathComponent:dstRelativePath];
-  if (![self _checkSandboxedPath:dstAbsolutePath]) {
+  NSString* dstAbsolutePath = [self _absolutePathForRelativePath:dstRelativePath allowRoot:NO];
+  if (!dstAbsolutePath) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", srcRelativePath];
   }
+
+  if ([srcAbsolutePath isEqualToString:dstAbsolutePath] ||
+      [srcAbsolutePath hasPrefix:[dstAbsolutePath stringByAppendingString:@"/"]] ||
+      (sourceIsDirectory && [dstAbsolutePath hasPrefix:[srcAbsolutePath stringByAppendingString:@"/"]])) {
+    return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_Forbidden message:@"Invalid destination \"%@\"", dstRelativePath];
+  }
   
-  BOOL isDirectory;
-  if (![[NSFileManager defaultManager] fileExistsAtPath:[dstAbsolutePath stringByDeletingLastPathComponent] isDirectory:&isDirectory] || !isDirectory) {
+  BOOL destinationParentIsDirectory = NO;
+  if (![[NSFileManager defaultManager] fileExistsAtPath:[dstAbsolutePath stringByDeletingLastPathComponent] isDirectory:&destinationParentIsDirectory] || !destinationParentIsDirectory) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_Conflict message:@"Invalid destination \"%@\"", dstRelativePath];
   }
   
-  NSString* itemName = [dstAbsolutePath lastPathComponent];
-  if ((!_allowHidden && [itemName hasPrefix:@"."]) || (!isDirectory && ![self _checkFileExtension:itemName])) {
-    return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_Forbidden message:@"%@ to item name \"%@\" is not allowed", isMove ? @"Moving" : @"Copying", itemName];
+  NSString* srcName = [srcAbsolutePath lastPathComponent];
+  if ((!_allowHidden && [srcName hasPrefix:@"."]) || (!sourceIsDirectory && ![self _checkFileExtension:srcName])) {
+    return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_Forbidden message:@"%@ from item name \"%@\" is not allowed", isMove ? @"Moving" : @"Copying", srcName];
+  }
+
+  NSString* dstName = [dstAbsolutePath lastPathComponent];
+  if ((!_allowHidden && [dstName hasPrefix:@"."]) || (!sourceIsDirectory && ![self _checkFileExtension:dstName])) {
+    return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_Forbidden message:@"%@ to item name \"%@\" is not allowed", isMove ? @"Moving" : @"Copying", dstName];
   }
   
   NSString* overwriteHeader = [request.headers objectForKey:@"Overwrite"];
@@ -440,9 +462,9 @@ static inline xmlNodePtr _XMLChildWithName(xmlNodePtr child, const xmlChar* name
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:YES];
   BOOL isDirectory = NO;
-  if (![self _checkSandboxedPath:absolutePath] || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
+  if (!absolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   
@@ -490,9 +512,9 @@ static inline xmlNodePtr _XMLChildWithName(xmlNodePtr child, const xmlChar* name
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:YES];
   BOOL isDirectory = NO;
-  if (![self _checkSandboxedPath:absolutePath] || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
+  if (!absolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   
@@ -587,9 +609,9 @@ static inline xmlNodePtr _XMLChildWithName(xmlNodePtr child, const xmlChar* name
   }
   
   NSString* relativePath = request.path;
-  NSString* absolutePath = [_uploadDirectory stringByAppendingPathComponent:relativePath];
+  NSString* absolutePath = [self _absolutePathForRelativePath:relativePath allowRoot:YES];
   BOOL isDirectory = NO;
-  if (![self _checkSandboxedPath:absolutePath] || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
+  if (!absolutePath || ![[NSFileManager defaultManager] fileExistsAtPath:absolutePath isDirectory:&isDirectory]) {
     return [GCDWebServerErrorResponse responseWithClientError:kGCDWebServerHTTPStatusCode_NotFound message:@"\"%@\" does not exist", relativePath];
   }
   

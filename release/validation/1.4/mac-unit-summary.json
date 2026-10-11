@@ -1,0 +1,49 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006000-000C21210238801E",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "26A434",
+        "osVersion" : "27.0.1",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 0,
+      "passedTests" : 61,
+      "skippedTests" : 1,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "ComicReader-Mac · Built with macOS 27.0.1",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1791709203.513,
+  "passedTests" : 61,
+  "result" : "Passed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 1,
+  "startTime" : 1791709074.069,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - ComicReader-Mac",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "79% of duration",
+      "text" : "4 longest test runs with outlier durations exceeding 12.74s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 62
+}

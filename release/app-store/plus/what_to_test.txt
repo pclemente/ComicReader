@@ -1,0 +1,19 @@
+ComicReader 1.3 build 9 expands the Guideline 4.10 remediation prepared in build 8. iCloud sync stays free and separate from ComicReader Plus.
+
+Current-page text recognition is also free. ComicReader Plus remains one non-consumable purchase and now has four feature groups: Comic Search & Quotes, Custom Reading Lists, Named Page Bookmarks and renderer-only Image Filters.
+
+Please test:
+
+1. Without buying Plus, import a PDF or CBZ, open it, reveal the reader toolbar and tap Comic text and search. On This Page, wait for text, select a phrase, copy it and use Share Text. The system share item should include the comic filename and page number. PDFs use embedded text when available; image-only pages use on-device recognition. Results may vary with language, scan quality and stylised lettering.
+2. Still without Plus, choose Search or Save Quote and confirm that ComicReader offers Plus. Current-page recognition, selection, copying and system sharing must remain usable without purchasing.
+3. Tap Plus in the library toolbar. Verify four rows: Comic Search & Quotes, Custom Reading Lists, Named Page Bookmarks and Image Filters. The screen must contain no iCloud control. Test purchase cancellation, purchase and Restore Purchases; TestFlight transactions are not charged.
+4. In an open comic, choose Comic text and search > Search, then Index Comic. Confirm the open page is indexed first, progress advances page by page, available pages can be searched before completion, and Stop pauses the work. Return later and use Resume Indexing.
+5. Search using different letter case and accents. Results should be ordered by page. Tap a result and confirm the reader jumps to that page. Search applies only to the current comic; there is no whole-library search.
+6. On This Page, select a passage and tap Save Quote. Edit it before saving. In Quotes, open it, edit it again, share it and use Go to Page. Confirm the share item includes the quote, comic filename and page number. Delete a quote and confirm the comic file is unchanged.
+7. Refund the test purchase and relaunch. Saved quotes must remain readable, shareable and able to return to their pages. Adding, editing or deleting a quote must offer Plus. Restore the purchase and confirm mutations become available again.
+8. Create and rename Reading Lists, add and reorder comics, and delete a list. Add, rename, open and delete Page Bookmarks. Their comic files must remain in place.
+9. Try Clear Ink, Grayscale and Warm Paper, then choose Original. Page dimensions and navigation must remain unchanged, and no comic file may be modified.
+10. Run free iCloud sync and confirm that comic files and reading progress can sync, while text indexes, saved quotes, Reading Lists and Page Bookmarks remain local. No recognised text, index or quote should be uploaded by ComicReader.
+11. Long-press a cover and verify the menu stays attached to that cover in portrait, landscape and a resized window. Import two same-named comics quickly and confirm both remain distinct.
+
+Please report crashes, unexpected paywalls, recognition failures that are not explained by image quality, missing or out-of-order search results, stalled resume/cancel behaviour, lost quotes, changed comic bytes, local-only data appearing on another device, or unexpected purchase behaviour before release.

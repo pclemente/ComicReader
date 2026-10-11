@@ -1,0 +1,23 @@
+Apple rejected ComicReader 1.3 (build 7) on 22 September under Guideline 4.10 because this purchase previously unlocked iCloud sync. The remediation introduced in build 9 remains in ComicReader 1.4 (11): iCloud sync is free for every user through a separate library toolbar button and has no dependency on ComicReader Plus.
+
+ComicReader Plus is the same €9.99 non-consumable product, com.pabloclementeperez.ComicFlow.plus. It unlocks four local feature groups:
+
+• Comic Search & Quotes: create a persistent page-by-page index for the comic being read, search indexed pages and jump to a result. Indexing starts with the open page, can be stopped and resumed, and partial results remain searchable. Search is case- and diacritic-insensitive and ordered by page. Selected passages can be edited before saving as quotes.
+• Custom Reading Lists and Smart Queues: create named lists, add comics without moving files, reorder lists and comics, and open automatic Continue Reading, Unread and Read Again queues. Queue counts are free to preview.
+• Named Page Bookmarks: add, rename, delete and open page bookmarks.
+• Image Filters: use Clear Ink, Grayscale or Warm Paper in the reader; Original remains available.
+
+Search covers one comic at a time rather than the whole library. Its index, saved quotes, Reading Lists and Page Bookmarks stay on this device and are not included in iCloud sync. Saved quotes record the comic filename and page. They remain available to read, share and open after a refund or revocation; adding, editing and deleting them requires Plus. Filters affect only on-screen rendering and never modify comic files.
+
+Current-page text recognition is free. Open a comic, reveal the reader toolbar and tap “Comic text and search”. This Page uses embedded PDF text where available or on-device recognition for an image-only page. The recognised text is selectable and can be copied or shared through the system share sheet without Plus. Recognition can be incomplete or incorrect for some languages, scans or stylised lettering.
+
+REVIEW PATH
+
+1. Unzip the attached review-sample.zip. Keep the inner public-domain .cbz file compressed, import it through Settings > Add Files and open it.
+2. Before purchase, open Comic text and search > This Page. Select, copy and share recognised text. Search and Save Quote offer Plus.
+3. Tap Plus in the library toolbar. Confirm the screen lists Comic Search & Quotes, Custom Reading Lists, Named Page Bookmarks and Image Filters, with purchase and Restore Purchases controls and no iCloud control.
+4. Buy in the sandbox or restore the same product. In the comic’s Search tab, choose Index Comic. Stop and resume indexing, search words from indexed pages and tap a result to jump to that page.
+5. On This Page, select text and tap Save Quote. Edit before saving. In Quotes, open, share and edit it, then use Go to Page. Sharing includes the quote, comic filename and page number.
+6. Test Reading Lists, Page Bookmarks and the three paid filters. Choose Original to restore normal rendering.
+
+To verify the 4.10 remediation independently, use an account without Plus and tap the separate iCloud button in the library toolbar. The iCloud Sync screen says “Free for everyone”, contains no purchase control and permits opt-in when iCloud Drive is available. No recognised text, index or saved quote is uploaded by ComicReader.

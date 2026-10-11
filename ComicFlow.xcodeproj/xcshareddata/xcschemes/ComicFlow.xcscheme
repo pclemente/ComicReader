@@ -28,6 +28,12 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference skipped="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="61945109548D78C1E147AD2F" BuildableName="ComicReaderTests.xctest" BlueprintName="ComicReaderTests" ReferencedContainer="container:ComicFlow.xcodeproj"/>
+         </TestableReference>
+         <TestableReference skipped="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="4985A16593B47D41BFF4EC04" BuildableName="ComicReaderUITests.xctest" BlueprintName="ComicReaderUITests" ReferencedContainer="container:ComicFlow.xcodeproj"/>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

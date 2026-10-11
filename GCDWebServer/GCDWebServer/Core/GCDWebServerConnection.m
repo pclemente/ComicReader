@@ -537,7 +537,11 @@ static inline NSUInteger _ScanHexNumber(const void* bytes, NSUInteger size) {
         requestURL = [self rewriteRequestURL:requestURL withMethod:requestMethod headers:requestHeaders];
         GWS_DCHECK(requestURL);
       }
-      NSString* requestPath = requestURL ? GCDWebServerUnescapeURLString(CFBridgingRelease(CFURLCopyPath((CFURLRef)requestURL))) : nil;  // Don't use -[NSURL path] which strips the ending slash
+      NSString* urlPath = requestURL ? CFBridgingRelease(CFURLCopyPath((CFURLRef)requestURL)) : nil;  // Don't use -[NSURL path] which strips the ending slash
+      if (requestURL && (urlPath == nil)) {
+        urlPath = @"/";  // CFURLCopyPath() returns NULL for a relative URL with path "//".
+      }
+      NSString* requestPath = urlPath ? GCDWebServerUnescapeURLString(urlPath) : nil;
       NSString* queryString = requestURL ? CFBridgingRelease(CFURLCopyQueryString((CFURLRef)requestURL, NULL)) : nil;  // Don't use -[NSURL query] to make sure query is not unescaped;
       NSDictionary* requestQuery = queryString ? GCDWebServerParseURLEncodedForm(queryString) : @{};
       if (requestMethod && requestURL && requestHeaders && requestPath && requestQuery) {

@@ -1,0 +1,28 @@
+{
+  "app": "ComicReader",
+  "app_id": "1597314495",
+  "version": "1.3",
+  "build": "9",
+  "build_id": "82c48917-7a27-4a25-aca5-d9768c8d990f",
+  "submission_id": "8528e3cf-59f0-467b-b703-34617ea29110",
+  "submitted_at": "2026-09-22T15:39:00+02:00",
+  "submission_url": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/8528e3cf-59f0-467b-b703-34617ea29110",
+  "status": "Waiting for Review",
+  "items": [
+    {
+      "name": "iOS App 1.3 (9)",
+      "type": "App Version",
+      "status": "Waiting for Review"
+    },
+    {
+      "name": "ComicReader Plus",
+      "type": "In-App Purchase",
+      "product_id": "com.pabloclementeperez.ComicFlow.plus",
+      "status": "Waiting for Review"
+    }
+  ],
+  "release": "Manual",
+  "public_screenshots_retained": 5,
+  "plus_spain_price": "EUR 9.99 one-time",
+  "private_review_screenshot_asset_id": "1af280f1-0852-4dca-ab26-b48bca576585"
+}

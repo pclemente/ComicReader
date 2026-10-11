@@ -68,21 +68,23 @@ static ApplicationDelegate* _sharedInstance = nil;
   _databaseLogger = [[XLDatabaseLogger alloc] init];
   [XLSharedFacility addLogger:_databaseLogger];
 #if DEBUG
-  [XLSharedFacility addLogger:[[XLTelnetServerLogger alloc] init]];
+  [XLSharedFacility addLogger:[[[XLTelnetServerLogger alloc] init] autorelease]];
 #endif
   
-  // Initialize overlay window
-  _overlayWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  _overlayWindow.screen = [UIScreen mainScreen];
-  _overlayWindow.windowLevel = kOverlayWindowLevel;
-  _overlayWindow.userInteractionEnabled = NO;
-  _overlayWindow.rootViewController = [[UIViewController alloc] init];
-  _overlayWindow.rootViewController.view = [[UIView alloc] initWithFrame:_overlayWindow.bounds];
-  
-  return NO;
+  return YES;
 }
 
-- (void) applicationDidEnterBackground:(UIApplication*)application {
+- (void) configureOverlayForWindowScene:(UIWindowScene*)scene {
+  [_overlayWindow release];
+  _overlayWindow = [[UIWindow alloc] initWithWindowScene:scene];
+  _overlayWindow.windowLevel = kOverlayWindowLevel;
+  _overlayWindow.userInteractionEnabled = NO;
+  _overlayWindow.backgroundColor = [UIColor clearColor];
+  _overlayWindow.rootViewController = [[[UIViewController alloc] init] autorelease];
+  _overlayWindow.rootViewController.view.backgroundColor = [UIColor clearColor];
+}
+
+- (void) enterBackground {
   // Dismiss alert views
   [self dismissAlert:NO];
   
@@ -98,7 +100,7 @@ static ApplicationDelegate* _sharedInstance = nil;
   XLOG_VERBOSE(@"Application did enter background");
 }
 
-- (void) applicationWillEnterForeground:(UIApplication*)application {
+- (void) enterForeground {
   XLOG_VERBOSE(@"Application will enter foreground");
   
   // Make sure user defaults are synchronized
@@ -172,19 +174,40 @@ static ApplicationDelegate* _sharedInstance = nil;
 }
 
 - (void) _dismissAlertWithButtonIndex:(NSInteger)index {
-  if (index == 0) {  // cancel index
-    if (_alertDelegate && _alertCancelSelector) {
-      [_alertDelegate performSelector:_alertCancelSelector withObject:_alertArgument];
-    }
-  } else {
-    if (_alertDelegate && _alertConfirmSelector) {
-      [_alertDelegate performSelector:_alertConfirmSelector withObject:_alertArgument];
-    }
-  }
-  [_alertArgument release];
-  [_alertDelegate release];
-  [_alertView release];
+  // Clear ownership before invoking client code: callbacks may show another alert.
+  id delegate = _alertDelegate;
+  id argument = _alertArgument;
+  SEL selector = index == 0 ? _alertCancelSelector : _alertConfirmSelector;
+  UIAlertController* alert = _alertView;
   _alertView = nil;
+  _alertDelegate = nil;
+  _alertArgument = nil;
+  _alertCancelSelector = NULL;
+  _alertConfirmSelector = NULL;
+  if (delegate && selector) {
+    [delegate performSelector:selector withObject:argument];
+  }
+  [argument release];
+  [delegate release];
+  [alert release];
+}
+
+- (void) presentPendingAlert {
+  if (!_alertView || _alertView.presentingViewController || !_viewController.view.window ||
+      _window.windowScene.activationState != UISceneActivationStateForegroundActive) {
+    return;
+  }
+  UIViewController* top = _viewController;
+  while (top.presentedViewController) {
+    top = top.presentedViewController;
+  }
+  // UIKit must finish dismissing the previous controller before presenting its replacement.
+  if (top.isBeingDismissed || top.isBeingPresented) {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(presentPendingAlert) object:nil];
+    [self performSelector:@selector(presentPendingAlert) withObject:nil afterDelay:0.05];
+    return;
+  }
+  [top presentViewController:_alertView animated:YES completion:nil];
 }
 
 - (void) showAlertWithTitle:(NSString*)title message:(NSString*)message button:(NSString*)button {
@@ -217,14 +240,18 @@ static ApplicationDelegate* _sharedInstance = nil;
                    argument:(id)argument {
   XLOG_CHECK(title);
   XLOG_CHECK(confirmButton);
+  NSUInteger previousGeneration = _alertGeneration;
   [self dismissAlert:NO];
+  if (_alertGeneration != previousGeneration) {
+    // A cancellation callback requested a newer alert; preserve its ownership and state.
+    return;
+  }
 
-  // Use UIAlertController (iOS 8+)
   UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
                                                                  message:message
                                                           preferredStyle:UIAlertControllerStyleAlert];
-  // Keep a dummy retained object in _alertView slot to satisfy isAlertVisible
   _alertView = [alert retain];
+  NSUInteger generation = ++_alertGeneration;
   _alertDelegate = [delegate retain];
   _alertConfirmSelector = confirmSelector;
   _alertCancelSelector = cancelSelector;
@@ -234,7 +261,9 @@ static ApplicationDelegate* _sharedInstance = nil;
     UIAlertAction* cancel = [UIAlertAction actionWithTitle:cancelButton
                                                      style:UIAlertActionStyleCancel
                                                    handler:^(UIAlertAction* action) {
-      [self _dismissAlertWithButtonIndex:0];
+      if (_alertView && _alertGeneration == generation) {
+        [self _dismissAlertWithButtonIndex:0];
+      }
     }];
     [alert addAction:cancel];
   }
@@ -242,33 +271,22 @@ static ApplicationDelegate* _sharedInstance = nil;
   UIAlertAction* confirm = [UIAlertAction actionWithTitle:confirmButton
                                                     style:UIAlertActionStyleDefault
                                                   handler:^(UIAlertAction* action) {
-    [self _dismissAlertWithButtonIndex:1];
+    if (_alertView && _alertGeneration == generation) {
+      [self _dismissAlertWithButtonIndex:1];
+    }
   }];
   [alert addAction:confirm];
 
-  UIViewController* top = _viewController;
-  while (top.presentedViewController) {
-    top = top.presentedViewController;
-  }
-  [top presentViewController:alert animated:YES completion:nil];
+  // Deferring also permits alerts requested during scene setup to be presented after launch.
+  [self performSelector:@selector(presentPendingAlert) withObject:nil afterDelay:0.0];
 }
 
 - (void) dismissAlert:(BOOL)animated {
   if (_alertView) {
-    UIViewController* top = _viewController;
-    while (top.presentedViewController) {
-      top = top.presentedViewController;
-    }
-    if ([top isKindOfClass:[UIAlertController class]]) {
-      [top dismissViewControllerAnimated:animated completion:^{
-        [self _dismissAlertWithButtonIndex:0];
-      }];
-    } else {
-      [_alertArgument release];
-      [_alertDelegate release];
-      [_alertView release];
-      _alertView = nil;
-    }
+    UIAlertController* alert = [_alertView retain];
+    [alert dismissViewControllerAnimated:animated completion:nil];
+    [self _dismissAlertWithButtonIndex:0];
+    [alert release];
   }
 }
 
@@ -285,9 +303,10 @@ static ApplicationDelegate* _sharedInstance = nil;
   
   [self hideSpinner:NO];
   
-  UIActivityIndicatorView* indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+  UIActivityIndicatorView* indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
   indicator.frame = CGRectOffset(indicator.frame, kSpinnerBorderWidth, kSpinnerBorderWidth);
   indicator.hidesWhenStopped = NO;
+  indicator.color = [UIColor whiteColor];
   [indicator autorelease];
   CGSize size = indicator.frame.size;
   frame.size.width = size.width + 2.0 * kSpinnerBorderWidth;
@@ -336,42 +355,40 @@ static ApplicationDelegate* _sharedInstance = nil;
     _spinnerView.layer.cornerRadius = 10.0;
   }
   _spinnerView.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.75];
-  [_overlayWindow addSubview:_spinnerView];
+  [_overlayWindow.rootViewController.view addSubview:_spinnerView];
   _overlayWindow.hidden = NO;
   if (animated) {
     _spinnerView.alpha = 0.0;
-    [UIView beginAnimations:nil context:NULL];
-    [UIView setAnimationCurve:UIViewAnimationCurveEaseOut];
-    [UIView setAnimationDuration:kSpinnerViewAnimationDuration];
-    _spinnerView.alpha = 1.0;
-    [UIView commitAnimations];
+    [UIView animateWithDuration:kSpinnerViewAnimationDuration
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseOut
+                     animations:^{ _spinnerView.alpha = 1.0; }
+                     completion:nil];
   }
   
   [indicator startAnimating];
 }
 
-- (void) _spinnerAnimationDidStop:(NSString*)animationID finished:(NSNumber*)finished context:(void*)context {
-  [(UIView*)context removeFromSuperview];
-  _overlayWindow.hidden = YES;
-  [(UIView*)context release];
-}
-
 - (void) hideSpinner:(BOOL)animated {
-  if (_spinnerView) {
+  UIView* spinner = _spinnerView;
+  _spinnerView = nil;
+  if (spinner) {
     if (animated) {
-      [UIView beginAnimations:nil context:[_spinnerView retain]];
-      [UIView setAnimationDelegate:self];
-      [UIView setAnimationDidStopSelector:@selector(_spinnerAnimationDidStop:finished:context:)];
-      [UIView setAnimationCurve:UIViewAnimationCurveEaseIn];
-      [UIView setAnimationDuration:kSpinnerViewAnimationDuration];
-      _spinnerView.alpha = 0.0;
-      [UIView commitAnimations];
+      [UIView animateWithDuration:kSpinnerViewAnimationDuration
+                            delay:0
+                          options:UIViewAnimationOptionCurveEaseIn
+                       animations:^{ spinner.alpha = 0.0; }
+                       completion:^(BOOL finished) {
+        [spinner removeFromSuperview];
+        if (!_spinnerView) {
+          _overlayWindow.hidden = YES;
+        }
+      }];
     } else {
-      [_spinnerView removeFromSuperview];
+      [spinner removeFromSuperview];
       _overlayWindow.hidden = YES;
     }
-    [_spinnerView release];
-    _spinnerView = nil;
+    [spinner release];
   }
 }
 

@@ -344,8 +344,10 @@ static int _ErrorFunction(voidpf opaque, voidpf stream) {
     
     // If file is required one, extract it
     if (![path hasSuffix:@"/"] && [path isEqualToString:inPath]) {
+      BOOL createdOutputFile = NO;
       FILE* outFile = fopen([outPath fileSystemRepresentation], "w");
       if (outFile) {
+        createdOutputFile = YES;
         success = YES;
         while (1) {
           unsigned char buffer[kZipExtractionBufferSize];
@@ -369,7 +371,14 @@ static int _ErrorFunction(voidpf opaque, voidpf stream) {
       } else {
         XLOG_ERROR(@"Failed creating \"%@\" from ZIP archive", path);
       }
-      unzCloseCurrentFile(_unzFile);
+      int closeResult = unzCloseCurrentFile(_unzFile);
+      if (success && closeResult != UNZ_OK) {
+        XLOG_ERROR(@"MiniZip returned error %i while validating \"%@\"", closeResult, path);
+        success = NO;
+      }
+      if (!success && createdOutputFile) {
+        [[NSFileManager defaultManager] removeItemAtPath:outPath error:NULL];
+      }
       break;
     }
     

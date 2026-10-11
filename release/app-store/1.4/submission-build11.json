@@ -1,0 +1,78 @@
+{
+  "version": "1.4",
+  "build": "11",
+  "appStoreAppID": "1597314495",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "recordedAt": "2026-10-11T12:31:47.901090+00:00",
+  "status": "Waiting for Review on iOS and macOS",
+  "platforms": {
+    "iOS": {
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4-build11/iOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.4-build11/iOS/export/ComicReader.ipa",
+      "sha256": "ea6dbcd38e811fe89a7a6a30feff4f67a38f014204121b2aea365ca6bfdd2fe7",
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "version": "1.4",
+      "build": "11",
+      "buildID": "9183e98c-1fbb-481d-9fbd-4f25c4c2a6aa",
+      "submissionID": "2d6748b1-750e-4c6f-8e56-4f67032b3235",
+      "status": "Waiting for Review",
+      "submittedAt": "2026-10-11T14:39:00+02:00",
+      "automaticReleaseAfterApproval": true,
+      "submissionURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/2d6748b1-750e-4c6f-8e56-4f67032b3235"
+    },
+    "macOS": {
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4-build11/macOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.4-build11/macOS/export/ComicReader.pkg",
+      "sha256": "8b39fad662eac06458330b12027158e4455a807e4f868b8d535227d6e17b8c64",
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "version": "1.4",
+      "build": "11",
+      "submissionID": "afed8206-4c44-4df8-a929-873898ba3cf7",
+      "status": "Waiting for Review",
+      "automaticReleaseAfterApproval": true,
+      "buildID": "37f2f70c-e7e9-488e-ae63-a2a0768d4f20",
+      "submittedAt": "2026-10-11T14:37:00+02:00",
+      "submissionURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/afed8206-4c44-4df8-a929-873898ba3cf7"
+    }
+  },
+  "plus": {
+    "productID": "com.pabloclementeperez.ComicFlow.plus",
+    "type": "non-consumable",
+    "price": "EUR 9.99",
+    "baseStorefront": "Spain",
+    "approvedExistingProduct": true,
+    "features": [
+      "Comic indexing and text search",
+      "Saved quotes",
+      "Custom Reading Lists and Smart Queues",
+      "Named page bookmarks",
+      "Reader image filters"
+    ]
+  },
+  "limitations": [
+    "Live two-device iCloud sync and cross-platform production purchase propagation not validated",
+    "Minimum supported OS runtime checks unavailable"
+  ],
+  "iOSBuildID": "9183e98c-1fbb-481d-9fbd-4f25c4c2a6aa",
+  "macOSBuildID": "37f2f70c-e7e9-488e-ae63-a2a0768d4f20",
+  "verifiedAt": "2026-10-11T12:43:14.429318+00:00",
+  "app": "ComicReader",
+  "appReviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions",
+  "publiclyAvailable": false,
+  "screenshots": {
+    "iPhone": 1,
+    "iPadExistingRetained": 5,
+    "macOS": 3
+  },
+  "proofScreenshots": [
+    "release/app-store/1.4/submission-proof/ios-waiting-for-review.png",
+    "release/app-store/1.4/submission-proof/macos-waiting-for-review.png",
+    "release/app-store/1.4/submission-proof/both-waiting-for-review.png"
+  ],
+  "freeFeatures": [
+    "iCloud sync of comic files, read status and current page",
+    "Current-page text recognition, copying and sharing"
+  ]
+}

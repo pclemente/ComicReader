@@ -13,12 +13,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#import <StoreKit/StoreKit.h>
-
 #import "ApplicationDelegate.h"
 #import "WebServer.h"
 
-#define kStoreKitProductIdentifier @"web_uploader"
 #if DEBUG
 #define kTrialMaxUploads 5
 #else
@@ -30,19 +27,17 @@
   BOOL _needsUpdate;
   WebServer* _webServer;
   UIWindow* _dimmingWindow;
-  BOOL _purchasing;
+  dispatch_queue_t _importQueue;
 }
 @property(nonatomic, getter=isScreenDimmed) BOOL screenDimmed;
 + (AppDelegate*) sharedDelegate;
 - (void) updateLibrary;
+- (BOOL) importComicAtURL:(NSURL*)url;  // Returns whether the import was queued.
+- (BOOL) importComicAtURL:(NSURL*)url completion:(void (^)(BOOL imported))completion;
+- (void) connectWindowScene:(UIWindowScene*)scene;
 @end
 
 @interface AppDelegate (WebServer) <WebServerDelegate>
-@end
-
-@interface AppDelegate (StoreKit) <SKPaymentTransactionObserver, SKProductsRequestDelegate>
-- (void) purchase;
-- (void) restore;
 @end
 
 @interface AppDelegate (Events)

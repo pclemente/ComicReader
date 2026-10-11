@@ -19,10 +19,42 @@
 // http://www.rarlab.com/rar_add.htm
 // http://goahomepage.free.fr/article/2000_09_17_unrar_dll/UnRARDLL.html
 
+static const unsigned int kRARMainHeaderFlagPassword = 0x0080U;
+static const unsigned int kRARFileHeaderFlagPassword = 0x0004U;
+
 static NSString* _PathFromFileName(const char* filename) {
-  NSString* path = [NSString stringWithCString:filename encoding:NSASCIIStringEncoding];
+  NSString* path = [NSString stringWithCString:filename encoding:NSUTF8StringEncoding];
+  if (path == nil) {
+    path = [NSString stringWithCString:filename encoding:NSISOLatin1StringEncoding];
+  }
   XLOG_DEBUG_CHECK(path);
   return path;
+}
+
+static HANDLE _OpenArchive(NSString* path, unsigned int mode) {
+  struct RAROpenArchiveDataEx archiveData;
+  bzero(&archiveData, sizeof(archiveData));
+  archiveData.ArcName = (char*)[path fileSystemRepresentation];
+  archiveData.OpenMode = mode;
+  HANDLE handle = RAROpenArchiveEx(&archiveData);
+  if (handle == NULL) {
+    XLOG_ERROR(@"UnRAR failed opening archive");
+    return NULL;
+  }
+  if (archiveData.Flags & kRARMainHeaderFlagPassword) {
+    XLOG_ERROR(@"Encrypted RAR headers are unsupported");
+    RARCloseArchive(handle);
+    return NULL;
+  }
+  return handle;
+}
+
+static BOOL _RARFileIsEncrypted(const struct RARHeaderData* headerData) {
+  if (headerData->Flags & kRARFileHeaderFlagPassword) {
+    XLOG_ERROR(@"Encrypted RAR files are unsupported");
+    return YES;
+  }
+  return NO;
 }
 
 @implementation UnRAR
@@ -42,12 +74,8 @@ static NSString* _PathFromFileName(const char* filename) {
 - (id) initWithArchiveAtPath:(NSString*)path {
   if ((self = [super init])) {
     _archivePath = [path copy];
-    
-    struct RAROpenArchiveData archiveData;
-    bzero(&archiveData, sizeof(archiveData));
-    archiveData.ArcName = (char*)[_archivePath fileSystemRepresentation];
-    archiveData.OpenMode = RAR_OM_LIST;
-    HANDLE handle = RAROpenArchive(&archiveData);
+
+    HANDLE handle = _OpenArchive(_archivePath, RAR_OM_LIST);
     if (handle) {
       RARCloseArchive(handle);
     } else {
@@ -68,11 +96,7 @@ static NSString* _PathFromFileName(const char* filename) {
   NSMutableArray* array = nil;
   
   // Open archive
-  struct RAROpenArchiveData archiveData;
-  bzero(&archiveData, sizeof(archiveData));
-  archiveData.ArcName = (char*)[_archivePath fileSystemRepresentation];
-  archiveData.OpenMode = RAR_OM_LIST;
-  HANDLE handle = RAROpenArchive(&archiveData);
+  HANDLE handle = _OpenArchive(_archivePath, RAR_OM_LIST);
   if (handle) {
     array = [NSMutableArray array];
     
@@ -87,6 +111,10 @@ static NSString* _PathFromFileName(const char* filename) {
           XLOG_ERROR(@"UnRAR returned error %i", result);
           array = nil;
         }
+        break;
+      }
+      if (_RARFileIsEncrypted(&headerData)) {
+        array = nil;
         break;
       }
       NSString* path = _PathFromFileName(headerData.FileName);
@@ -115,8 +143,6 @@ static NSString* _PathFromFileName(const char* filename) {
     
     // Close archive
     RARCloseArchive(handle);
-  } else {
-    XLOG_ERROR(@"UnRAR failed opening archive");
   }
   
   return array;
@@ -126,11 +152,7 @@ static NSString* _PathFromFileName(const char* filename) {
   BOOL success = NO;
   
   // Open archive
-  struct RAROpenArchiveData archiveData;
-  bzero(&archiveData, sizeof(archiveData));
-  archiveData.ArcName = (char*)[_archivePath fileSystemRepresentation];
-  archiveData.OpenMode = RAR_OM_EXTRACT;
-  HANDLE handle = RAROpenArchive(&archiveData);
+  HANDLE handle = _OpenArchive(_archivePath, RAR_OM_EXTRACT);
   if (handle) {
     const char* destination = [outPath fileSystemRepresentation];
     success = YES;
@@ -146,6 +168,10 @@ static NSString* _PathFromFileName(const char* filename) {
           XLOG_ERROR(@"UnRAR returned error %i", result);
           success = NO;
         }
+        break;
+      }
+      if (_RARFileIsEncrypted(&headerData)) {
+        success = NO;
         break;
       }
       NSString* path = _PathFromFileName(headerData.FileName);
@@ -171,8 +197,6 @@ static NSString* _PathFromFileName(const char* filename) {
     
     // Close archive
     RARCloseArchive(handle);
-  } else {
-    XLOG_ERROR(@"UnRAR failed opening archive");
   }
   
   return success;
@@ -182,11 +206,7 @@ static NSString* _PathFromFileName(const char* filename) {
   BOOL success = NO;
   
   // Open archive
-  struct RAROpenArchiveData archiveData;
-  bzero(&archiveData, sizeof(archiveData));
-  archiveData.ArcName = (char*)[_archivePath fileSystemRepresentation];
-  archiveData.OpenMode = RAR_OM_EXTRACT;
-  HANDLE handle = RAROpenArchive(&archiveData);
+  HANDLE handle = _OpenArchive(_archivePath, RAR_OM_EXTRACT);
   if (handle) {
     
     // Scan archive
@@ -199,6 +219,9 @@ static NSString* _PathFromFileName(const char* filename) {
         if (result != ERAR_END_ARCHIVE) {
           XLOG_ERROR(@"UnRAR returned error %i", result);
         }
+        break;
+      }
+      if (_RARFileIsEncrypted(&headerData)) {
         break;
       }
       NSString* path = _PathFromFileName(headerData.FileName);
@@ -223,8 +246,6 @@ static NSString* _PathFromFileName(const char* filename) {
     
     // Close archive
     RARCloseArchive(handle);
-  } else {
-    XLOG_ERROR(@"UnRAR failed opening archive");
   }
   
   return success;

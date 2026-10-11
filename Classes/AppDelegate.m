@@ -20,148 +20,11 @@
 #import "Extensions_Foundation.h"
 #import "Extensions_UIKit.h"
 #import "NetReachability.h"
+#import "CRLibrarySyncCoordinator.h"
+#import "ComicFlow-Swift.h"
 
 #define kUpdateDelay 1.0
 #define kScreenDimmingOpacity 0.5
-
-@implementation AppDelegate (StoreKit)
-
-- (void) _startPurchase {
-  _purchasing = YES;
-  [self showSpinnerWithMessage:NSLocalizedString(@"PURCHASE_SPINNER", nil) fullScreen:YES animated:YES];
-  self.window.userInteractionEnabled = NO;
-}
-
-- (void) _finishPurchase {
-  XLOG_DEBUG_CHECK(_purchasing);
-  self.window.userInteractionEnabled = YES;
-  [self hideSpinner:YES];
-  _purchasing = NO;
-}
-
-- (void) purchase {
-  XLOG_DEBUG_CHECK([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_ServerMode] != kServerMode_Full);
-  if (![[NetReachability sharedNetReachability] state]) {
-    [self showAlertWithTitle:NSLocalizedString(@"OFFLINE_ALERT_TITLE", nil) message:NSLocalizedString(@"OFFLINE_ALERT_MESSAGE", nil) button:NSLocalizedString(@"OFFLINE_ALERT_BUTTON", nil)];
-    return;
-  }
-  if (![SKPaymentQueue canMakePayments]) {
-    [self showAlertWithTitle:NSLocalizedString(@"DISABLED_ALERT_TITLE", nil) message:NSLocalizedString(@"DISABLED_ALERT_MESSAGE", nil) button:NSLocalizedString(@"DISABLED_ALERT_BUTTON", nil)];
-    return;
-  }
-  if (_purchasing || [[[SKPaymentQueue defaultQueue] transactions] count]) {
-    [self showAlertWithTitle:NSLocalizedString(@"BUSY_ALERT_TITLE", nil) message:NSLocalizedString(@"BUSY_ALERT_MESSAGE", nil) button:NSLocalizedString(@"BUSY_ALERT_BUTTON", nil)];
-    return;
-  }
-  SKProductsRequest* request = [[SKProductsRequest alloc] initWithProductIdentifiers:[NSSet setWithObject:kStoreKitProductIdentifier]];
-  request.delegate = self;
-  [request start];
-  [self _startPurchase];
-}
-
-- (void) restore {
-  XLOG_DEBUG_CHECK([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_ServerMode] != kServerMode_Full);
-  [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
-  [self _startPurchase];
-}
-
-- (void) request:(SKRequest*)request didFailWithError:(NSError*)error {
-  XLOG_ERROR(@"App Store request failed: %@", error);
-  [self showAlertWithTitle:NSLocalizedString(@"FAILED_ALERT_TITLE", nil) message:NSLocalizedString(@"FAILED_ALERT_MESSAGE", nil) button:NSLocalizedString(@"FAILED_ALERT_BUTTON", nil)];
-  [self _finishPurchase];
-}
-
-- (void) productsRequest:(SKProductsRequest*)request didReceiveResponse:(SKProductsResponse*)response {
-  SKProduct* product = [response.products firstObject];
-  if (product) {
-    SKPayment* payment = [SKPayment paymentWithProduct:product];
-    [[SKPaymentQueue defaultQueue] addPayment:payment];
-  } else {
-    XLOG_WARNING(@"Invalid App Store products: %@", response.invalidProductIdentifiers);
-    [self showAlertWithTitle:NSLocalizedString(@"FAILED_ALERT_TITLE", nil) message:NSLocalizedString(@"FAILED_ALERT_MESSAGE", nil) button:NSLocalizedString(@"FAILED_ALERT_BUTTON", nil)];
-    [self _finishPurchase];
-  }
-}
-
-// This can be called in response to a purchase request or on app cold launch if there are unfinished transactions still pending
-- (void) paymentQueue:(SKPaymentQueue*)queue updatedTransactions:(NSArray*)transactions {
-  XLOG_VERBOSE(@"%i App Store transactions updated", (int)transactions.count);
-  for (SKPaymentTransaction* transaction in transactions) {
-    NSString* productIdentifier = transaction.payment.productIdentifier;
-    XLOG_DEBUG_CHECK(productIdentifier);
-    switch (transaction.transactionState) {
-      
-      case SKPaymentTransactionStatePurchasing:
-        [self logEvent:@"iap.purchasing" withParameterName:@"product" value:productIdentifier];
-        break;
-        
-      case SKPaymentTransactionStateDeferred:
-        [self logEvent:@"iap.deferred" withParameterName:@"product" value:productIdentifier];
-        break;
-      
-      case SKPaymentTransactionStatePurchased:
-      case SKPaymentTransactionStateRestored: {
-        XLOG_VERBOSE(@"Processing App Store transaction '%@' from %@", transaction.transactionIdentifier, transaction.transactionDate);
-        if ([productIdentifier isEqualToString:kStoreKitProductIdentifier]) {
-          NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-          [defaults setInteger:kServerMode_Full forKey:kDefaultKey_ServerMode];
-          [defaults removeObjectForKey:kDefaultKey_UploadsRemaining];
-          [defaults synchronize];
-        } else {
-          XLOG_ERROR(@"Unexpected App Store product \"%@\"", productIdentifier);
-          XLOG_DEBUG_UNREACHABLE();
-        }
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
-          [(LibraryViewController*)self.viewController updatePurchase];
-          [self showAlertWithTitle:NSLocalizedString(@"COMPLETE_ALERT_TITLE", nil) message:NSLocalizedString(@"COMPLETE_ALERT_MESSAGE", nil) button:NSLocalizedString(@"COMPLETE_ALERT_BUTTON", nil)];
-          [self _finishPurchase];
-          [self logEvent:@"iap.purchased" withParameterName:@"product" value:productIdentifier];
-        } else {
-          XLOG_DEBUG_CHECK(_purchasing == NO);
-          [self logEvent:@"iap.restored" withParameterName:@"product" value:productIdentifier];
-        }
-        break;
-      }
-      
-      case SKPaymentTransactionStateFailed: {
-        NSError* error = transaction.error;
-        if ([error.domain isEqualToString:SKErrorDomain] && (error.code == SKErrorPaymentCancelled)) {
-          XLOG_VERBOSE(@"App Store transaction cancelled");
-          [self logEvent:@"iap.cancelled" withParameterName:@"product" value:productIdentifier];
-        } else {
-          XLOG_ERROR(@"App Store transaction failed: %@", error);
-          [self showAlertWithTitle:NSLocalizedString(@"FAILED_ALERT_TITLE", nil) message:NSLocalizedString(@"FAILED_ALERT_MESSAGE", nil) button:NSLocalizedString(@"FAILED_ALERT_BUTTON", nil)];
-          [self logEvent:@"iap.failed" withParameterName:@"product" value:productIdentifier];
-        }
-        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
-        [self _finishPurchase];
-        break;
-      }
-      
-    }
-  }
-}
-
-- (void) paymentQueue:(SKPaymentQueue*)queue removedTransactions:(NSArray*)transactions {
-  XLOG_VERBOSE(@"%i App Store transactions removed", (int)transactions.count);
-}
-
-- (void) paymentQueue:(SKPaymentQueue*)queue restoreCompletedTransactionsFailedWithError:(NSError*)error {
-  if ([error.domain isEqualToString:SKErrorDomain] && (error.code == SKErrorPaymentCancelled)) {
-    XLOG_VERBOSE(@"App Store transaction restoration cancelled");
-  } else {
-    XLOG_ERROR(@"App Store transaction restoration failed: %@", error);
-  }
-  [self _finishPurchase];
-}
-
-- (void) paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue*)queue {
-  XLOG_VERBOSE(@"App Store transactions restored");
-  [self _finishPurchase];
-}
-
-@end
 
 @implementation AppDelegate
 
@@ -169,7 +32,7 @@
   // Setup initial user defaults
   NSMutableDictionary* defaults = [[NSMutableDictionary alloc] init];
   [defaults setObject:[NSNumber numberWithInteger:0] forKey:kDefaultKey_LibraryVersion];
-  [defaults setObject:[NSNumber numberWithInteger:kServerMode_Trial] forKey:kDefaultKey_ServerMode];
+  [defaults setObject:[NSNumber numberWithInteger:kServerMode_Full] forKey:kDefaultKey_ServerMode];
   [defaults setObject:[NSNumber numberWithInteger:kTrialMaxUploads] forKey:kDefaultKey_UploadsRemaining];
   [defaults setObject:[NSNumber numberWithBool:NO] forKey:kDefaultKey_ScreenDimmed];
   [defaults setObject:[NSNumber numberWithDouble:0.0] forKey:kDefaultKey_RootTimestamp];
@@ -189,13 +52,6 @@
   return (AppDelegate*)[[UIApplication sharedApplication] delegate];
 }
 
-- (void) awakeFromNib {
-  [super awakeFromNib];
-
-  // Initialize library
-  XLOG_CHECK([LibraryConnection mainConnection]);
-}
-
 - (void) _updateTimer:(NSTimer*)timer {
   if ([[LibraryUpdater sharedUpdater] isUpdating]) {
     [_updateTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:kUpdateDelay]];
@@ -210,20 +66,71 @@
 
 - (BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions {
   [super application:application didFinishLaunchingWithOptions:launchOptions];
+  XLOG_CHECK([LibraryConnection mainConnection]);
+
+  [[CRLibrarySyncCoordinator sharedCoordinator] start];
+  [[CRPlusStore sharedStore] start];
+
+  // Keep unlimited transfers free, including installations with old trial settings.
+  NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+  [defaults setInteger:kServerMode_Full forKey:kDefaultKey_ServerMode];
+  [defaults removeObjectForKey:kDefaultKey_UploadsRemaining];
   
 #if TARGET_IPHONE_SIMULATOR
   // Log Documents folder path
   XLOG_VERBOSE(@"Documents folder location: %@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]);
 #endif
   
-  // Prevent backup of Documents directory as it contains only "offline data" (iOS 5.0.1 and later)
+  // Prevent mobile device backups from duplicating the offline comic library.
+  // On macOS, the sandbox Documents directory is the user's primary local
+  // library and should remain eligible for Time Machine backups.
+#if !TARGET_OS_MACCATALYST
   NSString* documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
   NSURL* documentsURL = [NSURL fileURLWithPath:documentsPath];
   NSError* backupError = nil;
   if (![documentsURL setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:&backupError]) {
     XLOG_ERROR(@"Failed setting do-not-backup attribute on \"%@\": %@", documentsPath, backupError);
   }
+#endif
   
+  // Initialize update timer
+  _updateTimer = [[NSTimer alloc] initWithFireDate:[NSDate distantFuture]
+                                          interval:HUGE_VAL
+                                            target:self
+                                          selector:@selector(_updateTimer:)
+                                          userInfo:nil
+                                           repeats:YES];
+  [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+
+  // Initialize web server
+  [[WebServer sharedWebServer] setDelegate:self];
+
+  return YES;
+}
+
+- (void) connectWindowScene:(UIWindowScene*)scene {
+#if TARGET_OS_MACCATALYST
+  // Keep the legacy fixed-size controls usable while still allowing a normal,
+  // resizable Mac window and full-screen reading.
+  scene.sizeRestrictions.minimumSize = CGSizeMake(700.0, 500.0);
+#endif
+  if (self.window.windowScene == scene) {
+    return;
+  }
+  if (self.window) {
+    // Reconnect the existing library after UIKit discards a scene connection.
+    self.window.windowScene = scene;
+    _dimmingWindow.windowScene = scene;
+    [self hideSpinner:NO];
+    [self configureOverlayForWindowScene:scene];
+    [self.window makeKeyAndVisible];
+    [self updateLibrary];
+    return;
+  }
+  [self saveState];
+  self.window = [[[UIWindow alloc] initWithWindowScene:scene] autorelease];
+  [self configureOverlayForWindowScene:scene];
+
   // Create root view controller
   self.viewController = [[[LibraryViewController alloc] initWithWindow:self.window] autorelease];
   
@@ -238,50 +145,100 @@
     [[LibraryUpdater sharedUpdater] update:NO];
   }
   
-  // Initialize update timer
-  _updateTimer = [[NSTimer alloc] initWithFireDate:[NSDate distantFuture]
-                                          interval:HUGE_VAL
-                                            target:self
-                                          selector:@selector(_updateTimer:)
-                                          userInfo:nil
-                                           repeats:YES];
-  [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
-  
-  // Initialize web server
-  [[WebServer sharedWebServer] setDelegate:self];
-  
-  // Show window
-  self.window.backgroundColor = nil;
   self.window.rootViewController = self.viewController;
   [self.window makeKeyAndVisible];
-  
-  // Initialize dimming window
-  _dimmingWindow = [[UIWindow alloc] initWithFrame:([UIScreen instancesRespondToSelector:@selector(nativeBounds)] ? [[UIScreen mainScreen] nativeBounds] : [[UIScreen mainScreen] bounds])];
+
+  [_dimmingWindow release];
+  _dimmingWindow = [[UIWindow alloc] initWithWindowScene:scene];
   _dimmingWindow.userInteractionEnabled = NO;
   _dimmingWindow.windowLevel = UIWindowLevelStatusBar;
-  _dimmingWindow.backgroundColor = [UIColor blackColor];
-  _dimmingWindow.alpha = 0.0;
-  _dimmingWindow.hidden = YES;
-  _dimmingWindow.rootViewController = [[UIViewController alloc] init];
-  _dimmingWindow.rootViewController.view.hidden = YES;
-  if ([[NSUserDefaults standardUserDefaults] boolForKey:kDefaultKey_ScreenDimmed]) {
-    [self setScreenDimmed:YES];
-  }
-  
-  // Initialize StoreKit
-  [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
-    
-  int count = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"LaunchCount"];
-  if(count < 0) count = 0;
-  [[NSUserDefaults standardUserDefaults] setInteger:count+1 forKey:@"LaunchCount"];
+  _dimmingWindow.backgroundColor = [UIColor clearColor];
+  _dimmingWindow.rootViewController = [[[UIViewController alloc] init] autorelease];
+  _dimmingWindow.rootViewController.view.backgroundColor = [UIColor blackColor];
+  _dimmingWindow.alpha = self.isScreenDimmed ? kScreenDimmingOpacity : 0.0;
+  _dimmingWindow.hidden = !self.isScreenDimmed;
+}
 
-  /**
-  NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-  [defaults setInteger:kServerMode_Full forKey:kDefaultKey_ServerMode];
-  [defaults removeObjectForKey:kDefaultKey_UploadsRemaining];
-  [defaults synchronize];
-    **/
-  
+- (BOOL) importComicAtURL:(NSURL*)url {
+  return [self importComicAtURL:url completion:nil];
+}
+
+- (BOOL) importComicAtURL:(NSURL*)url completion:(void (^)(BOOL))completion {
+  if (!url.isFileURL || [url.lastPathComponent hasPrefix:@"."] ||
+      ![@[@"pdf", @"cbz", @"zip", @"cbr", @"rar"] containsObject:url.pathExtension.lowercaseString]) {
+    if (completion) {
+      completion(NO);
+    }
+    return NO;
+  }
+  if (!_importQueue) {
+    _importQueue = dispatch_queue_create("com.comicreader.import", DISPATCH_QUEUE_SERIAL);
+  }
+  dispatch_async(_importQueue, ^{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    BOOL scoped = [url startAccessingSecurityScopedResource];
+    __block NSError* copyError = nil;
+    NSError* coordinationError = nil;
+    __block BOOL imported = NO;
+    NSFileCoordinator* coordinator = [[[NSFileCoordinator alloc] initWithFilePresenter:nil] autorelease];
+    [coordinator coordinateReadingItemAtURL:url options:0 error:&coordinationError byAccessor:^(NSURL* readableURL) {
+      NSNumber* regularFile = nil;
+      if (![readableURL getResourceValue:&regularFile forKey:NSURLIsRegularFileKey error:&copyError] || !regularFile.boolValue) {
+        [copyError retain];
+        return;
+      }
+      NSString* root = [[LibraryConnection libraryRootPath] stringByResolvingSymlinksInPath];
+      NSString* source = [readableURL.path stringByResolvingSymlinksInPath];
+      // The indexer supports root comics and one visible collection folder.
+      if ([source hasPrefix:[root stringByAppendingString:@"/"]]) {
+        NSArray* components = [[source substringFromIndex:root.length + 1] pathComponents];
+        BOOL indexedLocation = components.count <= 2 && ![components.firstObject isEqualToString:@"Inbox"];
+        for (NSString* component in components) {
+          indexedLocation &= ![component hasPrefix:@"."];
+        }
+        if (indexedLocation) {
+          imported = YES;
+          return;
+        }
+      }
+      NSFileManager* manager = [NSFileManager defaultManager];
+      NSString* filename = url.lastPathComponent;
+      NSString* destination = [root stringByAppendingPathComponent:filename];
+      NSUInteger suffix = 2;
+      while ([manager fileExistsAtPath:destination]) {
+        filename = [NSString stringWithFormat:@"%@ (%lu).%@", url.lastPathComponent.stringByDeletingPathExtension, (unsigned long)suffix++, url.pathExtension];
+        destination = [root stringByAppendingPathComponent:filename];
+      }
+      // Copy via a hidden staging file so the updater cannot index a partially copied archive.
+      NSString* staging = [NSTemporaryDirectory() stringByAppendingPathComponent:[@".comicreader-import-" stringByAppendingString:NSUUID.UUID.UUIDString]];
+      imported = [manager copyItemAtPath:source toPath:staging error:&copyError] &&
+                 [manager moveItemAtPath:staging toPath:destination error:&copyError];
+      if (!imported) {
+        [copyError retain];
+        [manager removeItemAtPath:staging error:NULL];
+      }
+    }];
+    if (scoped) {
+      [url stopAccessingSecurityScopedResource];
+    }
+    NSError* error = coordinationError ?: copyError;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      if (imported) {
+        [self updateLibrary];
+        [self logEvent:@"app.open"];
+      } else {
+        XLOG_ERROR(@"Unable to import %@: %@", url.lastPathComponent, error);
+        [self showAlertWithTitle:NSLocalizedString(@"IMPORT_FAILED_TITLE", nil)
+                        message:error.localizedDescription ?: NSLocalizedString(@"IMPORT_FAILED_MESSAGE", nil)
+                         button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
+      }
+      if (completion) {
+        completion(imported);
+      }
+    });
+    [copyError release];
+    [pool drain];
+  });
   return YES;
 }
 
@@ -300,7 +257,7 @@
   [UIView animateWithDuration:(1.0 / 3.0) animations:^{
     _dimmingWindow.alpha = flag ? kScreenDimmingOpacity : 0.0;
   } completion:^(BOOL finished) {
-    if (!flag) {
+    if (!self.isScreenDimmed) {
       _dimmingWindow.hidden = YES;
     }
   }];
@@ -369,4 +326,62 @@
   // TODO
 }
 
+@end
+
+// Keep a single library window, while using the scene lifecycle required by modern iPadOS.
+@interface ComicSceneDelegate : UIResponder <UIWindowSceneDelegate>
+@property(nonatomic, retain) UIWindow* window;
+@property(nonatomic) BOOL skipInitialForegroundScan;
+@end
+
+@implementation ComicSceneDelegate
+@synthesize window = _window;
+
+- (void) scene:(UIScene*)scene willConnectToSession:(UISceneSession*)session options:(UISceneConnectionOptions*)connectionOptions {
+  AppDelegate* delegate = [AppDelegate sharedDelegate];
+  [delegate connectWindowScene:(UIWindowScene*)scene];
+  self.window = delegate.window;
+  self.skipInitialForegroundScan = YES;
+  for (UIOpenURLContext* context in connectionOptions.URLContexts) {
+    [delegate importComicAtURL:context.URL];
+  }
+}
+
+- (void) scene:(UIScene*)scene openURLContexts:(NSSet<UIOpenURLContext*>*)URLContexts {
+  for (UIOpenURLContext* context in URLContexts) {
+    [[AppDelegate sharedDelegate] importComicAtURL:context.URL];
+  }
+}
+
+- (void) sceneWillEnterForeground:(UIScene*)scene {
+  [[AppDelegate sharedDelegate] enterForeground];
+  if (!self.skipInitialForegroundScan) {
+    [[AppDelegate sharedDelegate] updateLibrary];
+  }
+  self.skipInitialForegroundScan = NO;
+}
+
+- (void) sceneDidBecomeActive:(UIScene*)scene {
+  [[AppDelegate sharedDelegate] presentPendingAlert];
+  [[CRPlusStore sharedStore] refreshEntitlementStatus];
+  [[CRLibrarySyncCoordinator sharedCoordinator] synchronize];
+}
+
+- (void) sceneWillResignActive:(UIScene*)scene {
+  [[AppDelegate sharedDelegate] saveState];
+}
+
+- (void) sceneDidEnterBackground:(UIScene*)scene {
+  [[AppDelegate sharedDelegate] enterBackground];
+}
+
+- (void) sceneDidDisconnect:(UIScene*)scene {
+  [[AppDelegate sharedDelegate] saveState];
+  self.window = nil;
+}
+
+- (void) dealloc {
+  [_window release];
+  [super dealloc];
+}
 @end

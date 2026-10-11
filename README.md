@@ -5,11 +5,36 @@
 Overview
 ========
 
-**Finally a comic reader for iPad done right! ComicFlow was designed with one goal in mind: providing the best experience for comic fans with large collections.**
+**ComicReader is a comic reader for iPhone, iPad and Mac, designed for comic fans with large collections.**
 
-ComicFlow is also the first (and only?) open-source comic reader for iPad: the entire source code and graphic assets are available for anyone to look at or contribute. The original repo is hosted here https://github.com/swisspol/ComicFlow, since this repo is not mantained and has been changed to read-only (it hasn't received an update in over 5 years), I decided to resurrect the project to adapt it to new iOS devices and take full advantage of the new processing capabilities. This meant updating the code and syntax to compile in the latest version of Xcode and add cool iOS features like dark mode. It is now completely free and contributions are very welcome to make this App even more awesome.
+ComicReader is an open-source continuation of ComicFlow, one of the first open-source comic readers for iPad. The entire source code and graphic assets are available for anyone to inspect or contribute to. The original project is hosted at https://github.com/swisspol/ComicFlow and is now read-only, so this project brings it to modern Apple devices and current versions of Xcode. Reading and all existing import and transfer features remain free, and contributions are welcome.
 
-See the complete product description at http://itunes.apple.com/us/app/comicflow/id409290355?mt=8.
+See [ComicReader on the App Store](https://apps.apple.com/app/id1597314495).
+
+Optional iCloud synchronization of your own comics, read
+status and current page is free for everyone across iPhone, iPad and Mac. Sync starts off, requires explicit
+consent and uses your personal iCloud storage. Text from the current page can
+also be recognised, selected, copied and shared for free.
+
+**ComicReader Plus** remains a one-time purchase for app-specific features:
+current-comic Search & Quotes, custom Reading Lists with automatic Smart Queues, named Page Bookmarks and
+renderer-only Image Filters. Search builds a persistent local page index for the
+comic being read; saved quotes can be edited, shared and opened at their source
+page. Search indexes, quotes, lists and bookmarks stay on this device. Search does
+not cover the whole library, and text recognition may be incomplete. Image
+Filters include Clear Ink, Grayscale and Warm Paper, never modify comic files,
+and always allow returning to Original rendering.
+Smart Queues group Continue Reading, Unread and Read Again from the current library state; they are not separate stored lists. Plus includes a free visual preview of its image filters.
+Restore Purchases is included; there is no subscription or bundled comic
+content. See [Plus setup and release validation](docs/PlusUpgrade.md) and the
+[monetization decision](docs/MonetizationReview.md).
+
+Building and testing
+====================
+
+Open `ComicFlow.xcodeproj` in Xcode 27 and select the shared `ComicFlow` scheme. ComicReader supports iPhone and iPad on iOS/iPadOS 15 or later, plus Mac Catalyst on macOS 12 or later. Run Product → Test on an iPad simulator for the regression suite.
+
+See [the regression and compatibility review](docs/RegressionReview.md) for restored behavior, build commands, and validation details.
 
 License
 =======
