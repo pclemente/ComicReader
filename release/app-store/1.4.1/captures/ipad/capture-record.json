@@ -1,0 +1,58 @@
+{
+  "family": "ipad",
+  "device_id": "B920D0C9-D19A-430E-B26B-A187F0CDEBF9",
+  "version": "1.4.1",
+  "build": "12",
+  "result_bundle": "/private/tmp/ComicReader-20261013-ipad-captures.xcresult",
+  "test": "ComicReaderUITests/ComicReaderUITests/testCaptureAppStoreScreenshots",
+  "capture_method": "Unmodified XCUIScreen PNG attachments from the real application UI",
+  "entitlement": "Local StoreKitTest non-consumable purchase through the app purchase UI",
+  "fixtures": "Existing approved public-domain demo library in the app's Documents folder",
+  "reuse_fixture_library": true,
+  "production_purchase_or_cloud_verification": false,
+  "visual_review_required": true,
+  "screenshots": [
+    {
+      "file": "01-library.png",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "d3ddde4b800e76b5cd00d2668fb6193a8f8a8bb32b48efb568dfc428412d6931",
+      "device": "ComicReader Screenshots 20261013 iPad26.2",
+      "timestamp": 1791882261.297
+    },
+    {
+      "file": "02-reader.png",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "c68d715b561ebd4fa8a0ff39e31d960553a71399fc5fc2b2d6c8259f0ce893e8",
+      "device": "ComicReader Screenshots 20261013 iPad26.2",
+      "timestamp": 1791882268.577
+    },
+    {
+      "file": "03-search.png",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "cf7f5916edef42de0c5b0491bcbec1b2933839af5859e06922f1aa81c59f6584",
+      "device": "ComicReader Screenshots 20261013 iPad26.2",
+      "timestamp": 1791882285.433
+    },
+    {
+      "file": "04-lists.png",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "694798abb53a181adba00d758c9045e0df8640c3616dff4f26ed3f847c1a0eae",
+      "device": "ComicReader Screenshots 20261013 iPad26.2",
+      "timestamp": 1791882292.883
+    },
+    {
+      "file": "05-icloud.png",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "b18d62fde4df97e600377c87a54a1994d23618cfe10082232e23f803b2c90d1d",
+      "device": "ComicReader Screenshots 20261013 iPad26.2",
+      "timestamp": 1791882297.017
+    }
+  ],
+  "visual_review_completed": true,
+  "visual_review_report": "../../design-preview/ipad-qa.json"
+}

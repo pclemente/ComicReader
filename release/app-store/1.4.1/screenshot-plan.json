@@ -1,0 +1,114 @@
+{
+  "release": "1.4.1",
+  "build": "12",
+  "locale": "en-GB",
+  "status": "uploaded-verified-submitted-for-review",
+  "capture_root": "captures",
+  "output_root": "screenshots/en-GB",
+  "working_capture_root": "captures",
+  "expected_order": [
+    "01-library.png",
+    "02-reader.png",
+    "03-search.png",
+    "04-lists.png",
+    "05-icloud.png"
+  ],
+  "platforms": {
+    "iphone": {
+      "output_size": [
+        1206,
+        2622
+      ],
+      "expected_count": 5,
+      "status": "uploaded-verified-submitted-for-review",
+      "app_store_slot": "Dynamic Island medium",
+      "size_confirmed_in_app_store_connect": true,
+      "qa_report": "design-preview/iphone-qa.json",
+      "contact_sheet": "design-preview/iphone-final-contact-sheet.png",
+      "store_upload": "Five images verified in the expected order in App Store Connect; prior gallery images replaced in the submitted version.",
+      "gallery_evidence": "submission-evidence/iphone-gallery.png"
+    },
+    "ipad": {
+      "output_size": [
+        2064,
+        2752
+      ],
+      "expected_count": 5,
+      "status": "uploaded-verified-submitted-for-review",
+      "app_store_slot": "iPad13-inch",
+      "size_confirmed_in_app_store_connect": true,
+      "qa_report": "design-preview/ipad-qa.json",
+      "contact_sheet": "design-preview/ipad-final-contact-sheet.png",
+      "store_upload": "Five images verified in the expected order in App Store Connect; prior gallery images replaced in the submitted version.",
+      "gallery_evidence": "submission-evidence/ipad-gallery.png"
+    },
+    "macos": {
+      "output_size": [
+        2880,
+        1800
+      ],
+      "expected_count": 5,
+      "status": "uploaded-verified-submitted-for-review",
+      "qa_report": "design-preview/macos-qa.json",
+      "contact_sheet": "design-preview/macos-final-contact-sheet.png",
+      "store_upload": "Five images verified in the expected order in App Store Connect; prior gallery images replaced in the submitted version.",
+      "gallery_evidence": "submission-evidence/macos-gallery.png"
+    }
+  },
+  "capture_rules": [
+    "Show complete genuine application UI; preserve its aspect ratio.",
+    "Use the populated library and actual reader, search, list and iCloud screens.",
+    "Use no placeholder, recreated or retouched UI.",
+    "Remove the pointer and unrelated popups before capture."
+  ],
+  "content_claims": {
+    "free": [
+      "Reading and imports",
+      "iCloud sync of comic files, read status and current page",
+      "Current-page text recognition, copy and system sharing"
+    ],
+    "plus": [
+      "Index/search the current comic",
+      "Save quotes",
+      "Reading lists and Smart Queues",
+      "Named bookmarks",
+      "Reader filters"
+    ],
+    "purchase": "One-time existing non-consumable; no subscription and no fixed price in screenshot captions.",
+    "local_only": [
+      "Indexes",
+      "Quotes",
+      "Lists",
+      "Bookmarks"
+    ],
+    "demo_library": "Imported editorial demo editions of three approved public-domain 1905 scans; no comic content is bundled or sold with Plus."
+  },
+  "approved_scan_names": [
+    "page-01.jpg",
+    "page-02.jpg",
+    "page-04.jpg"
+  ],
+  "fixture_generator": "prepare_screenshot_library.py",
+  "fixture_directory": "/tmp/ComicReader-Screenshot-Library-54",
+  "compositor": "compose_screenshots.py",
+  "composition_command": "python3 release/app-store/1.4.1/compose_screenshots.py --captures release/app-store/1.4.1/captures --output release/app-store/1.4.1/screenshots/en-GB",
+  "qa_requirements": [
+    "All 15 required outputs exist, with exactly five planned roles per platform.",
+    "Every output is opaque RGB PNG at its platform size.",
+    "Rendered UI is identical to the source after aspect-preserving scaling.",
+    "Captions fit; complete screenshots have been visually reviewed at useful size.",
+    "Search and lists show actual populated states; library grids are dense.",
+    "All three App Store galleries show all five images in the intended order."
+  ],
+  "historical_preservation": "historical-artifacts.json",
+  "completion_sequence": [
+    "Finish and visually approve final native captures.",
+    "Copy only the five final filenames per platform from working inputs to this release capture tree.",
+    "Compose and verify this release independently.",
+    "Upload and verify all five images in each App Store gallery.",
+    "After capture writers stop, restore the historical 1.4 files from the verified backup and restore its original compositor from the recorded commit."
+  ],
+  "mac_preprocessing_allowed": "OS titlebar or unused outer padding may be omitted only with preserved full originals and exact recorded crop bounds; all app controls/content remain intact. Compositor performs no further cropping.",
+  "historical_1_4_restored": true,
+  "submission_record": "submission-record.json"
+}

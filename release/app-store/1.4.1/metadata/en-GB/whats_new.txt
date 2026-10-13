@@ -1,0 +1,3 @@
+Updated App Store screenshots show the current ComicReader experience on iPhone, iPad and Mac, including comic search, reading lists and free iCloud sync.
+
+This release retains the same reader features and optional one-time ComicReader Plus purchase.

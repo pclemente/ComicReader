@@ -2,11 +2,19 @@
 
 Target app: ComicReader, bundle ID `com.pabloclementeperez.ComicFlow`.
 
-## Current release: 1.4 (11)
+## Current submission: 1.4.1 (12)
 
-Version **1.4 (11)** was submitted on 11 October 2026 for iPhone/iPad and Mac.
+Version **1.4.1 (12)** was submitted on 13 October 2026 for iPhone/iPad and Mac.
 Both are **Waiting for Review**, with automatic release after approval.
-See `1.4/README.md` and `1.4/submission-build11.json` for current records.
+It replaces the store galleries with five current-interface screenshots per
+platform: library, reader, comic text search, reading lists and free iCloud sync.
+Version **1.4 (11)** is already **Ready for Distribution**; the new version was
+needed to update its locked screenshots. Production behavior is unchanged.
+
+See [1.4.1/README.md](1.4.1/README.md),
+[submission record](1.4.1/submission-record.json), and
+[App Store Connect proof](1.4.1/submission-evidence/review-overview.png).
+The records below describe earlier releases as observed at their submission dates.
 
 ## Version 1.3 and earlier release history
 
@@ -103,7 +111,7 @@ The third attempt succeeded at 15:25:21; durable log:
 App Store Connect marked build 9 **Validated**, displayed it at 15:27 and assigned
 UUID `82c48917-7a27-4a25-aca5-d9768c8d990f`.
 
-## Screenshot set
+## Historical screenshot set (through version 1.3)
 
 `compose_screenshots.py` prepares five bold comic-style marketing images from real, unmodified app captures. Apple accepts the selected iPad 13-inch slot at 2064 × 2752 pixels. The compositor emits opaque RGB PNGs at that size and refuses to run without full-resolution portrait captures.
 
@@ -142,8 +150,9 @@ For a future screenshot refresh, the required captures are `01-library.png`, `02
 ### Version 1.4 submission
 
 Version 1.4 build 11 was submitted for iOS and Mac Catalyst on 11 October 2026.
-Both platform submissions are **Waiting for Review**. The submitted metadata,
-screenshots and structured submission record are under `release/app-store/1.4/`.
+Both platform submissions completed review and are **Ready for Distribution**
+as of 13 October 2026. The original submitted metadata, screenshots and
+submission-time records are preserved under `release/app-store/1.4/`.
 The local app description, What's New and review notes now describe version 1.4;
 they are not verbatim evidence of the version 1.3 build 9 submission below.
 The immutable build 9 record remains `release/app-store/submission-build9.json`.

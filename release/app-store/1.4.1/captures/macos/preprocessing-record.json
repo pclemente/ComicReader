@@ -1,0 +1,135 @@
+{
+  "status": "all-five-final-captures-approved",
+  "records": [
+    {
+      "filename": "01-library.png",
+      "selected_source_filename": "01-library.png",
+      "original_payload": "originals/01-library.original.jpg",
+      "normalized_full_capture": "originals/01-library.full.png",
+      "source_size": [
+        1512,
+        864
+      ],
+      "capture_size": [
+        1512,
+        802
+      ],
+      "crop_bounds": [
+        0,
+        62,
+        1512,
+        864
+      ],
+      "removed": "OS titlebar only; pointer moved to OS titlebar by native CUA before capture",
+      "original_sha256": "f21ffc444388cc37c3a9922bc58e59c319cc72ae528cd61e02a538374921e22a",
+      "normalized_full_sha256": "794447ebc6172b2324ef294248e35b8f71e48d523385cd26bd730062b7b95540",
+      "final_capture_sha256": "0e958652b589a122f2f4d908fa81300e915d72767643cd76ab357050800ff0a9",
+      "retained_pixels_unchanged": true,
+      "visual_review": "passed"
+    },
+    {
+      "filename": "02-reader.png",
+      "selected_source_filename": "02-reader-fit.png",
+      "original_payload": "originals/02-reader.original.jpg",
+      "normalized_full_capture": "originals/02-reader.full.png",
+      "source_size": [
+        1512,
+        864
+      ],
+      "capture_size": [
+        1512,
+        802
+      ],
+      "crop_bounds": [
+        0,
+        62,
+        1512,
+        864
+      ],
+      "removed": "OS titlebar only; pointer moved there through native CUA",
+      "original_sha256": "542cbc4e1eb9a0def703f6857a87e0e92819a2f1bb026ed931db0c201e337b11",
+      "normalized_full_sha256": "8ed7af02714aa438299831db690abc6774547cb946d9f2439240a065e86f549f",
+      "final_capture_sha256": "cd32b3802f28ee3acd517ccf52c128e17ea4a73a2d708ab02bd1505b902c2bcf",
+      "retained_pixels_unchanged": true,
+      "visual_review": "passed"
+    },
+    {
+      "filename": "03-search.png",
+      "selected_source_filename": "03-search.png",
+      "original_payload": "originals/03-search.original.jpg",
+      "normalized_full_capture": "originals/03-search.full.png",
+      "source_size": [
+        1018,
+        1252
+      ],
+      "capture_size": [
+        1018,
+        700
+      ],
+      "crop_bounds": [
+        0,
+        0,
+        1018,
+        700
+      ],
+      "removed": "Empty bottom sheet padding only; all content ends at approximately y626. Pointer moved outside sheet through native File menu and Cancel before capture. No app text or controls retouched.",
+      "original_sha256": "b52b0028f86b6acf15448599104495f4492f15e39c1d062162cef35b95ed531b",
+      "normalized_full_sha256": "51e80cb03cdac84ffd91ae633c187173b203e63e2ef988918f4a382d629c41dc",
+      "final_capture_sha256": "3542dc59b7f2e695ba88ba69564079b902990816bbab2965ed3671bd9fc04726",
+      "retained_pixels_unchanged": true,
+      "visual_review": "passed"
+    },
+    {
+      "filename": "04-lists.png",
+      "selected_source_filename": "04-lists.png",
+      "original_payload": "originals/04-lists.original.jpg",
+      "normalized_full_capture": "originals/04-lists.full.png",
+      "source_size": [
+        894,
+        986
+      ],
+      "capture_size": [
+        894,
+        870
+      ],
+      "crop_bounds": [
+        0,
+        0,
+        894,
+        870
+      ],
+      "removed": "Empty bottom sheet padding only. Pointer moved outside sheet through native File menu and Cancel before capture. No app text or controls retouched.",
+      "original_sha256": "c1ebfeebbe9f125beaa671fbbd6f2d3ccf5f431926aa5de2e32bfb454b0e98f1",
+      "normalized_full_sha256": "6e7d768c44210835d53ae855f8bf4a88248c2cf2607352737e4cff8622710da5",
+      "final_capture_sha256": "5f6897c4b2371bef8c376d1eca5f3d08d139eeb317c528c0022151ab6280e40d",
+      "retained_pixels_unchanged": true,
+      "visual_review": "passed"
+    },
+    {
+      "filename": "05-icloud.png",
+      "selected_source_filename": "05-icloud.png",
+      "original_payload": "originals/05-icloud.original.jpg",
+      "normalized_full_capture": "originals/05-icloud.full.png",
+      "source_size": [
+        894,
+        986
+      ],
+      "capture_size": [
+        894,
+        900
+      ],
+      "crop_bounds": [
+        0,
+        0,
+        894,
+        900
+      ],
+      "removed": "Empty bottom sheet padding only. Pointer moved outside sheet through native File menu and Cancel before capture. No app text or controls retouched.",
+      "original_sha256": "7bb1f68ccc388f11239c7b8d77393d37dfe3afeb50141748b46935ebb2b29aeb",
+      "normalized_full_sha256": "69b0ff75cafe87c2700e154fadfdd0f40ff58034ec70ad33eef98503b1b47c99",
+      "final_capture_sha256": "c666c855687d9a891ae1f6ba1bcf8b974adc56810062a0f366edacdfc63546c8",
+      "retained_pixels_unchanged": true,
+      "visual_review": "passed"
+    }
+  ]
+}

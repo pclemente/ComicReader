@@ -1,0 +1,137 @@
+[
+  {
+    "platform": "iphone",
+    "filename": "01-library.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "source": "release/app-store/1.4.1/captures/iphone/01-library.png",
+    "source_sha256": "f63599eae529ec182124a64eccbfaed2ed3c2c0bdada53ca78b1faa94b04ada7",
+    "output_sha256": "3353fa9da2d90b454e38e54b15a35ceb945650f3e211a066015b39de9cf5205d",
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "platform": "iphone",
+    "filename": "02-reader.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "source": "release/app-store/1.4.1/captures/iphone/02-reader.png",
+    "source_sha256": "e8f8a54979f75b7496ca49971a126a5dcb0388605bda493eb2f4e092462b5e4e",
+    "output_sha256": "ead684ded8eb86c6a4110df6b7d55e16cc8ecf208c87e30305c7bbfe2b4b10d1",
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "platform": "iphone",
+    "filename": "03-search.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "source": "release/app-store/1.4.1/captures/iphone/03-search.png",
+    "source_sha256": "6e25517ef27cda7b4b55d180a2c7abb68342c140061c84fa870ac9e5ae46a721",
+    "output_sha256": "822dbd81bacbc2636906f15f0f2daa1d6324aac924d95becac9e1ea029838de1",
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "platform": "iphone",
+    "filename": "04-lists.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "source": "release/app-store/1.4.1/captures/iphone/04-lists.png",
+    "source_sha256": "e3b5370e0da59388cae540b722dad7c2dc4591267b1ba2caccc6b84017bf8adf",
+    "output_sha256": "9d2145dd6577365aba82f98cd33031c728e8e12ca853dfc6969b0c2be87d87de",
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "platform": "iphone",
+    "filename": "05-icloud.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "source": "release/app-store/1.4.1/captures/iphone/05-icloud.png",
+    "source_sha256": "c018870fe964f03ff8ddb187c4e2825f0a58f59cc057a09613e096fa8f2a9665",
+    "output_sha256": "5e64f15f48cab59e6eb78c8a07f23d0a09ab52d6b070bf9167a9361ebeb99e89",
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  }
+]

@@ -1,0 +1,126 @@
+{
+  "purpose": "Screenshot-only data preparation for the App Store artwork refresh",
+  "date": "2026-10-13",
+  "app": "/tmp/ComicReader-MacSupport-FileReference/Build/Products/Debug-maccatalyst/ComicFlow.app",
+  "version": "1.4",
+  "build": "11",
+  "method": "LLDB attached to the owned Debug demo process 52877, on the main thread, then detached",
+  "dataChanges": [
+    "Set CRPlusStore.sharedStore.isUnlocked to YES through the existing Objective-C KVC property for this process only",
+    "Posted the existing entitlement and store-change notifications",
+    "Created Weekend reading and Dream adventures using CRReadingListsStore.createListNamed:createdList:error:",
+    "Added the first three approved Little Nemo demo comics to Weekend reading and the next three to Dream adventures using CRReadingListsStore.addComic:toList:error:"
+  ],
+  "verified": [
+    "The temporary in-memory isUnlocked property returned YES",
+    "Both list creation operations returned YES",
+    "The store returned two lists with three items each, with no model error"
+  ],
+  "persistentFixture": "~/Library/Containers/com.pabloclementeperez.ComicFlow/Data/Documents/.library/reading-lists-v1.json",
+  "limitations": [
+    "No production source or project changes were made",
+    "No paid StoreKit transaction was performed or validated by this fixture",
+    "The entitlement override ends when this Debug process exits or StoreKit refreshes it",
+    "No UI presentation, navigation, event injection, or visibility changes were invoked from the debugger",
+    "Final screenshots must be captured from the actual rendered app"
+  ],
+  "nativeUITestHarness": {
+    "path": "/tmp/ComicReader-MacScreenshotHarness",
+    "scope": "Standalone macOS XCTest UI bundle; no application or shared project build changes",
+    "build": "Passed",
+    "attemptedAction": "XCTest activate, open first demo comic, click reader center",
+    "result": "Blocked by host display event infrastructure: application window is Disabled and synthesized event coordinates report (inf, inf); clean XCTest restart did not repair it",
+    "lastResultBundle": "/tmp/ComicReader-MacScreenshotHarness/reveal5.xcresult",
+    "newOwnedDebugPID": 49065,
+    "screenshotsProduced": 0,
+    "appRestarted": true,
+    "productionChange": false,
+    "purchaseValidation": false
+  },
+  "hostedSnapshotHarness": {
+    "path": "/tmp/ComicReader-MacSnapshotFixture",
+    "scope": "External Catalyst XCTest snapshot fixture; compiled separately without production source or shared project modifications",
+    "build": "Passed",
+    "result": "External bundle failed to load into sandboxed Debug app before test code ran",
+    "resultBundle": "/tmp/ComicReader-MacSnapshotFixture/capture.xcresult",
+    "screenshotsProduced": 0,
+    "productionChange": false,
+    "purchaseValidation": false
+  },
+  "currentState": {
+    "ownedDebugPID": 49065,
+    "temporaryEntitlement": "Active in memory for screenshot session; resets on app restart",
+    "lists": "Weekend reading and Dream adventures persist with three approved demo comics each",
+    "nativeTestRunner": "Stopped",
+    "uiNavigationOwner": "Desktop released to root after native CUA captures completed",
+    "iCloudSyncEnabled": false,
+    "as_of": "Screenshot session on 2026-10-13; this section records capture-time state."
+  },
+  "readOnlyScreenshotHarness": {
+    "result": "Passed",
+    "testMethod": "MacScreenshotHarness/testCaptureExistingWindowOnly",
+    "resultBundle": "/tmp/ComicReader-MacScreenshotHarness/readonly2.xcresult",
+    "windowPNG": "/tmp/ComicReader-MacScreenshotHarness/captures-readonly2/C4034A86-7E1C-42C5-AF8B-DAD572D75A39.png",
+    "dimensions": [
+      1512,
+      864
+    ],
+    "performedUIActions": false,
+    "limitation": "The native window capture still includes system pointer and window-sharing badge; do not use this raw capture as final App Store artwork"
+  },
+  "laterDataFixture": {
+    "pid": 49065,
+    "method": "LLDB main-thread existing model APIs; no UI presentation, navigation or visibility calls",
+    "entitlement": "CRPlusStore.sharedStore isUnlocked=true and isBusy=true in memory only, with normal store notifications",
+    "reasonForBusyFlag": "Prevents startup and foreground StoreKit refresh from replacing the temporary screenshot entitlement",
+    "comic": "little-nemo-01-bed-adrift.cbz",
+    "oldStatus": 0,
+    "newStatus": 1,
+    "statusWriteMethod": "LibraryConnection.updateObject returned YES, then normal reading-state notification posted",
+    "purchaseValidated": false,
+    "productionSourceChanged": false,
+    "debuggerDetached": true
+  },
+  "finalNativeCaptures": {
+    "directory": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/screenshot-refresh-work-20261013/1.4-active-before-restore/captures/macos/refresh-2026-10-13",
+    "method": "All final UI navigation and original screenshots through the documented native CUA API",
+    "selectedFiles": [
+      "01-library.png",
+      "02-reader-fit.png",
+      "03-search.png",
+      "04-lists.png",
+      "05-icloud.png"
+    ],
+    "rawCapturesRetained": true,
+    "cropManifest": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/screenshot-refresh-work-20261013/1.4-active-before-restore/captures/macos/refresh-2026-10-13/crop-manifest.json",
+    "pixelEdits": "RGB PNG normalization and documented OS titlebar or empty bottom padding crops only; no text, controls, results, or app pixels retouched",
+    "ocrVerification": "Real app OCR indexed all 4 pages; query child returned a Page 3 result",
+    "readingListCounts": {
+      "continueReading": 1,
+      "unread": 52,
+      "readAgain": 1,
+      "weekendReading": 3,
+      "dreamAdventures": 3
+    },
+    "iCloudSyncEnabled": false,
+    "appVersion": "1.4 (11)",
+    "releaseVersion": "1.4.1 (12)",
+    "versionNote": "Release uses the same interface; only the app version/build was bumped for the new App Store version",
+    "purchaseValidation": false,
+    "liveCloudSyncValidation": false,
+    "canonicalDirectory": ".",
+    "canonicalProvenance": "capture-record.json",
+    "canonicalPreprocessing": "preprocessing-record.json"
+  },
+  "cleanup": {
+    "completedAtUTC": "2026-10-13T10:01:56.911246+00:00",
+    "app": "/tmp/ComicReader-MacSupport-FileReference/Build/Products/Debug-maccatalyst/ComicFlow.app",
+    "verifiedOwnedPIDBeforeQuit": 49065,
+    "method": "Normal native CUA Quit action and standard Command-Q shortcut, after dismissing iCloud sheet and raising the owned app window",
+    "verification": "No process remained for the exact owned Debug app executable after normal quit",
+    "temporaryEntitlement": "The in-memory Plus isUnlocked/isBusy screenshot fixture ended with the Debug process",
+    "appDataPreserved": true,
+    "iCloudSyncEnabledAtQuit": false,
+    "otherAppsOrBrowserChanged": false
+  }
+}

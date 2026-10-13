@@ -1,0 +1,88 @@
+{
+  "historical_release": "1.4 (11)",
+  "baseline_commit": "1fd435689b692d384bf6f5d04226dc55d942613f",
+  "backup": "/Users/pablocpe/Documents/ComicReader Releases/1.4-build11/screenshots-before-refresh-20261013",
+  "verification_date": "2026-10-13",
+  "backup_matches_committed_originals": true,
+  "active_1_4_capture_inputs_restored": true,
+  "restoration_note": "After all capture agents completed and all 15 final images passed QA, the entire active 1.4 tree was copied and hash-verified to the external archive. Ten historical files were restored byte-for-byte from the verified backup, and the original compositor restored from the baseline commit. Only known untracked screenshot-work artifacts were then removed from 1.4 after confirming their archived bytes. Canonical 1.4.1 captures and outputs remained unchanged.",
+  "files": [
+    {
+      "path": "captures/iphone/03-plus.png",
+      "bytes": 276377,
+      "sha256": "9e63e044d12e1918d1fc500eaf896d6ac1cea171ecc5bc86b1cabbc77f6f1e60"
+    },
+    {
+      "path": "captures/macos/01-library.png",
+      "bytes": 848267,
+      "sha256": "607261bfda136b83a5f9e3bad1eee4b61d9f8ac4f96fc0fd1a1128bc2840d160"
+    },
+    {
+      "path": "captures/macos/02-reader.png",
+      "bytes": 3649270,
+      "sha256": "0d8a708b177f10b480ce2c9930c457f63201674caa0ac095879ca8ae8b8c58cf"
+    },
+    {
+      "path": "captures/macos/03-icloud.png",
+      "bytes": 231042,
+      "sha256": "3a0296f3ddc91115cd89a47b31ba60cb0f8d28e1cdcbb897a01d2ecbe9e6651d"
+    },
+    {
+      "path": "screenshots/en-GB/iphone/03-plus.png",
+      "bytes": 418127,
+      "sha256": "600789a36d86f519e04f13dae2283a74dd2e97c253a80072ffe4622f249b596f"
+    },
+    {
+      "path": "screenshots/en-GB/macos/01-library.png",
+      "bytes": 275275,
+      "sha256": "b1e55ba4a420339a99e9e43c661ed9a8b82e7a19bebc5be3557b9235fc3063d7"
+    },
+    {
+      "path": "screenshots/en-GB/macos/02-reader.png",
+      "bytes": 881081,
+      "sha256": "8dce960a5231fd1db0c27146fd3bdd3c7f84e7e421e5d5736dc929e1bc1ca19f"
+    },
+    {
+      "path": "screenshots/en-GB/macos/03-icloud.png",
+      "bytes": 190542,
+      "sha256": "2259475d71d4371fdcc68d281371383200669677f1987df435a517adf46888cc"
+    },
+    {
+      "path": "screenshots/en-GB/manifest.json",
+      "bytes": 4607,
+      "sha256": "53720f5750be1fab28a832a55ab820e05a9cfe798b611b71462eddc9331ea417"
+    },
+    {
+      "path": "screenshots/en-GB/validation.txt",
+      "bytes": 2458,
+      "sha256": "74c4282e108d2b0aa9e63811415cb1a4cba0df27637b6c82ab07b58752b68213"
+    }
+  ],
+  "historical_compositor_restored": true,
+  "historical_compositor_sha256": "a3ef105295d5df19cfae5cc09d6300473440b3de72ba106451641ece7647cdf7",
+  "refresh_work_archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/screenshot-refresh-work-20261013/1.4-active-before-restore",
+  "archived_untracked_paths": [
+    "captures/ipad",
+    "captures/iphone/01-library.png",
+    "captures/iphone/02-reader.png",
+    "captures/iphone/03-search.png",
+    "captures/iphone/04-lists.png",
+    "captures/iphone/05-icloud.png",
+    "captures/iphone/capture-record.json",
+    "captures/macos/04-lists.png",
+    "captures/macos/05-icloud.png",
+    "captures/macos/fixture-preparation-2026-10-13.json",
+    "captures/macos/refresh-2026-10-13",
+    "design-preview",
+    "prepare_screenshot_library.py"
+  ],
+  "preliminary_design_preview_archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/screenshot-refresh-work-20261013/1.4.1-preliminary-design-preview",
+  "archived_preliminary_previews": [
+    "preliminary-macos-02-reader.png",
+    "preliminary-macos-05-icloud.png",
+    "preliminary-macos-01-library.png",
+    "preliminary-macos-04-lists.png",
+    "macos-preliminary-contact-sheet.png",
+    "macos-preliminary-qa.json"
+  ]
+}

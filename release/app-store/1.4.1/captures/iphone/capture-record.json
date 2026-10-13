@@ -1,0 +1,60 @@
+{
+  "family": "iphone",
+  "device_id": "98B12514-3AD0-4E7D-B115-03EF452290CF",
+  "version": "1.4.1",
+  "build": "12",
+  "result_bundle": "/private/tmp/ComicReader-20261013-iphone-capture3.xcresult",
+  "test": "ComicReaderUITests/ComicReaderUITests/testCaptureAppStoreScreenshots",
+  "capture_method": "Unmodified XCUIScreen PNG attachments from the real application UI",
+  "entitlement": "Local StoreKitTest non-consumable purchase through the app purchase UI",
+  "fixtures": "Approved public-domain demo comics imported through the normal document URL route",
+  "production_purchase_or_cloud_verification": false,
+  "visual_review_required": true,
+  "screenshots": [
+    {
+      "file": "01-library.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "f63599eae529ec182124a64eccbfaed2ed3c2c0bdada53ca78b1faa94b04ada7",
+      "device": "ComicReader Screenshots 20261013 iPhone26.2",
+      "timestamp": 1791880666.705
+    },
+    {
+      "file": "02-reader.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "e8f8a54979f75b7496ca49971a126a5dcb0388605bda493eb2f4e092462b5e4e",
+      "device": "ComicReader Screenshots 20261013 iPhone26.2",
+      "timestamp": 1791880673.703
+    },
+    {
+      "file": "03-search.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "6e25517ef27cda7b4b55d180a2c7abb68342c140061c84fa870ac9e5ae46a721",
+      "device": "ComicReader Screenshots 20261013 iPhone26.2",
+      "timestamp": 1791881499.743,
+      "result_bundle": "/private/tmp/ComicReader-20261013-iphone-child-search.xcresult",
+      "query": "child"
+    },
+    {
+      "file": "04-lists.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "e3b5370e0da59388cae540b722dad7c2dc4591267b1ba2caccc6b84017bf8adf",
+      "device": "ComicReader Screenshots 20261013 iPhone26.2",
+      "timestamp": 1791880695.87
+    },
+    {
+      "file": "05-icloud.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c018870fe964f03ff8ddb187c4e2825f0a58f59cc057a09613e096fa8f2a9665",
+      "device": "ComicReader Screenshots 20261013 iPhone26.2",
+      "timestamp": 1791880699.583
+    }
+  ],
+  "search_refresh_result_bundle": "/private/tmp/ComicReader-20261013-iphone-child-search.xcresult",
+  "visual_review_completed": true,
+  "visual_review_report": "../../design-preview/iphone-qa.json"
+}

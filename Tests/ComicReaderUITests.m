@@ -787,4 +787,152 @@
   }
 }
 
+// Run only from the screenshot preparation script, which places the approved
+// public-domain demo comics in the UI-test bundle. No fixture or entitlement
+// override is shipped in the application.
+- (void)testCaptureAppStoreScreenshots {
+  NSURL* fixtureDirectory = [[NSBundle bundleForClass:self.class] URLForResource:@"ScreenshotLibrary"
+                                                                  withExtension:nil];
+  XCTSkipUnless(fixtureDirectory != nil && [[NSFileManager defaultManager] fileExistsAtPath:
+    [[fixtureDirectory URLByAppendingPathComponent:@"capture-request"] path]],
+    @"Use the screenshot helper to install fixtures and explicitly enable this capture journey.");
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  NSMutableArray<NSString*>* sources = [@[
+    @"little-nemo-01-bed-adrift.cbz", @"little-nemo-02-moving-island.cbz",
+    @"little-nemo-03-claws-in-the-current.cbz", @"little-nemo-04-moons-mouth.cbz",
+    @"little-nemo-05-bedstead-acrobatics.cbz", @"little-nemo-06-imp-at-midnight.cbz",
+    @"little-nemo-07-mushroom-road.cbz", @"little-nemo-08-under-giant-caps.cbz",
+    @"little-nemo-09-falling-forest.cbz"] mutableCopy];
+  NSMutableArray<NSString*>* names = [@[
+    @"01 Bed Adrift.cbz", @"02 The Moving Island.cbz", @"03 Claws in the Current.cbz",
+    @"04 The Moon's Mouth.cbz", @"05 Bedstead Acrobatics.cbz", @"06 The Imp at Midnight.cbz",
+    @"07 The Mushroom Road.cbz", @"08 Under Giant Caps.cbz", @"09 The Falling Forest.cbz"] mutableCopy];
+  NSArray<NSString*>* bundledNames = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:fixtureDirectory.path
+                                                                                       error:NULL] sortedArrayUsingSelector:@selector(compare:)];
+  for (NSString* name in bundledNames) {
+    if ([name.pathExtension.lowercaseString isEqualToString:@"cbz"] && ![sources containsObject:name]) {
+      [sources addObject:name];
+      NSString* readableName = [[[name stringByDeletingPathExtension] stringByReplacingOccurrencesOfString:@"little-nemo-" withString:@""]
+        stringByReplacingOccurrencesOfString:@"-" withString:@" "];
+      [names addObject:[readableName.capitalizedString stringByAppendingPathExtension:@"cbz"]];
+    }
+  }
+  NSURL* configurationURL = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader" withExtension:@"storekit"];
+  NSError* error = nil;
+  SKTestSession* session = [[SKTestSession alloc] initWithContentsOfURL:configurationURL error:&error];
+  XCTAssertNotNil(session, @"%@", error);
+  [session resetToDefaultState];
+  [session clearTransactions];
+  session.disableDialogs = YES;
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+
+  @try {
+    [app launch];
+    if ([app.buttons[@"Remind Me Later"] waitForExistenceWithTimeout:2]) [app.buttons[@"Remind Me Later"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:30]);
+    [app.buttons[@"library.plus"] tap];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:app.cells[@"plus.purchase"] timeout:30]);
+    [app.cells[@"plus.purchase"] tap];
+    XCTAssertTrue([self waitForPlusToUnlockInApp:app]);
+    [app.buttons[@"Done"] tap];
+
+    BOOL reuseScreenshotLibrary = [[NSFileManager defaultManager] fileExistsAtPath:
+      [[fixtureDirectory URLByAppendingPathComponent:@"reuse-library"] path]];
+    for (NSUInteger index = 0; !reuseScreenshotLibrary && index < sources.count; index++) {
+      NSString* identifier = [@"library.comic." stringByAppendingString:names[index]];
+      if ([app descendantsMatchingType:XCUIElementTypeAny][identifier].exists) continue;
+      NSURL* source = [fixtureDirectory URLByAppendingPathComponent:sources[index]];
+      NSURL* local = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:names[index]]];
+      [[NSFileManager defaultManager] removeItemAtURL:local error:NULL];
+      XCTAssertTrue([[NSFileManager defaultManager] copyItemAtURL:source toURL:local error:&error], @"%@", error);
+      if (@available(iOS 16.4, *)) {
+        [app openURL:local];
+      } else {
+        XCTFail(@"App Store captures require iOS 16.4 or later.");
+        return;
+      }
+      // openURL creates a new launch in XCTest. The legacy rating notice can
+      // therefore appear while importing a large screenshot fixture library.
+      if (app.buttons[@"Remind Me Later"].exists) [app.buttons[@"Remind Me Later"] tap];
+      XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:30]);
+    }
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    if (app.buttons[@"library.sort"].exists) {
+      [app.buttons[@"library.sort"] tap];
+      [app.buttons[@"By Name"] tap];
+    } else {
+      [[app.segmentedControls[@"library.sort.segmented"].buttons elementBoundByIndex:1] tap];
+    }
+    XCUIElement* cover = [app descendantsMatchingType:XCUIElementTypeAny][[@"library.comic." stringByAppendingString:names[0]]];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:45]);
+    // Wait for the last asynchronous import by checking the complete library in
+    // the real Add Comic picker, then return to the cover grid for the capture.
+    [app.buttons[@"library.readingLists"] tap];
+    XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForExistenceWithTimeout:10]);
+    NSArray<NSString*>* listNames = @[@"Weekend reading", @"Dream adventures"];
+    for (NSUInteger listIndex = 0; listIndex < listNames.count; listIndex++) {
+      NSString* listName = listNames[listIndex];
+      if ([self cellInApp:app containingText:listName].exists) continue;
+      [app.buttons[@"readingLists.add"] tap];
+      [self replaceTextInElement:app.alerts[@"New Reading List"].textFields[@"readingLists.name"] withText:listName];
+      [app.alerts[@"New Reading List"].buttons[@"Create"] tap];
+      XCTAssertTrue([app.navigationBars[listName] waitForExistenceWithTimeout:10]);
+      for (NSUInteger comicIndex = 0; comicIndex < 3; comicIndex++) {
+        [app.buttons[@"readingLists.addComic"] tap];
+        XCUIElement* cell = [self cellInApp:app containingText:names[listIndex * 3 + comicIndex]];
+        XCTAssertTrue([self waitForElementToBecomeHittable:cell timeout:30]);
+        [cell tap];
+        XCTAssertTrue([app.navigationBars[listName] waitForExistenceWithTimeout:10]);
+      }
+      [app.navigationBars[listName].buttons[@"Reading Lists"] tap];
+      XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForExistenceWithTimeout:10]);
+    }
+    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:15]);
+    [self saveScreenshot:@"01-library" ofApp:app];
+
+    [cover tap];
+    XCUICoordinate* center = [app coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)];
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
+    // Advance from the designed cover to a genuine complete 1905 comic page.
+    [[app coordinateWithNormalizedOffset:CGVectorMake(0.95, 0.5)] tap];
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
+    [self saveScreenshot:@"02-reader" ofApp:app];
+    [app.buttons[@"reader.text.open"] tap];
+    XCUIElement* modes = app.segmentedControls[@"reader.text.mode"];
+    XCTAssertTrue([modes waitForExistenceWithTimeout:15]);
+    [modes.buttons[@"Search"] tap];
+    XCUIElement* indexButton = app.buttons[@"reader.text.index"];
+    NSPredicate* indexReady = [NSPredicate predicateWithFormat:@"exists == YES AND (enabled == YES OR label == %@)", @"Comic Indexed"];
+    XCTestExpectation* indexPreparation = [[XCTNSPredicateExpectation alloc] initWithPredicate:indexReady object:indexButton];
+    XCTAssertEqual([XCTWaiter waitForExpectations:@[indexPreparation] timeout:120], XCTWaiterResultCompleted);
+    if (indexButton.enabled) [indexButton tap];
+    XCUIElement* query = app.searchFields[@"reader.text.query"];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:query timeout:120]);
+    [self replaceTextInElement:query withText:@"child"];
+    [query typeText:@"\n"];
+    XCUIElement* result = [app.cells matchingPredicate:[NSPredicate predicateWithFormat:@"identifier BEGINSWITH %@", @"reader.text.result."]].firstMatch;
+    XCTAssertTrue([self waitForElementToBecomeHittable:result timeout:30]);
+    XCTAssertTrue([app.buttons[@"reader.text.index"] waitForExistenceWithTimeout:120]);
+    [self saveScreenshot:@"03-search" ofApp:app];
+    [app.buttons[@"reader.text.done"] tap];
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
+    [app.buttons[@"Library"] tap];
+
+    [app.buttons[@"library.readingLists"] tap];
+    XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForExistenceWithTimeout:10]);
+    [self saveScreenshot:@"04-lists" ofApp:app];
+    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    [app.buttons[@"library.icloud"] tap];
+    XCTAssertTrue([app.switches[@"Sync all comics with iCloud"] waitForExistenceWithTimeout:10]);
+    [self saveScreenshot:@"05-icloud" ofApp:app];
+  } @finally {
+    [app terminate];
+    [session clearTransactions];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
 @end

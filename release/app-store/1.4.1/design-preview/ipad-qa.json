@@ -1,0 +1,168 @@
+{
+  "platform": "ipad",
+  "status": "passed-ready-for-upload",
+  "count": 5,
+  "output_size": [
+    2064,
+    2752
+  ],
+  "ordered_files": [
+    "01-library.png",
+    "02-reader.png",
+    "03-search.png",
+    "04-lists.png",
+    "05-icloud.png"
+  ],
+  "records": [
+    {
+      "platform": "ipad",
+      "filename": "01-library.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "source": "release/app-store/1.4.1/captures/ipad/01-library.png",
+      "source_sha256": "d3ddde4b800e76b5cd00d2668fb6193a8f8a8bb32b48efb568dfc428412d6931",
+      "output_sha256": "9e6819846bab6f57b3359a4c42cdf7b72170f1ca42c791ebdf95c801668255ea",
+      "source_size": [
+        2064,
+        2752
+      ],
+      "rendered_size": [
+        1582,
+        2110
+      ],
+      "capture_bounds": [
+        241,
+        485,
+        1823,
+        2595
+      ],
+      "cropped": false,
+      "layout": "portrait",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "ipad",
+      "filename": "02-reader.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "source": "release/app-store/1.4.1/captures/ipad/02-reader.png",
+      "source_sha256": "c68d715b561ebd4fa8a0ff39e31d960553a71399fc5fc2b2d6c8259f0ce893e8",
+      "output_sha256": "2e5769e52d78c53ce9aa228179d815ab9c36605ab80962d8ae5bb6023bd707ad",
+      "source_size": [
+        2064,
+        2752
+      ],
+      "rendered_size": [
+        1582,
+        2110
+      ],
+      "capture_bounds": [
+        241,
+        485,
+        1823,
+        2595
+      ],
+      "cropped": false,
+      "layout": "portrait",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "ipad",
+      "filename": "03-search.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "source": "release/app-store/1.4.1/captures/ipad/03-search.png",
+      "source_sha256": "cf7f5916edef42de0c5b0491bcbec1b2933839af5859e06922f1aa81c59f6584",
+      "output_sha256": "3662de64cb404bc5a73381f822f79e71b8837643c8cba0765387337a6b45fdf1",
+      "source_size": [
+        2064,
+        2752
+      ],
+      "rendered_size": [
+        1582,
+        2110
+      ],
+      "capture_bounds": [
+        241,
+        485,
+        1823,
+        2595
+      ],
+      "cropped": false,
+      "layout": "portrait",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "ipad",
+      "filename": "04-lists.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "source": "release/app-store/1.4.1/captures/ipad/04-lists.png",
+      "source_sha256": "694798abb53a181adba00d758c9045e0df8640c3616dff4f26ed3f847c1a0eae",
+      "output_sha256": "ed9e13d19a29ce11f45ea445437f82cff1716ee1037cf79a9e0f74e1055b5753",
+      "source_size": [
+        2064,
+        2752
+      ],
+      "rendered_size": [
+        1582,
+        2110
+      ],
+      "capture_bounds": [
+        241,
+        485,
+        1823,
+        2595
+      ],
+      "cropped": false,
+      "layout": "portrait",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "ipad",
+      "filename": "05-icloud.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "source": "release/app-store/1.4.1/captures/ipad/05-icloud.png",
+      "source_sha256": "b18d62fde4df97e600377c87a54a1994d23618cfe10082232e23f803b2c90d1d",
+      "output_sha256": "69449a184fa20195738e64f9dd20968d3d52a855e7025bfcdd8b9ea0c1544df1",
+      "source_size": [
+        2064,
+        2752
+      ],
+      "rendered_size": [
+        1582,
+        2110
+      ],
+      "capture_bounds": [
+        241,
+        485,
+        1823,
+        2595
+      ],
+      "cropped": false,
+      "layout": "portrait",
+      "qa_source_region_pixel_identical_after_scaling": true
+    }
+  ],
+  "capture_review": "All five genuine raw captures visually reviewed: dense54-comic library, full approved comic page, readable child search, unlocked queues and two custom lists, free optional iCloud. Complete original UI is preserved.",
+  "capture_test": {
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "summary": "ipad-capture-test-summary.json"
+  },
+  "limitations": "Screenshot QA does not establish live production cross-device synchronization or purchase propagation.",
+  "final_composite_visual_review": "All five composed screenshots and the complete contact sheet were visually reviewed. Captions fit, native iPad interface and complete artwork are preserved, and the search/list/cloud sheets remain readable in their real app context."
+}

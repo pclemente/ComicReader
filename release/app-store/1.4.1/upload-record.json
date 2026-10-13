@@ -1,0 +1,82 @@
+{
+  "version": "1.4.1",
+  "build": "12",
+  "appStoreAppID": "1597314495",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "teamID": "CEQU933V6W",
+  "recordedAt": "2026-10-13T08:07:36.832776+00:00",
+  "status": "Both platforms processed, attached and submitted; Waiting for Review",
+  "scope": "Version-only binary update for refreshed App Store screenshots; behavior unchanged from 1.4 (11)",
+  "sourceCommit": "1fd435689b692d384bf6f5d04226dc55d942613f",
+  "platforms": {
+    "iOS": {
+      "platform": "iOS",
+      "version": "1.4.1",
+      "build": "12",
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/iOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/iOS/export/ComicReader.ipa",
+      "sha256": "b1ad04851d0b90740d61199d55049273a5ece74946efac3465ce4f50b27f2fe2",
+      "validatedAt": "2026-10-13T08:10:15.409543+00:00",
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "architectures": [
+        "arm64"
+      ],
+      "matchingDSYMs": true,
+      "uuids": {
+        "arm64": "3F7272C1-43B0-3385-A47F-6C80C66971EA"
+      },
+      "deviceFamily": [
+        1,
+        2
+      ],
+      "status": "Waiting for Review",
+      "uploadedAt": "2026-10-13T08:13:28.867373+00:00",
+      "uploadLog": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/iOS/upload.log",
+      "containsTestBundles": false,
+      "buildID": "8a227086-bac4-4fb5-89cc-81118f56697d",
+      "submissionID": "668864fc-5732-4acf-8fe9-30476fbfe04e"
+    },
+    "macOS": {
+      "platform": "macOS",
+      "version": "1.4.1",
+      "build": "12",
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/macOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/macOS/export/ComicReader.pkg",
+      "sha256": "054a9695c2fe0596f70b30141ee438dea2bfc02587a372b7e0637067bf5d778d",
+      "validatedAt": "2026-10-13T08:14:06.868312+00:00",
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "matchingDSYMs": true,
+      "uuids": {
+        "x86_64": "8AAB53CA-9002-30CE-9CB6-34C2AB37BE94",
+        "arm64": "7EC961EC-C733-344E-BDEE-4B439F00B2A5"
+      },
+      "installerSignatureValid": true,
+      "sandbox": true,
+      "userSelectedFiles": "read-only",
+      "status": "Waiting for Review",
+      "uploadedAt": "2026-10-13T08:22:28.416056+00:00",
+      "uploadLog": "/Users/pablocpe/Documents/ComicReader Releases/1.4.1-build12/macOS/upload.log",
+      "containsTestBundles": false,
+      "buildID": "81feb834-0018-44db-a7ac-a0de413120b6",
+      "submissionID": "312727ab-c6bf-433d-bb40-bef5035dfaa9"
+    }
+  },
+  "validatedAt": "2026-10-13T08:22:28.416542+00:00",
+  "reviewSubmissionPerformed": true,
+  "runtimeRegressionTestsRerun": false,
+  "validationScope": "Version-only update; production source and entitlements unchanged. Archives and exported packages validated for versions, signatures, entitlements, architecture and dSYMs.",
+  "limitations": [
+    "Live two-device iCloud sync and cross-platform production purchase propagation have not been revalidated",
+    "Minimum supported OS runtimes not available for runtime checks"
+  ],
+  "submissionRecord": "submission-record.json",
+  "reviewStatusVerifiedAt": "2026-10-13T10:00:10.566580+00:00"
+}

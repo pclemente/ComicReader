@@ -1,0 +1,166 @@
+{
+  "platform": "macos",
+  "status": "passed-ready-for-upload",
+  "count": 5,
+  "output_size": [
+    2880,
+    1800
+  ],
+  "ordered_files": [
+    "01-library.png",
+    "02-reader.png",
+    "03-search.png",
+    "04-lists.png",
+    "05-icloud.png"
+  ],
+  "records": [
+    {
+      "platform": "macos",
+      "filename": "01-library.png",
+      "size": [
+        2880,
+        1800
+      ],
+      "source": "release/app-store/1.4.1/captures/macos/01-library.png",
+      "source_sha256": "0e958652b589a122f2f4d908fa81300e915d72767643cd76ab357050800ff0a9",
+      "output_sha256": "946cd2278856b36e0ab81f2792559160061adc7319af94b97ddea1a64189c4db",
+      "source_size": [
+        1512,
+        802
+      ],
+      "rendered_size": [
+        2355,
+        1249
+      ],
+      "capture_bounds": [
+        262,
+        422,
+        2617,
+        1671
+      ],
+      "cropped": false,
+      "layout": "mac-wide-caption",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "macos",
+      "filename": "02-reader.png",
+      "size": [
+        2880,
+        1800
+      ],
+      "source": "release/app-store/1.4.1/captures/macos/02-reader.png",
+      "source_sha256": "cd32b3802f28ee3acd517ccf52c128e17ea4a73a2d708ab02bd1505b902c2bcf",
+      "output_sha256": "2eba3d9d648968089a80085c3e00caa57417bdc12dcf63c211433718d7f2a18c",
+      "source_size": [
+        1512,
+        802
+      ],
+      "rendered_size": [
+        2355,
+        1249
+      ],
+      "capture_bounds": [
+        262,
+        422,
+        2617,
+        1671
+      ],
+      "cropped": false,
+      "layout": "mac-wide-caption",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "macos",
+      "filename": "03-search.png",
+      "size": [
+        2880,
+        1800
+      ],
+      "source": "release/app-store/1.4.1/captures/macos/03-search.png",
+      "source_sha256": "3542dc59b7f2e695ba88ba69564079b902990816bbab2965ed3671bd9fc04726",
+      "output_sha256": "efa874c68c1125257651b71ac287ad916fb3be535fe73930f1b19dde433826d9",
+      "source_size": [
+        1018,
+        700
+      ],
+      "rendered_size": [
+        2000,
+        1375
+      ],
+      "capture_bounds": [
+        780,
+        212,
+        2780,
+        1587
+      ],
+      "cropped": false,
+      "layout": "mac-side-caption",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "macos",
+      "filename": "04-lists.png",
+      "size": [
+        2880,
+        1800
+      ],
+      "source": "release/app-store/1.4.1/captures/macos/04-lists.png",
+      "source_sha256": "5f6897c4b2371bef8c376d1eca5f3d08d139eeb317c528c0022151ab6280e40d",
+      "output_sha256": "127e96328bd6f1fe6bdf9fb6684c0ef46c9984d1c7dce058e608d65030b4a77c",
+      "source_size": [
+        894,
+        870
+      ],
+      "rendered_size": [
+        1541,
+        1500
+      ],
+      "capture_bounds": [
+        1009,
+        150,
+        2550,
+        1650
+      ],
+      "cropped": false,
+      "layout": "mac-side-caption",
+      "qa_source_region_pixel_identical_after_scaling": true
+    },
+    {
+      "platform": "macos",
+      "filename": "05-icloud.png",
+      "size": [
+        2880,
+        1800
+      ],
+      "source": "release/app-store/1.4.1/captures/macos/05-icloud.png",
+      "source_sha256": "c666c855687d9a891ae1f6ba1bcf8b974adc56810062a0f366edacdfc63546c8",
+      "output_sha256": "011ce079a7c4c4420679261041a6a3c6f83be4731fed373dc85d0c3ca701fe1e",
+      "source_size": [
+        894,
+        900
+      ],
+      "rendered_size": [
+        1490,
+        1500
+      ],
+      "capture_bounds": [
+        1035,
+        150,
+        2525,
+        1650
+      ],
+      "cropped": false,
+      "layout": "mac-side-caption",
+      "qa_source_region_pixel_identical_after_scaling": true
+    }
+  ],
+  "capture_review": "All five native UI sources visually reviewed. Clean dense library, actual full-page reader, genuine four-page OCR child search, unlocked queues with 1/52/1 counts and two 3-comic lists, free iCloud off.",
+  "preprocessing": "Full original payloads preserved. Exact crops exclude only OS titlebars or outer blank padding, with every retained pixel verified unchanged.",
+  "purchase_validation": false,
+  "live_cloud_sync_validation": false,
+  "capture_app": "Debug 1.4 (11), same application interface as version-only 1.4.1 (12) release.",
+  "visual_review_completed": true,
+  "composite_review": "All five final composed images and the final contact sheet visually reviewed. Captions fit, actual app controls remain readable, and each retained app region is unchanged after aspect-preserving scaling.",
+  "contact_sheet": "design-preview/macos-final-contact-sheet.png"
+}

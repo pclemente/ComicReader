@@ -1,0 +1,96 @@
+{
+  "version": "1.4.1",
+  "build": "12",
+  "appStoreAppID": "1597314495",
+  "status": "Waiting for Review",
+  "screenshotsReplaced": true,
+  "reviewSubmissionPerformed": true,
+  "platforms": {
+    "ios": {
+      "buildID": "8a227086-bac4-4fb5-89cc-81118f56697d",
+      "draftURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/ios/version/inflight",
+      "buildAttached": true,
+      "metadataSaved": true,
+      "reviewSampleAttached": true,
+      "iphoneScreenshotCount": 5,
+      "iphoneScreenshots": [
+        "01-library.png",
+        "02-reader.png",
+        "03-search.png",
+        "04-lists.png",
+        "05-icloud.png"
+      ],
+      "iphoneScreenshotUploadVerifiedAt": "2026-10-13T09:01:31.679051+00:00",
+      "iPadScreenshotArtifactsReady": true,
+      "iPadScreenshotTest": {
+        "result": "Passed",
+        "passed": 1,
+        "failed": 0,
+        "resultBundle": "/tmp/ComicReader-20261013-ipad-captures.xcresult",
+        "skipped": 0,
+        "summary": "design-preview/ipad-capture-test-summary.json"
+      },
+      "status": "Waiting for Review",
+      "submissionID": "668864fc-5732-4acf-8fe9-30476fbfe04e",
+      "submissionURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/668864fc-5732-4acf-8fe9-30476fbfe04e",
+      "submittedAt": "2026-10-13T11:58:00+02:00",
+      "submittedAtPrecision": "minute, as displayed by App Store Connect",
+      "automaticReleaseAfterApproval": true,
+      "proof": "submission-evidence/ios-waiting-for-review.png",
+      "ipadScreenshotCount": 5,
+      "ipadScreenshots": [
+        "01-library.png",
+        "02-reader.png",
+        "03-search.png",
+        "04-lists.png",
+        "05-icloud.png"
+      ],
+      "iphoneGalleryProof": "submission-evidence/iphone-gallery.png",
+      "ipadGalleryProof": "submission-evidence/ipad-gallery.png",
+      "iphoneInheritanceVerified": true,
+      "ipadInheritanceVerified": true,
+      "iphoneCaptureRecord": "captures/iphone/capture-record.json",
+      "ipadCaptureRecord": "captures/ipad/capture-record.json"
+    },
+    "macos": {
+      "buildID": "81feb834-0018-44db-a7ac-a0de413120b6",
+      "draftURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/macos/version/inflight",
+      "buildAttached": true,
+      "metadataSaved": true,
+      "reviewSampleAttached": true,
+      "status": "Waiting for Review",
+      "submissionID": "312727ab-c6bf-433d-bb40-bef5035dfaa9",
+      "submissionURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/312727ab-c6bf-433d-bb40-bef5035dfaa9",
+      "submittedAt": "2026-10-13T11:54:00+02:00",
+      "submittedAtPrecision": "minute, as displayed by App Store Connect",
+      "automaticReleaseAfterApproval": true,
+      "proof": "submission-evidence/macos-waiting-for-review.png",
+      "screenshotCount": 5,
+      "screenshots": [
+        "01-library.png",
+        "02-reader.png",
+        "03-search.png",
+        "04-lists.png",
+        "05-icloud.png"
+      ],
+      "galleryProof": "submission-evidence/macos-gallery.png",
+      "inheritanceVerified": true,
+      "captureRecord": "captures/macos/capture-record.json"
+    }
+  },
+  "observedAt": "2026-10-13T10:00:10.566580+00:00",
+  "automaticReleaseAfterApproval": true,
+  "totalScreenshotCount": 15,
+  "scope": "Screenshot refresh of the existing interface; version-only 1.4.1 (12) binaries because 1.4 (11) was already released.",
+  "overviewProof": "submission-evidence/review-overview.png",
+  "validation": {
+    "captureJourneys": "iPhone and iPad screenshot journeys passed using actual app UI and local StoreKitTest purchases. Mac captures used genuine application screens and an in-memory Plus fixture.",
+    "artifacts": "All 15 opaque RGB PNGs visually reviewed, with required dimensions, source provenance and hashes recorded.",
+    "productionPackages": "Both signed packages uploaded and processed, attached to the respective 1.4.1 submission; signature, version, entitlements, architectures, dSYMs and fixture exclusion checked.",
+    "limitations": [
+      "Live cross-device iCloud synchronization and production purchase propagation were not revalidated for this screenshot-only release.",
+      "Mac captures show Debug 1.4 (11), whose production source is identical to the version-only 1.4.1 (12) update.",
+      "The full regression suite and minimum-supported OS runtimes were not rerun."
+    ]
+  }
+}

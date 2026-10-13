@@ -1,0 +1,34 @@
+COMICREADER 1.4.1 (12)
+
+This update replaces the App Store screenshot galleries on iPhone, iPad and Mac with fresh captures of the current interface. App functionality, free iCloud synchronization and the existing one-time Plus purchase are unchanged from approved version 1.4 (11). The new sample comic fixtures are used only for screenshots and are not bundled with the app.
+
+GUIDELINE 4.10
+
+Following the build 7 rejection, iCloud sync has remained free since build 9. It is still free in this build. The dedicated “Free iCloud Sync” button opens a screen with no purchase control. Sync is off until the user consents to upload all library comics and reading progress to their personal iCloud Drive storage. Plus never enables or expands iCloud sync.
+
+Reading, imports, transfers, current-page text recognition, copying and system sharing are also free. Recognition uses embedded PDF text when available and on-device OCR otherwise. Recognition accuracy varies with scans, languages and lettering.
+
+COMICREADER PLUS
+
+com.pabloclementeperez.ComicFlow.plus remains a non-consumable, one-time purchase, priced at €9.99 in Spain. The app shows the buyer’s localized StoreKit price and includes Restore Purchases.
+
+Plus includes:
+• Comic Search & Quotes: build a persistent page-by-page index, search indexed pages, jump to results and save editable quotes. Indexing can be stopped and resumed. Search covers the current comic, not the whole library.
+• Custom Reading Lists and Smart Queues: arrange comics without moving files, and open automatic Continue Reading, Unread and Read Again queues. Queue counts are free to preview.
+• Named Page Bookmarks.
+• Clear Ink, Grayscale and Warm Paper filters. A free sample preview is available in Plus. Original rendering is always free, and no filter changes the comic file.
+
+Indexes, quotes, lists and bookmarks stay on each device. Only comic files, read/unread status and current page use iCloud sync. Saved quotes, lists and bookmarks remain readable after a refund; editing requires Plus. No comics are included with the upgrade.
+
+TEST PATH
+
+Use your own PDF, CBZ/ZIP or classic CBR/RAR file. Unzip the attached review-sample.zip, keep the inner public-domain .cbz file compressed, and import that CBZ through Settings > Add Files. No app login is needed.
+
+1. Open a comic and use “Comic text and search” > This Page. Select text, copy or share it without Plus.
+2. Open Plus. Try the filter preview free. Purchase in the sandbox or restore the existing non-consumable.
+3. In the comic’s Search tab, choose Index Comic, stop and resume indexing, search visible words and open a result. Save, edit and share a quote from This Page.
+4. Open Reading Lists to inspect free queue counts, then use Plus to open queues and create a custom list. Test a named bookmark and a reader filter.
+5. Separately open Free iCloud Sync, which needs no purchase, and inspect the upload-consent prompt.
+6. On iPhone, rotate the library and open the scrollable Settings. On Mac, Command-O imports, Command-R refreshes, and arrow keys navigate the comic.
+
+The Mac platform is configured under the same App Store Connect app with the existing non-consumable product.
