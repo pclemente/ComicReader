@@ -744,6 +744,7 @@
   app.launchArguments = self.standardLaunchArguments;
   @try {
     [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
     for (NSString* identifier in @[@"library.plus", @"library.icloud", @"library.settings"]) {
       XCUIElement* button = app.buttons[identifier];
       XCTAssertTrue([self waitForElementToBecomeHittable:button timeout:15], @"%@", identifier);
@@ -784,6 +785,70 @@
     [app terminate];
     [session clearTransactions];
     XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
+- (void)testReaderRetainsCurrentPageAcrossViewportChanges {
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  NSString* filename = [NSString stringWithFormat:@"Resize-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* fixture = [self createPDFUIFixtureNamed:filename];
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:30]);
+    if (@available(iOS 16.4, *)) {
+      [app openURL:fixture];
+    } else {
+      XCTSkip(@"Document URL UI automation requires iOS 16.4 or later.");
+      return;
+    }
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCUIElement* cover = [app descendantsMatchingType:XCUIElementTypeAny][[@"library.comic." stringByAppendingString:filename]];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:45]);
+    [cover tap];
+    XCUIElement* canvas = app.otherElements[@"reader.canvas"];
+    XCTAssertTrue([canvas waitForExistenceWithTimeout:15]);
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
+      [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
+    [[canvas coordinateWithNormalizedOffset:CGVectorMake(0.9, 0.5)] tap];
+
+    // Exercise real UIKit layout and presentation transitions. The unit tests
+    // separately exercise fold-sized bounds changes without device rotation.
+    NSArray<NSNumber*>* orientations = @[@(UIDeviceOrientationPortrait),
+      @(UIDeviceOrientationLandscapeLeft), @(UIDeviceOrientationPortrait),
+      @(UIDeviceOrientationLandscapeRight), @(UIDeviceOrientationPortrait)];
+    for (NSUInteger index = 0; index < orientations.count; index++) {
+      XCUIDevice.sharedDevice.orientation = orientations[index].integerValue;
+      XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
+        [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
+      XCTAssertTrue(CGRectContainsRect(app.frame, canvas.frame));
+      XCTAssertGreaterThan(CGRectGetWidth(canvas.frame), 0.0);
+      XCTAssertGreaterThan(CGRectGetHeight(canvas.frame), 0.0);
+      for (NSString* identifier in @[@"reader.bookmarks.open", @"reader.filters.open", @"reader.text.open"]) {
+        XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[identifier] timeout:10]);
+        XCTAssertTrue(CGRectContainsRect(app.frame, app.buttons[identifier].frame));
+      }
+      [[canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)] tap];
+      XCTAssertTrue([app.buttons[@"reader.bookmarks.open"] waitForNonExistenceWithTimeout:10]);
+      [self saveScreenshot:[NSString stringWithFormat:@"Reader resize %lu", (unsigned long)index] ofApp:app];
+      XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
+        [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
+      [app.buttons[@"reader.text.open"] tap];
+      XCUIElement* text = app.textViews[@"reader.text.content"];
+      NSPredicate* pageTwo = [NSPredicate predicateWithFormat:@"exists == YES AND value CONTAINS[c] %@", @"page 2"];
+      XCTestExpectation* currentPage = [[XCTNSPredicateExpectation alloc] initWithPredicate:pageTwo object:text];
+      XCTAssertEqual([XCTWaiter waitForExpectations:@[currentPage] timeout:45], XCTWaiterResultCompleted,
+        @"Resizing must keep the same comic page");
+      XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"reader.text.done"] timeout:10]);
+      [app.buttons[@"reader.text.done"] tap];
+    }
+  } @finally {
+    [app terminate];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+    [[NSFileManager defaultManager] removeItemAtURL:fixture error:NULL];
   }
 }
 

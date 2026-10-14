@@ -29,6 +29,20 @@
 #define kLeftZoneRatio 0.2
 #define kRightZoneRatio 0.8
 #define kDoubleTapZoomRatio 1.5
+#define kReaderChromeHeight 44.0
+#define kReaderCompactWidth 600.0
+
+CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
+  bounds = CGRectStandardize(bounds);
+  CGFloat left = MIN(MAX(safeAreaInsets.left, 0.0), CGRectGetWidth(bounds));
+  CGFloat right = MIN(MAX(safeAreaInsets.right, 0.0), CGRectGetWidth(bounds) - left);
+  CGFloat top = MIN(MAX(safeAreaInsets.top, 0.0), CGRectGetHeight(bounds));
+  CGFloat bottom = MIN(MAX(safeAreaInsets.bottom, 0.0), CGRectGetHeight(bounds) - top);
+  return CGRectMake(CGRectGetMinX(bounds) + left,
+                    CGRectGetMinY(bounds) + top,
+                    CGRectGetWidth(bounds) - left - right,
+                    CGRectGetHeight(bounds) - top - bottom);
+}
 
 @interface ComicDocumentView : DocumentView
 @end
@@ -36,8 +50,10 @@
 @interface ComicPageView : ZoomView {
 @private
   NSString* _file;
+  CGFloat _renderedDisplayScale;
 }
 @property(nonatomic, copy) NSString* file;
+@property(nonatomic) CGFloat renderedDisplayScale;
 - (id) initWithTapTarget:(id)target action:(SEL)action;
 - (void) displayImage:(UIImage*)anImage;
 @end
@@ -59,12 +75,13 @@
 
 @implementation ComicPageView
 
-@synthesize file=_file;
+@synthesize file=_file, renderedDisplayScale=_renderedDisplayScale;
 
 - (id) initWithTapTarget:(id)target action:(SEL)action {
   if ((self = [super init])) {
     self.displayMode = kZoomViewDisplayMode_Fit;
     self.doubleTapZoom = kDoubleTapZoomRatio;
+    self.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     
     self.alwaysBounceHorizontal = NO;
     self.alwaysBounceVertical = NO;
@@ -79,10 +96,18 @@
 
 - (void) displayImage:(UIImage*)anImage {
   if (anImage) {
-    UIImageView* imageView = [[UIImageView alloc] initWithImage:anImage];
-    [self setDisplayView:imageView];
-    [imageView release];
+    // A display-scale refresh must not replace the zoomed view: doing so resets
+    // ZoomView's viewport state. The decoded page has the same source aspect,
+    // so updating the existing image preserves its coordinate space and focus.
+    if ([self.displayView isKindOfClass:[UIImageView class]]) {
+      [(UIImageView*)self.displayView setImage:anImage];
+    } else {
+      UIImageView* imageView = [[UIImageView alloc] initWithImage:anImage];
+      [self setDisplayView:imageView];
+      [imageView release];
+    }
   } else {
+    _renderedDisplayScale = 0.0;
     [self setDisplayView:nil];
   }
 }
@@ -96,8 +121,11 @@
 @end
 
 @interface ComicViewController () <CRPageBookmarksViewControllerDelegate, CRReaderImageFiltersDelegate, CRComicTextViewControllerDelegate>
-- (void)_configureReaderChromeForCompactWidth:(BOOL)compact;
+- (void)_configureReaderChromeForNarrowWidth:(BOOL)narrow usesSeparateToolsToolbar:(BOOL)usesToolbar;
 - (void)_setReaderChromeHidden:(BOOL)hidden;
+- (CGFloat)_displayScaleForPageView:(UIView*)pageView documentView:(DocumentView*)documentView;
+- (void)_scheduleSelectedPageScaleRefresh;
+- (void)_refreshSelectedPageScaleIfNeeded;
 - (void)_previousPageCommand:(UIKeyCommand*)command;
 - (void)_nextPageCommand:(UIKeyCommand*)command;
 @end
@@ -229,8 +257,19 @@
   return YES;
 }
 
+- (CGFloat) _displayScaleForPageView:(UIView*)pageView documentView:(DocumentView*)documentView {
+  // A page is normally attached before this delegate callback. Prefer its
+  // traits when attached, then fall back through attached reader containers so
+  // alternate DocumentView visibility policies cannot silently use scale 1.
+  CGFloat displayScale = pageView.superview ? pageView.traitCollection.displayScale : 0.0;
+  if (displayScale <= 0.0) displayScale = documentView.traitCollection.displayScale;
+  if (displayScale <= 0.0) displayScale = self.traitCollection.displayScale;
+  return displayScale > 0.0 ? displayScale : 1.0;
+}
+
 - (void) documentView:(DocumentView*)documentView willShowPageView:(UIView*)view {
-  CGFloat maxPageSize = kMaxPageSize * [[UIScreen mainScreen] scale];
+  CGFloat displayScale = [self _displayScaleForPageView:view documentView:documentView];
+  CGFloat maxPageSize = kMaxPageSize * displayScale;
   CGImageRef imageRef = NULL;
   if (_type == kComicType_PDF) {
     CGPDFDocumentRef document = CGPDFDocumentCreateWithURL((CFURLRef)[NSURL fileURLWithPath:_path]);  // Don't keep CGPDFDocument around as it caches pages content heavily
@@ -255,7 +294,10 @@
   }
   if (imageRef) {
     UIImage* image = [[UIImage alloc] initWithCGImage:imageRef];
-    [(ComicPageView*)view displayImage:[CRReaderImageFilters displayImage:image]];
+    ComicPageView* pageView = (ComicPageView*)view;
+    UIImage* displayImage = [CRReaderImageFilters displayImage:image];
+    [pageView displayImage:displayImage];
+    pageView.renderedDisplayScale = displayImage ? displayScale : 0.0;
     [image release];
     view.backgroundColor = [UIColor blackColor];
     CGImageRelease(imageRef);
@@ -316,11 +358,15 @@
   _toolsToolbar.accessibilityIdentifier = @"reader.compactTools";
   [self.view addSubview:_toolsToolbar];
   _contentView.backgroundColor = nil;
+  _contentView.accessibilityIdentifier = @"reader.canvas";
   
   _documentView = [[ComicDocumentView alloc] initWithFrame:_contentView.bounds];
   _documentView.delegate = self;
   _documentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   [_contentView addSubview:_documentView];
+  // Keep the scrubber and its overlay inside the same safe rectangle as the page.
+  [_navigationControl removeFromSuperview];
+  [_contentView addSubview:_navigationControl];
   
   _pageLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 160, 24)];
   _pageLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
@@ -351,19 +397,22 @@
     _toolsToolbar.scrollEdgeAppearance = toolbarAppearance;
     [toolbarAppearance release];
   }
-  BOOL startsCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
-                       CGRectGetWidth(self.view.bounds) < 600.0;
-  [self _configureReaderChromeForCompactWidth:startsCompact];
+  CGRect initialBounds = CRReaderContentBounds(self.view.bounds, self.view.safeAreaInsets);
+  BOOL startsNarrow = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                      CGRectGetWidth(initialBounds) < kReaderCompactWidth;
+  BOOL startsWithToolbar = startsNarrow && CGRectGetHeight(initialBounds) >= 3.0 * kReaderChromeHeight;
+  [self _configureReaderChromeForNarrowWidth:startsNarrow usesSeparateToolsToolbar:startsWithToolbar];
 }
 
-- (void) _configureReaderChromeForCompactWidth:(BOOL)compact {
-  _usingCompactLayout = compact;
+- (void) _configureReaderChromeForNarrowWidth:(BOOL)narrow usesSeparateToolsToolbar:(BOOL)usesToolbar {
+  _usingNarrowLayout = narrow;
+  _usingCompactLayout = usesToolbar;
   _adaptiveLayoutConfigured = YES;
 
   UINavigationItem* previousItem = _navigationBar.items.firstObject;
   UINavigationItem* readerItem = _navigationBar.topItem;
-  if (compact) {
-    previousItem.backButtonDisplayMode = UINavigationItemBackButtonDisplayModeMinimal;
+  previousItem.backButtonDisplayMode = narrow ? UINavigationItemBackButtonDisplayModeMinimal : UINavigationItemBackButtonDisplayModeDefault;
+  if (usesToolbar) {
     readerItem.rightBarButtonItems = nil;
     UIBarButtonItem* flexible1 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                                  target:nil action:nil] autorelease];
@@ -377,10 +426,9 @@
                             flexible3, _textButtonItem, flexible4];
   } else {
     _toolsToolbar.items = nil;
-    previousItem.backButtonDisplayMode = UINavigationItemBackButtonDisplayModeDefault;
     readerItem.rightBarButtonItems = @[_bookmarksButtonItem, _filtersButtonItem, _textButtonItem];
   }
-  _toolsToolbar.hidden = !compact || _navigationBar.hidden;
+  _toolsToolbar.hidden = !usesToolbar || _navigationBar.hidden;
 }
 
 - (void) _setReaderChromeHidden:(BOOL)hidden {
@@ -394,12 +442,13 @@
   if (recognizer.state == UIGestureRecognizerStateEnded) {
     CGRect bounds = recognizer.view.bounds;
     CGPoint location = [recognizer locationInView:recognizer.view];
+    CGFloat viewportX = location.x - CGRectGetMinX(bounds);
     // Left margin
-    if (location.x <= bounds.size.width * kLeftZoneRatio) {
+    if (viewportX <= bounds.size.width * kLeftZoneRatio) {
       [_documentView goToPreviousPage:NO];
     }
     // Right margin
-    else if (location.x >= bounds.size.width * kRightZoneRatio) {
+    else if (viewportX >= bounds.size.width * kRightZoneRatio) {
       [_documentView goToNextPage:NO];
     }
     // Center
@@ -411,34 +460,58 @@
 
 - (void) viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
-  _contentView.frame = self.view.bounds;
-  CGRect safeBounds = UIEdgeInsetsInsetRect(self.view.bounds, self.view.safeAreaInsets);
-  BOOL compact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
-                 CGRectGetWidth(safeBounds) < 600.0;
-  if (!_adaptiveLayoutConfigured || compact != _usingCompactLayout) {
-    [self _configureReaderChromeForCompactWidth:compact];
+  CGRect safeBounds = CRReaderContentBounds(self.view.bounds, self.view.safeAreaInsets);
+  _contentView.frame = safeBounds;
+  _documentView.frame = _contentView.bounds;
+
+  BOOL narrow = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+                CGRectGetWidth(safeBounds) < kReaderCompactWidth;
+  // On short displays, keep all tools in the navigation bar so the reader only
+  // needs two 44-point chrome rows and the controls cannot overlap each other.
+  BOOL usesToolbar = narrow && CGRectGetHeight(safeBounds) >= 3.0 * kReaderChromeHeight;
+  if (!_adaptiveLayoutConfigured || narrow != _usingNarrowLayout || usesToolbar != _usingCompactLayout) {
+    [self _configureReaderChromeForNarrowWidth:narrow usesSeparateToolsToolbar:usesToolbar];
   }
   _navigationBar.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMinY(safeBounds),
-                                    CGRectGetWidth(safeBounds), 44.0);
-  _navigationControl.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMaxY(safeBounds) - 44.0,
-                                        CGRectGetWidth(safeBounds), 44.0);
-  if (compact) {
+                                    CGRectGetWidth(safeBounds), kReaderChromeHeight);
+  _navigationControl.frame = CGRectMake(0.0, MAX(0.0, CGRectGetHeight(safeBounds) - kReaderChromeHeight),
+                                        CGRectGetWidth(safeBounds), kReaderChromeHeight);
+  if (usesToolbar) {
     _toolsToolbar.frame = CGRectMake(CGRectGetMinX(safeBounds),
-                                     CGRectGetMinY(_navigationControl.frame) - 44.0,
-                                     CGRectGetWidth(safeBounds), 44.0);
+                                     CGRectGetMaxY(safeBounds) - 2.0 * kReaderChromeHeight,
+                                     CGRectGetWidth(safeBounds), kReaderChromeHeight);
     _navigationControl.margins = UIEdgeInsetsMake(0.0, 24.0, 0.0, 24.0);
   } else {
+    _toolsToolbar.frame = CGRectZero;
     _navigationControl.margins = UIEdgeInsetsMake(0.0, 80.0, 20.0, 80.0);
+  }
+  CGRect pageLabelBounds = _pageLabel.bounds;
+  pageLabelBounds.size.width = MIN(160.0, MAX(0.0, CGRectGetWidth(safeBounds) - 16.0));
+  _pageLabel.bounds = pageLabelBounds;
+}
+
+- (void) viewSafeAreaInsetsDidChange {
+  [super viewSafeAreaInsetsDidChange];
+  [self.view setNeedsLayout];
+}
+
+- (void) traitCollectionDidChange:(UITraitCollection*)previousTraitCollection {
+  [super traitCollectionDidChange:previousTraitCollection];
+  [self.view setNeedsLayout];
+  if (self.traitCollection.displayScale > previousTraitCollection.displayScale + 0.01) {
+    [self _scheduleSelectedPageScaleRefresh];
   }
 }
 
 - (void) viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
+  _readerAcceptsScaleRefreshes = YES;
 
   // A compact-width sheet can cover the reader and trigger appearance callbacks.
   // Keep the existing views and selected page instead of rebuilding the document.
   if (_readerReady && _documentView.pageViews.count > 0) {
     _navigationControl.currentPage = _documentView.selectedPageIndex;
+    [self _scheduleSelectedPageScaleRefresh];
     return;
   }
   
@@ -486,7 +559,8 @@
 
 - (void) viewWillDisappear:(BOOL)animated {
   [super viewWillDisappear:animated];
-  
+  _readerAcceptsScaleRefreshes = NO;
+
   [self saveState];
 }
 
@@ -506,9 +580,30 @@
 - (void) documentViewDidChangePage:(DocumentView*)documentView {
   if (_readerReady) [self saveState];
   _navigationControl.currentPage = _documentView.selectedPageIndex;
+  [self _scheduleSelectedPageScaleRefresh];
   
   if (_documentView.pageViews) {
     [[AppDelegate sharedDelegate] logPageView];
+  }
+}
+
+- (void) _scheduleSelectedPageScaleRefresh {
+  if (!_readerAcceptsScaleRefreshes || !_readerReady || _selectedPageScaleRefreshScheduled) return;
+  _selectedPageScaleRefreshScheduled = YES;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    self->_selectedPageScaleRefreshScheduled = NO;
+    if (!self->_readerAcceptsScaleRefreshes || !self->_readerReady || self.isBeingDismissed) return;
+    [self _refreshSelectedPageScaleIfNeeded];
+  });
+}
+
+- (void) _refreshSelectedPageScaleIfNeeded {
+  if (!_readerAcceptsScaleRefreshes || !_readerReady || _documentView.pageViews.count == 0) return;
+  ComicPageView* pageView = (ComicPageView*)_documentView.selectedPageView;
+  if (!pageView.displayView) return;
+  CGFloat displayScale = [self _displayScaleForPageView:pageView documentView:_documentView];
+  if (displayScale > pageView.renderedDisplayScale + 0.01) {
+    [self documentView:_documentView willShowPageView:pageView];
   }
 }
 

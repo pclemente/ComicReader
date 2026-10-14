@@ -38,6 +38,24 @@
 @end
 
 @implementation ComicReaderTests
+- (UIView*)viewWithAccessibilityIdentifier:(NSString*)identifier underView:(UIView*)view {
+  if ([view.accessibilityIdentifier isEqualToString:identifier]) {
+    return view;
+  }
+  for (UIView* subview in view.subviews) {
+    UIView* match = [self viewWithAccessibilityIdentifier:identifier underView:subview];
+    if (match) return match;
+  }
+  return nil;
+}
+- (void)assertSubviewsFitHorizontallyInView:(UIView*)view {
+  for (UIView* subview in view.subviews) {
+    XCTAssertGreaterThanOrEqual(CGRectGetMinX(subview.frame), -0.5);
+    XCTAssertGreaterThanOrEqual(CGRectGetWidth(subview.frame), 0.0);
+    XCTAssertLessThanOrEqual(CGRectGetMaxX(subview.frame), CGRectGetWidth(view.bounds) + 0.5);
+    [self assertSubviewsFitHorizontallyInView:subview];
+  }
+}
 - (UIContextMenuInteraction*)contextMenuInteractionForView:(UIView*)view {
   for (id<UIInteraction> interaction in view.interactions) {
     if ([interaction isKindOfClass:[UIContextMenuInteraction class]]) {
@@ -107,6 +125,161 @@
   XCTAssertNotNil(app.window.windowScene);
   XCTAssertEqual(app.window.rootViewController, app.viewController);
   XCTAssertEqual([[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_ServerMode], kServerMode_Full);
+}
+- (void)testCompactLibraryChromeHonorsAsymmetricSafeArea {
+  LibraryViewController* controller = (LibraryViewController*)[AppDelegate sharedDelegate].viewController;
+  XCTAssertTrue([controller isKindOfClass:[LibraryViewController class]]);
+  UIView* view = controller.view;
+  CGRect originalFrame = view.frame;
+  UIEdgeInsets originalAdditionalInsets = controller.additionalSafeAreaInsets;
+
+  @try {
+    view.frame = CGRectMake(originalFrame.origin.x, originalFrame.origin.y, 430, 700);
+    controller.additionalSafeAreaInsets = UIEdgeInsetsMake(7, 31, 19, 67);
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+
+    CGRect safeBounds = UIEdgeInsetsInsetRect(view.bounds, view.safeAreaInsets);
+    UIToolbar* toolbar = (UIToolbar*)[self viewWithAccessibilityIdentifier:@"library.compactToolbar"
+                                                                 underView:view];
+    XCTAssertNotNil(toolbar);
+    XCTAssertFalse(toolbar.hidden);
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(controller.navigationBar.frame), CGRectGetMinX(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetWidth(controller.navigationBar.frame), CGRectGetWidth(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(toolbar.frame), CGRectGetMinX(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetWidth(toolbar.frame), CGRectGetWidth(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMaxY(toolbar.frame), CGRectGetMaxY(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(controller.gridView.frame), CGRectGetMinX(safeBounds), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetWidth(controller.gridView.frame), CGRectGetWidth(safeBounds), 0.5);
+    XCTAssertLessThanOrEqual(CGRectGetMaxY(controller.gridView.frame), CGRectGetMinY(toolbar.frame) + 0.5);
+    XCTAssertGreaterThanOrEqual(CGRectGetMinY(controller.gridView.frame), CGRectGetMaxY(controller.navigationBar.frame) - 0.5);
+    UIView* banner = [self viewWithAccessibilityIdentifier:@"library.whatsNew" underView:view];
+    if (banner && !banner.hidden) {
+      XCTAssertGreaterThanOrEqual(CGRectGetMinX(banner.frame), CGRectGetMinX(safeBounds) - 0.5);
+      XCTAssertLessThanOrEqual(CGRectGetMaxX(banner.frame), CGRectGetMaxX(safeBounds) + 0.5);
+      XCTAssertLessThanOrEqual(CGRectGetMaxY(banner.frame), CGRectGetMinY(controller.gridView.frame) + 0.5);
+    }
+  } @finally {
+    controller.additionalSafeAreaInsets = originalAdditionalInsets;
+    view.frame = originalFrame;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+  }
+}
+- (void)testLibraryResizePreservesGridStateAndShortLayoutGeometry {
+  LibraryViewController* controller = (LibraryViewController*)[AppDelegate sharedDelegate].viewController;
+  XCTAssertTrue([controller isKindOfClass:[LibraryViewController class]]);
+  UIView* view = controller.view;
+  GridView* grid = controller.gridView;
+  CGRect originalFrame = view.frame;
+  UIEdgeInsets originalAdditionalInsets = controller.additionalSafeAreaInsets;
+  NSArray* originalItems = grid.items;
+  CGFloat originalScrollingAmount = grid.scrollingAmount;
+  ComicCollection* collectionBeforeResize = [controller valueForKey:@"currentCollection"];
+  NSInteger originalPersistedScrolling = collectionBeforeResize ? collectionBeforeResize.scrolling :
+    [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_RootScrolling];
+  UIView* originalEmptyState = [controller valueForKey:@"emptyStateView"];
+  CGPoint originalEmptyOffset = [(UIScrollView*)[originalEmptyState viewWithTag:9901] contentOffset];
+
+  NSMutableArray* fixtures = [NSMutableArray array];
+  for (NSUInteger index = 0; index < 30; index++) {
+    Comic* comic = [Comic new];
+    [comic setValue:@(100000 + index) forKey:@"sqlRowID"];
+    comic.name = [NSString stringWithFormat:@"Adaptive fixture %lu", (unsigned long)index];
+    [fixtures addObject:comic];
+  }
+
+  @try {
+    view.frame = CGRectMake(originalFrame.origin.x, originalFrame.origin.y, 230, 320);
+    controller.additionalSafeAreaInsets = UIEdgeInsetsMake(9, 23, 17, 47);
+    grid.items = fixtures;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [grid layoutIfNeeded];
+    grid.scrollingAmount = 4500.0;
+
+    NSArray* itemsBeforeResize = grid.items;
+    UINavigationItem* navigationItemBeforeResize = controller.navigationBar.topItem;
+    id scrollAnchor = grid.visibleItems.firstObject;
+    UIView* anchorView = [grid viewForItem:scrollAnchor];
+    XCTAssertNotNil(scrollAnchor);
+    XCTAssertNotNil(anchorView);
+    CGFloat scrollAnchorY = CGRectGetMinY([grid convertRect:anchorView.bounds fromView:anchorView]);
+    XCTAssertGreaterThan(grid.scrollingAmount, 4000.0);
+
+    UIView* emptyState = [controller valueForKey:@"emptyStateView"];
+    UIScrollView* emptyScroll = (UIScrollView*)[emptyState viewWithTag:9901];
+    emptyScroll.contentOffset = CGPointMake(0, 120);
+    XCTAssertGreaterThanOrEqual(CGRectGetWidth(grid.frame), 0.0);
+    XCTAssertGreaterThanOrEqual(CGRectGetHeight(grid.frame), 0.0);
+    XCTAssertLessThanOrEqual(grid.contentMargins.left + kLibraryThumbnailWidth + grid.contentMargins.right,
+                             CGRectGetWidth(grid.bounds) + 0.5);
+
+    emptyState = [controller valueForKey:@"emptyStateView"];
+    emptyScroll = (UIScrollView*)[emptyState viewWithTag:9901];
+    UIView* emptyContent = [emptyState viewWithTag:9902];
+    XCTAssertTrue(CGRectEqualToRect(emptyState.frame, grid.frame));
+    XCTAssertEqualWithAccuracy(CGRectGetWidth(emptyContent.frame), CGRectGetWidth(emptyScroll.bounds), 0.5);
+    XCTAssertEqualWithAccuracy(emptyScroll.contentOffset.y, 120.0, 0.5);
+    [self assertSubviewsFitHorizontallyInView:emptyContent];
+    UIView* banner = [self viewWithAccessibilityIdentifier:@"library.whatsNew" underView:view];
+    if (banner) XCTAssertTrue(banner.hidden);
+
+    view.frame = CGRectMake(originalFrame.origin.x, originalFrame.origin.y, 430, 600);
+    controller.additionalSafeAreaInsets = UIEdgeInsetsMake(5, 17, 11, 43);
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [grid layoutIfNeeded];
+    NSArray* itemsAfterExpansion = grid.items;
+    XCTAssertEqual(itemsAfterExpansion.count, itemsBeforeResize.count);
+    for (NSUInteger index = 0; index < itemsBeforeResize.count; index++) {
+      XCTAssertEqual(itemsAfterExpansion[index], itemsBeforeResize[index]);
+    }
+    anchorView = [grid viewForItem:scrollAnchor];
+    XCTAssertTrue([grid.visibleItems indexOfObjectIdenticalTo:scrollAnchor] != NSNotFound);
+    XCTAssertEqualWithAccuracy(CGRectGetMinY([grid convertRect:anchorView.bounds fromView:anchorView]),
+                               scrollAnchorY, 0.5);
+    XCTAssertLessThan(grid.scrollingAmount, 3000.0);
+    XCTAssertEqual(controller.navigationBar.topItem, navigationItemBeforeResize);
+    XCTAssertEqual([controller valueForKey:@"currentCollection"], collectionBeforeResize);
+
+    NSInteger expandedPersistedScrolling = collectionBeforeResize ? collectionBeforeResize.scrolling :
+      [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_RootScrolling];
+    XCTAssertEqual(expandedPersistedScrolling, (NSInteger)lround(grid.scrollingAmount));
+
+    view.frame = CGRectMake(originalFrame.origin.x, originalFrame.origin.y, 230, 320);
+    controller.additionalSafeAreaInsets = UIEdgeInsetsMake(9, 23, 17, 47);
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [grid layoutIfNeeded];
+    anchorView = [grid viewForItem:scrollAnchor];
+    XCTAssertTrue([grid.visibleItems indexOfObjectIdenticalTo:scrollAnchor] != NSNotFound);
+    XCTAssertEqualWithAccuracy(CGRectGetMinY([grid convertRect:anchorView.bounds fromView:anchorView]),
+                               scrollAnchorY, 0.5);
+    XCTAssertEqualWithAccuracy(grid.scrollingAmount, 4500.0, 0.5);
+    XCTAssertEqual(controller.navigationBar.topItem, navigationItemBeforeResize);
+    XCTAssertEqual([controller valueForKey:@"currentCollection"], collectionBeforeResize);
+
+    NSInteger collapsedPersistedScrolling = collectionBeforeResize ? collectionBeforeResize.scrolling :
+      [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_RootScrolling];
+    XCTAssertEqual(collapsedPersistedScrolling, (NSInteger)lround(grid.scrollingAmount));
+  } @finally {
+    controller.additionalSafeAreaInsets = originalAdditionalInsets;
+    view.frame = originalFrame;
+    grid.items = originalItems;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [grid layoutIfNeeded];
+    grid.scrollingAmount = originalScrollingAmount;
+    if (collectionBeforeResize) {
+      collectionBeforeResize.scrolling = (int)originalPersistedScrolling;
+      [[LibraryConnection mainConnection] updateObject:collectionBeforeResize];
+    } else {
+      [[NSUserDefaults standardUserDefaults] setInteger:originalPersistedScrolling forKey:kDefaultKey_RootScrolling];
+    }
+    UIView* restoredEmptyState = [controller valueForKey:@"emptyStateView"];
+    [(UIScrollView*)[restoredEmptyState viewWithTag:9901] setContentOffset:originalEmptyOffset];
+  }
 }
 - (void)testEachLibraryThumbnailOwnsItsContextMenuPreview {
   AppDelegate* app = [AppDelegate sharedDelegate];

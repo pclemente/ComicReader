@@ -194,7 +194,15 @@
 
 - (void) layoutSubviews {
   CGRect bounds = self.bounds;
-  
+
+  BOOL pageSizeChanged = !CGSizeEqualToSize(_pageSize, CGSizeZero) && !CGSizeEqualToSize(_pageSize, bounds.size);
+  if (pageSizeChanged) {
+    // A window resize can arrive while the swipe animation is still using the
+    // old page width. Keep the model's selected index and discard that stale
+    // animation before positioning the pages with the new bounds.
+    [self cancelAnimations];
+  }
+
   _pageSize = bounds.size;
   
   if (_pageViews) {
@@ -209,6 +217,13 @@
     _leftShadowView.frame = CGRectMake(-kShadowSize, 0.0, kShadowSize, _pageSize.height);
     _rightShadowView.hidden = NO;
     _rightShadowView.frame = CGRectMake(totalWidth, 0.0, kShadowSize, _pageSize.height);
+
+    if (_swiping && pageSizeChanged) {
+      // Treat the remainder of an in-progress gesture as a fresh drag in the
+      // resized viewport, avoiding a stale old-width threshold on release.
+      [_panRecognizer setTranslation:CGPointZero inView:self];
+      _startPosition = _contentView.layer.position;
+    }
   } else {
     _leftShadowView.hidden = YES;
     _rightShadowView.hidden = YES;

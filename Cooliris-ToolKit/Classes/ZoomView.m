@@ -30,24 +30,59 @@
 }
 
 - (void) _resetFocusPoint {
-  _focusPoint.x = self.zoomScale * self.contentSize.width / 2.0;
-  _focusPoint.y = self.zoomScale * self.contentSize.height / 2.0;
+  _focusPoint.x = _displaySize.width / 2.0;
+  _focusPoint.y = _displaySize.height / 2.0;
 }
 
-- (void) _saveFocusPoint {
-  CGSize boundsSize = self.bounds.size;
+- (void) _saveFocusPointForBoundsSize:(CGSize)boundsSize {
   CGPoint offset = self.contentOffset;
-  float zoomScale = self.zoomScale;
-  _focusPoint.x = (offset.x + boundsSize.width / 2.0) / zoomScale;
-  _focusPoint.y = (offset.y + boundsSize.height / 2.0) / zoomScale;
+  CGFloat zoomScale = self.zoomScale;
+  if (zoomScale > 0.0) {
+    _focusPoint.x = MIN(MAX((offset.x + boundsSize.width / 2.0) / zoomScale, 0.0), _displaySize.width);
+    _focusPoint.y = MIN(MAX((offset.y + boundsSize.height / 2.0) / zoomScale, 0.0), _displaySize.height);
+  }
+}
+
+- (void) _preserveFocusBeforeSizeChange {
+  if (!_hasPendingSizeChangeFocus && _displayView && !CGSizeEqualToSize(_oldSize, CGSizeZero)) {
+    // Capture before UIScrollView sees the new geometry. Its superclass may
+    // clamp contentOffset immediately when the viewport grows.
+    [self _saveFocusPointForBoundsSize:self.bounds.size];
+    _hasPendingSizeChangeFocus = YES;
+  }
+}
+
+- (void) setFrame:(CGRect)frame {
+  CGSize oldBoundsSize = self.bounds.size;
+  BOOL alreadyPending = _hasPendingSizeChangeFocus;
+  if (!CGSizeEqualToSize(frame.size, self.frame.size)) {
+    [self _preserveFocusBeforeSizeChange];
+  }
+  [super setFrame:frame];
+  // A transform can change frame.size without changing the viewport. Do not
+  // leave a false pending capture that would mask the next real bounds change.
+  if (!alreadyPending && _hasPendingSizeChangeFocus && CGSizeEqualToSize(oldBoundsSize, self.bounds.size)) {
+    _hasPendingSizeChangeFocus = NO;
+  }
+}
+
+- (void) setBounds:(CGRect)bounds {
+  if (!CGSizeEqualToSize(bounds.size, self.bounds.size)) {
+    [self _preserveFocusBeforeSizeChange];
+  }
+  [super setBounds:bounds];
 }
 
 - (void) _restoreFocusPoint {
   CGSize contentSize = self.contentSize;
   CGSize boundsSize = self.bounds.size;
-  float zoomScale = self.zoomScale;
-  CGPoint point = CGPointMake(MIN(MAX(roundf(zoomScale * _focusPoint.x - boundsSize.width / 2.0), 0.0), contentSize.width - boundsSize.width),
-                              MIN(MAX(roundf(zoomScale * _focusPoint.y - boundsSize.height / 2.0), 0.0), contentSize.height - boundsSize.height));
+  CGFloat zoomScale = self.zoomScale;
+  CGFloat minimumX = -self.contentInset.left;
+  CGFloat minimumY = -self.contentInset.top;
+  CGFloat maximumX = MAX(minimumX, contentSize.width - boundsSize.width + self.contentInset.right);
+  CGFloat maximumY = MAX(minimumY, contentSize.height - boundsSize.height + self.contentInset.bottom);
+  CGPoint point = CGPointMake(MIN(MAX(zoomScale * _focusPoint.x - boundsSize.width / 2.0, minimumX), maximumX),
+                              MIN(MAX(zoomScale * _focusPoint.y - boundsSize.height / 2.0, minimumY), maximumY));
   self.contentOffset = point;
 }
 
@@ -154,54 +189,62 @@
   // Update layout if we have a display view
   if (_displayView) {
     CGSize boundsSize = self.bounds.size;
+    if (boundsSize.width <= 0.0 || boundsSize.height <= 0.0 || _displaySize.width <= 0.0 || _displaySize.height <= 0.0) {
+      return;
+    }
     
     // Check if zoom values need to be recomputed
     if (!CGSizeEqualToSize(boundsSize, _oldSize)) {
-      // Save current zoom factor
-      float oldZoomFactor = 0.0;
-      if (self.maximumZoomScale > self.minimumZoomScale) {
-        oldZoomFactor = (self.zoomScale - self.minimumZoomScale) / (self.maximumZoomScale - self.minimumZoomScale);
-      }
+      // Preserve the reader's magnification relative to a fitted page. This
+      // keeps the same reading zoom as the window grows or shrinks.
+      CGFloat oldZoomScale = self.zoomScale;
+      CGFloat oldRelativeZoom = self.minimumZoomScale > 0.0 ? oldZoomScale / self.minimumZoomScale : 1.0;
       
       // Compute new min and max zoom
-      float fitZoomScale = MIN(boundsSize.width / _displaySize.width, boundsSize.height / _displaySize.height);
-      float fillZoomScale = MAX(boundsSize.width / _displaySize.width, boundsSize.height / _displaySize.height);
+      CGFloat fitZoomScale = MIN(boundsSize.width / _displaySize.width, boundsSize.height / _displaySize.height);
+      CGFloat fillZoomScale = MAX(boundsSize.width / _displaySize.width, boundsSize.height / _displaySize.height);
       DCHECK(fillZoomScale >= fitZoomScale);
+      CGFloat newMinimumZoomScale = 1.0;
       switch (_displayMode) {
         
         case kZoomViewDisplayMode_Centered:
-          self.minimumZoomScale = 1.0;
+          newMinimumZoomScale = 1.0;
           break;
         
         case kZoomViewDisplayMode_Fit:
-          self.minimumZoomScale = fitZoomScale;
+          newMinimumZoomScale = fitZoomScale;
           break;
         
         case kZoomViewDisplayMode_FitVertically:
-          self.minimumZoomScale = boundsSize.height / _displaySize.height;
+          newMinimumZoomScale = boundsSize.height / _displaySize.height;
           break;
 
         case kZoomViewDisplayMode_FitHorizontally:
-          self.minimumZoomScale = boundsSize.width / _displaySize.width;
+          newMinimumZoomScale = boundsSize.width / _displaySize.width;
           break;
 
         case kZoomViewDisplayMode_Fill:
-          self.minimumZoomScale = fillZoomScale;
+          newMinimumZoomScale = fillZoomScale;
           break;
         
         case kZoomViewDisplayMode_Automatic: {
           CGFloat ratio = (_displaySize.width / _displaySize.height) / (boundsSize.width / boundsSize.height);
           if ((ratio >= 1.0 - kAutomaticTolerance) && (ratio <= 1.0 + kAutomaticTolerance)) {
-            self.minimumZoomScale = fillZoomScale;
+            newMinimumZoomScale = fillZoomScale;
           } else {
-            self.minimumZoomScale = fitZoomScale;
+            newMinimumZoomScale = fitZoomScale;
           }
           break;
         }
         
       }
-      float maxZoomScale = MAX(boundsSize.width, boundsSize.height) / MIN(_displaySize.width, _displaySize.height);
-      self.maximumZoomScale = _doubleTapZoom * maxZoomScale;
+      CGFloat maxZoomScale = MAX(boundsSize.width, boundsSize.height) / MIN(_displaySize.width, _displaySize.height);
+      CGFloat newMaximumZoomScale = MAX(newMinimumZoomScale, _doubleTapZoom * maxZoomScale);
+      if (newMinimumZoomScale > self.maximumZoomScale) {
+        self.maximumZoomScale = newMinimumZoomScale;
+      }
+      self.minimumZoomScale = newMinimumZoomScale;
+      self.maximumZoomScale = newMaximumZoomScale;
       
       // Update current zoom
       if (CGSizeEqualToSize(_oldSize, CGSizeZero)) {
@@ -210,32 +253,40 @@
         self.zoomScale = self.minimumZoomScale;
         [self _resetFocusPoint];
       } else {
-        if (oldZoomFactor <= kZoomTolerance) {
-          self.zoomScale = self.minimumZoomScale;
-        } else if (oldZoomFactor >= 1.0 - kZoomTolerance) {
-          self.zoomScale = self.maximumZoomScale;
-        } else {
-          self.zoomScale = MIN(MAX(self.zoomScale, self.minimumZoomScale), self.maximumZoomScale);
-        }
+        CGFloat relativeZoom = oldRelativeZoom <= 1.0 + kZoomTolerance ? 1.0 : oldRelativeZoom;
+        self.zoomScale = MIN(MAX(self.minimumZoomScale * relativeZoom, self.minimumZoomScale), self.maximumZoomScale);
       }
-      
-      // Restore last focus point
+
+      // Recompute padding before restoring the offset so fitted content can use
+      // the negative offsets represented by its insets.
+      CGSize contentSize = self.contentSize;  // Content size depends on current zoom scale
+      CGFloat paddingX = MAX((boundsSize.width - contentSize.width) / 2.0, 0.0);
+      CGFloat paddingY = MAX((boundsSize.height - contentSize.height) / 2.0, 0.0);
+      self.contentInset = UIEdgeInsetsMake(paddingY, paddingX, paddingY, paddingX);
       [self _restoreFocusPoint];
-      
+
       _oldSize = boundsSize;
+      _hasPendingSizeChangeFocus = NO;
+    } else {
+      // Zooming changes contentSize without changing bounds.
+      CGSize contentSize = self.contentSize;
+      CGFloat paddingX = MAX((boundsSize.width - contentSize.width) / 2.0, 0.0);
+      CGFloat paddingY = MAX((boundsSize.height - contentSize.height) / 2.0, 0.0);
+      UIEdgeInsets edgeInsets = UIEdgeInsetsMake(paddingY, paddingX, paddingY, paddingX);
+      if (!UIEdgeInsetsEqualToEdgeInsets(edgeInsets, self.contentInset)) {
+        self.contentInset = edgeInsets;
+      }
+      if (_hasPendingSizeChangeFocus) {
+        // Multiple geometry updates may return to _oldSize before a layout.
+        // UIKit may still have clamped the intermediate offset, so consume the
+        // snapshot captured before the first mutation even though sizes match.
+        [self _restoreFocusPoint];
+        _hasPendingSizeChangeFocus = NO;
+      }
     }
-    
-    // Update padding around display view if necessary
-    CGSize contentSize = self.contentSize;  // Content size depends on current zoom scale
-    CGFloat paddingX = MAX((boundsSize.width - contentSize.width) / 2.0, 0.0);
-    CGFloat paddingY = MAX((boundsSize.height - contentSize.height) / 2.0, 0.0);
-    UIEdgeInsets edgeInsets = UIEdgeInsetsMake(paddingY, paddingX, paddingY, paddingX);
-    if (!UIEdgeInsetsEqualToEdgeInsets(edgeInsets, self.contentInset)) {
-      self.contentInset = edgeInsets;
-    }
-    
-    // Save current focus point
-    [self _saveFocusPoint];
+
+    // Save the current source-space focal point for a future bounds change.
+    [self _saveFocusPointForBoundsSize:boundsSize];
   }
   // Otherwise reset everything
   else {

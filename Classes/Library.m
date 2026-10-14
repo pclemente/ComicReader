@@ -25,6 +25,10 @@
 
 #define kInboxDirectoryName @"Inbox"
 
+// Thumbnails are persistent library assets shared across window/display changes.
+// A fixed raster density avoids baking the launch display's scale into the cache.
+static const CGFloat kThumbnailRasterScale = 3.0;
+
 #define kComicCoverX 10
 #define kComicCoverY 8
 #define kComicCoverWidth 117
@@ -244,7 +248,6 @@ typedef enum {
 
 - (id) init {
   if ((self = [super init])) {
-    _screenScale = [[UIScreen mainScreen] scale];
     _comicPlaceholderImageRef = CGImageRetain([[UIImage imageNamed: @"Comic-Placeholder"] CGImage]);
     XLOG_CHECK(_comicPlaceholderImageRef);
     _comicBackgroundImageRef = CGImageRetain([[UIImage imageNamed: @"Comic-Background"] CGImage]);
@@ -303,14 +306,14 @@ typedef enum {
 
 // Called from GCD thread
 - (NSData*) _thumbnailDataForComicWithCoverImage:(CGImageRef)imageRef {
-  size_t contextWidth = _screenScale * kLibraryThumbnailWidth;
-  size_t contextHeight = _screenScale * kLibraryThumbnailHeight;
+  size_t contextWidth = kThumbnailRasterScale * kLibraryThumbnailWidth;
+  size_t contextHeight = kThumbnailRasterScale * kLibraryThumbnailHeight;
   
   CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
   CGContextRef context = CGBitmapContextCreate(NULL, contextWidth, contextHeight, 8, 0, colorspace,
                                                (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
   CGContextClearRect(context, CGRectMake(0, 0, contextWidth, contextHeight));
-  CGContextScaleCTM(context, _screenScale, _screenScale);
+  CGContextScaleCTM(context, kThumbnailRasterScale, kThumbnailRasterScale);
   
   CGContextSetBlendMode(context, kCGBlendModeCopy);
   CGContextDrawImage(context, CGRectMake(0, 0, kLibraryThumbnailWidth, kLibraryThumbnailHeight), _comicBackgroundImageRef);
@@ -335,14 +338,14 @@ typedef enum {
 
 // Called from GCD thread
 - (NSData*) _thumbnailDataForCollectionWithCoverImage:(CGImageRef)imageRef name:(NSString*)name {
-  size_t contextWidth = _screenScale * kLibraryThumbnailWidth;
-  size_t contextHeight = _screenScale * kLibraryThumbnailHeight;
+  size_t contextWidth = kThumbnailRasterScale * kLibraryThumbnailWidth;
+  size_t contextHeight = kThumbnailRasterScale * kLibraryThumbnailHeight;
   
   CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
   CGContextRef context = CGBitmapContextCreate(NULL, contextWidth, contextHeight, 8, 0, colorspace,
                                                (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
   CGContextClearRect(context, CGRectMake(0, 0, contextWidth, contextHeight));
-  CGContextScaleCTM(context, _screenScale, _screenScale);
+  CGContextScaleCTM(context, kThumbnailRasterScale, kThumbnailRasterScale);
   
   CGContextSetBlendMode(context, kCGBlendModeCopy);
   CGContextDrawImage(context, CGRectMake(0, 0, kLibraryThumbnailWidth, kLibraryThumbnailHeight), _collectionBackgroundImageRef);
@@ -427,8 +430,8 @@ typedef enum {
 }
 
 - (CGImageRef) _copyCoverImageFromComicAtPath:(NSString*)path withArchiveType:(ArchiveType)type forSize:(CGSize)size {
-  size.width *= _screenScale;
-  size.height *= _screenScale;
+  size.width *= kThumbnailRasterScale;
+  size.height *= kThumbnailRasterScale;
   CGImageRef imageRef = NULL;
   if (type == kArchiveType_PDF) {
     CGPDFDocumentRef document = CGPDFDocumentCreateWithURL((CFURLRef)[NSURL fileURLWithPath:path]);

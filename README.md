@@ -35,6 +35,7 @@ Building and testing
 Open `ComicFlow.xcodeproj` in Xcode 27 and select the shared `ComicFlow` scheme. ComicReader supports iPhone and iPad on iOS/iPadOS 15 or later, plus Mac Catalyst on macOS 12 or later. Run Product → Test on an iPad simulator for the regression suite.
 
 See [the regression and compatibility review](docs/RegressionReview.md) for restored behavior, build commands, and validation details.
+See [adaptive reading and Duo validation](docs/AdaptiveReader.md) for the resize behavior, passing regression checks and remaining device-specific verification.
 
 License
 =======

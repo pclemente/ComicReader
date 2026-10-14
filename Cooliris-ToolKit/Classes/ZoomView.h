@@ -33,6 +33,7 @@ typedef enum {
   CGSize _oldSize;
   CGSize _displaySize;
   CGPoint _focusPoint;
+  BOOL _hasPendingSizeChangeFocus;
 }
 @property(nonatomic, retain) UIView* displayView;
 @property(nonatomic) ZoomViewDisplayMode displayMode;  // Default is kZoomViewDisplayMode_Centered

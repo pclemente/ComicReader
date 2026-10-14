@@ -23,6 +23,9 @@ typedef enum {
   kComicType_RAR
 } ComicType;
 
+// Returns the usable reader rectangle while preserving asymmetric safe-area insets.
+FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets);
+
 @interface ComicViewController : UIViewController <UINavigationBarDelegate, DocumentViewDelegate, NavigationControlDelegate> {
 @private
   UINavigationBar* _navigationBar;
@@ -41,8 +44,11 @@ typedef enum {
   UIBarButtonItem* _filtersButtonItem;
   UIBarButtonItem* _textButtonItem;
   UIToolbar* _toolsToolbar;
+  BOOL _usingNarrowLayout;
   BOOL _usingCompactLayout;
   BOOL _adaptiveLayoutConfigured;
+  BOOL _readerAcceptsScaleRefreshes;
+  BOOL _selectedPageScaleRefreshScheduled;
 }
 @property(nonatomic, retain) IBOutlet UINavigationBar* navigationBar;
 @property(nonatomic, retain) IBOutlet NavigationControl* navigationControl;

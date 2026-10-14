@@ -32,8 +32,17 @@
 @class ThumbnailView;
 
 @interface LibraryViewController () <CRWhatsNewBannerDelegate>
+@property(nonatomic, retain) id adaptiveGridScrollAnchor;
+@property(nonatomic) CGFloat adaptiveGridScrollAnchorY;
+@property(nonatomic) CGSize gridSizeBeforeLayout;
+@property(nonatomic) UIEdgeInsets gridContentMarginsBeforeLayout;
+@property(nonatomic) UIEdgeInsets gridItemSpacingBeforeLayout;
+@property(nonatomic) BOOL hasGridLayoutSnapshot;
+@property(nonatomic) BOOL suppressGridScrollingPersistence;
 - (void)_activateThumbnail:(ThumbnailView*)thumbnail;
+- (void)_captureGridLayoutSnapshot;
 - (void)_configureNavigationForCompactWidth:(BOOL)compact;
+- (void)_centerEmptyStateContent;
 - (void)_updateCompactSortMenu;
 - (void)_openComicFilesCommand:(UIKeyCommand*)command;
 - (void)_refreshLibraryCommand:(UIKeyCommand*)command;
@@ -111,6 +120,16 @@
 
 #define kUpdateTimerInterval 1.0
 
+static CGRect CRSafeBoundsForView(UIView* view) {
+  CGRect bounds = view.bounds;
+  UIEdgeInsets insets = view.safeAreaInsets;
+  CGFloat minX = MIN(CGRectGetMaxX(bounds), MAX(CGRectGetMinX(bounds), CGRectGetMinX(bounds) + insets.left));
+  CGFloat maxX = MAX(CGRectGetMinX(bounds), MIN(CGRectGetMaxX(bounds), CGRectGetMaxX(bounds) - insets.right));
+  CGFloat minY = MIN(CGRectGetMaxY(bounds), MAX(CGRectGetMinY(bounds), CGRectGetMinY(bounds) + insets.top));
+  CGFloat maxY = MAX(CGRectGetMinY(bounds), MIN(CGRectGetMaxY(bounds), CGRectGetMaxY(bounds) - insets.bottom));
+  return CGRectMake(minX, minY, MAX(0.0, maxX - minX), MAX(0.0, maxY - minY));
+}
+
 #if __DISPLAY_THUMBNAILS_IN_BACKGROUND__
 @interface ThumbnailView : UIView
 #else
@@ -150,6 +169,12 @@
             forceUpdateButton=_forceUpdateButton, serverControl=_serverControl, addressLabel=_addressLabel,
             infoLabel=_infoLabel, versionLabel=_versionLabel, dimmingSwitch=_dimmingSwitch, purchaseButton=_purchaseButton,
             restoreButton=_restoreButton;
+
+- (void) dealloc {
+  [_adaptiveGridScrollAnchor release];
+  _adaptiveGridScrollAnchor = nil;
+  [super dealloc];
+}
 
 - (void) updatePurchase {
   BOOL enabled = YES;
@@ -656,6 +681,8 @@ static void __DisplayQueueCallBack(void* info) {
 
   // Grid background (XIB has it red by mistake — fix here)
   _gridView.backgroundColor = [UIColor clearColor];
+  // This controller sets the grid frame after capturing its pre-layout geometry.
+  _gridView.autoresizingMask = UIViewAutoresizingNone;
   
   _gridView.contentBackgroundOffset = CGPointMake(0.0, kBackgroundOffset);
   _gridView.contentBackgroundColor = [UIColor colorWithPatternImage:[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Background" ofType:@"png"]]];
@@ -886,6 +913,11 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _buildEmptyStateView {
+  UIScrollView* previousScroll = (UIScrollView*)[_emptyStateView viewWithTag:9901];
+  CGPoint previousContentOffset = previousScroll ? previousScroll.contentOffset : CGPointZero;
+  BOOL restoreScrollPosition = (previousScroll != nil);
+  BOOL wasHidden = _emptyStateView ? _emptyStateView.hidden : !(_gridView.empty && (_currentCollection == nil));
+  CGFloat previousAlpha = _emptyStateView ? _emptyStateView.alpha : 1.0;
   if (_emptyStateView) {
     [_emptyStateView removeFromSuperview];
     [_emptyStateView release];
@@ -895,7 +927,8 @@ static void __DisplayQueueCallBack(void* info) {
   // nav-bar offset — frame is kept in sync in viewDidLayoutSubviews.
   _emptyStateView = [[UIView alloc] initWithFrame:_gridView.frame];
   _emptyStateView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  _emptyStateView.hidden = !(_gridView.empty && (_currentCollection == nil));
+  _emptyStateView.hidden = wasHidden;
+  _emptyStateView.alpha = previousAlpha;
 
   // ── Scroll view (safety net when content is taller than the screen) ───────
   UIScrollView* scroll = [[UIScrollView alloc] initWithFrame:_emptyStateView.bounds];
@@ -911,7 +944,8 @@ static void __DisplayQueueCallBack(void* info) {
   // ── Single content view – everything goes in here ─────────────────────────
   CGFloat w = _emptyStateView.bounds.size.width;
   _emptyStateLayoutWidth = w;
-  CGFloat cardW = MIN(w - 40, 600);   // cap card width for large iPad Pro
+  CGFloat horizontalInset = MIN(20.0, floor(w / 2.0));
+  CGFloat cardW = MAX(0.0, MIN(w - 2.0 * horizontalInset, 600.0));
   CGFloat cardX = (w - cardW) / 2.0;
 
   UIView* contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, 0)];
@@ -936,7 +970,7 @@ static void __DisplayQueueCallBack(void* info) {
   }
   iconView.contentMode = UIViewContentModeScaleAspectFit;
   iconView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-  CGFloat iconSize = 110;
+  CGFloat iconSize = MIN(110.0, w);
   iconView.frame = CGRectMake((w - iconSize) / 2.0, y, iconSize, iconSize);
   [contentView addSubview:iconView];
   [iconView release];
@@ -954,9 +988,8 @@ static void __DisplayQueueCallBack(void* info) {
   } else {
     titleLabel.textColor = [UIColor darkTextColor];
   }
-  [titleLabel sizeToFit];
-  titleLabel.frame = CGRectMake((w - titleLabel.frame.size.width) / 2.0, y,
-                                 titleLabel.frame.size.width, titleLabel.frame.size.height);
+  CGSize titleSize = [titleLabel sizeThatFits:CGSizeMake(MAX(1.0, cardW), CGFLOAT_MAX)];
+  titleLabel.frame = CGRectMake(cardX, y, cardW, ceil(titleSize.height));
   [contentView addSubview:titleLabel];
   y = CGRectGetMaxY(titleLabel.frame) + 8;
   [titleLabel release];
@@ -973,8 +1006,8 @@ static void __DisplayQueueCallBack(void* info) {
   } else {
     subtitleLabel.textColor = [UIColor grayColor];
   }
-  [subtitleLabel sizeToFit];
-  subtitleLabel.frame = CGRectMake((w - cardW) / 2.0, y, cardW, subtitleLabel.frame.size.height);
+  CGSize subtitleSize = [subtitleLabel sizeThatFits:CGSizeMake(MAX(1.0, cardW), CGFLOAT_MAX)];
+  subtitleLabel.frame = CGRectMake(cardX, y, cardW, ceil(subtitleSize.height));
   [contentView addSubview:subtitleLabel];
   y = CGRectGetMaxY(subtitleLabel.frame) + 32;
   [subtitleLabel release];
@@ -1029,9 +1062,13 @@ static void __DisplayQueueCallBack(void* info) {
     card.layer.masksToBounds = YES;
 
     // Numbered badge
-    UIView* badge = [[UIView alloc] initWithFrame:CGRectMake(16, 16, 36, 36)];
+    BOOL stacksCardContents = cardW < 260.0;
+    CGFloat cardInset = MIN(16.0, floor(cardW / 2.0));
+    CGFloat badgeSize = MIN(36.0, cardW);
+    CGFloat badgeX = stacksCardContents ? floor((cardW - badgeSize) / 2.0) : 16.0;
+    UIView* badge = [[UIView alloc] initWithFrame:CGRectMake(badgeX, 16, badgeSize, badgeSize)];
     badge.backgroundColor = accentColor;
-    badge.layer.cornerRadius = 18;
+    badge.layer.cornerRadius = badgeSize / 2.0;
     UILabel* numLabel = [[UILabel alloc] initWithFrame:badge.bounds];
     numLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)];
     numLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightBold];
@@ -1043,7 +1080,7 @@ static void __DisplayQueueCallBack(void* info) {
     [badge release];
 
     // SF Symbol icon (right side)
-    if (@available(iOS 13.0, *)) {
+    if (!stacksCardContents) {
       UIImageSymbolConfiguration* cfg = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightMedium];
       UIImage* img = [UIImage systemImageNamed:steps[i].symbol withConfiguration:cfg];
       UIImageView* symView = [[UIImageView alloc] initWithImage:img];
@@ -1054,15 +1091,17 @@ static void __DisplayQueueCallBack(void* info) {
     }
 
     // Text
-    CGFloat textX = 68;
-    CGFloat textW = cardW - textX - 56;
-    UILabel* stepTitle = [[UILabel alloc] initWithFrame:CGRectMake(textX, 14, textW, 0)];
+    CGFloat textX = stacksCardContents ? cardInset : 68.0;
+    CGFloat textRightInset = stacksCardContents ? cardInset : 56.0;
+    CGFloat textW = MAX(0.0, cardW - textX - textRightInset);
+    CGFloat titleY = stacksCardContents ? CGRectGetMaxY(badge.frame) + 12.0 : 14.0;
+    UILabel* stepTitle = [[UILabel alloc] initWithFrame:CGRectMake(textX, titleY, textW, 0)];
     stepTitle.text = steps[i].title;
     stepTitle.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
     stepTitle.textColor = stepTitleColor;
-    stepTitle.numberOfLines = 1;
-    [stepTitle sizeToFit];
-    stepTitle.frame = CGRectMake(textX, 14, textW, stepTitle.frame.size.height);
+    stepTitle.numberOfLines = stacksCardContents ? 0 : 1;
+    CGSize stepTitleSize = [stepTitle sizeThatFits:CGSizeMake(MAX(1.0, textW), CGFLOAT_MAX)];
+    stepTitle.frame = CGRectMake(textX, titleY, textW, ceil(stepTitleSize.height));
     [card addSubview:stepTitle];
 
     UILabel* stepBody = [[UILabel alloc] initWithFrame:CGRectMake(textX, CGRectGetMaxY(stepTitle.frame) + 4, textW, 0)];
@@ -1070,8 +1109,8 @@ static void __DisplayQueueCallBack(void* info) {
     stepBody.font = [UIFont systemFontOfSize:14];
     stepBody.textColor = stepBodyColor;
     stepBody.numberOfLines = 0;
-    [stepBody sizeToFit];
-    stepBody.frame = CGRectMake(textX, CGRectGetMaxY(stepTitle.frame) + 4, textW, stepBody.frame.size.height);
+    CGSize stepBodySize = [stepBody sizeThatFits:CGSizeMake(MAX(1.0, textW), CGFLOAT_MAX)];
+    stepBody.frame = CGRectMake(textX, CGRectGetMaxY(stepTitle.frame) + 4, textW, ceil(stepBodySize.height));
     [card addSubview:stepBody];
 
     [stepTitle release];
@@ -1097,8 +1136,8 @@ static void __DisplayQueueCallBack(void* info) {
   } else {
     hint.textColor = [UIColor lightGrayColor];
   }
-  [hint sizeToFit];
-  hint.frame = CGRectMake((w - cardW) / 2.0, y, cardW, hint.frame.size.height);
+  CGSize hintSize = [hint sizeThatFits:CGSizeMake(MAX(1.0, cardW), CGFLOAT_MAX)];
+  hint.frame = CGRectMake(cardX, y, cardW, ceil(hintSize.height));
   [contentView addSubview:hint];
   y = CGRectGetMaxY(hint.frame);
   [hint release];
@@ -1109,6 +1148,13 @@ static void __DisplayQueueCallBack(void* info) {
   [contentView release];
 
   [_gridView.superview insertSubview:_emptyStateView aboveSubview:_gridView];
+  [self _centerEmptyStateContent];
+  if (restoreScrollPosition) {
+    CGFloat minimumOffset = -scroll.contentInset.top;
+    CGFloat maximumOffset = MAX(minimumOffset, scroll.contentSize.height + scroll.contentInset.bottom - CGRectGetHeight(scroll.bounds));
+    previousContentOffset.y = MIN(maximumOffset, MAX(minimumOffset, previousContentOffset.y));
+    scroll.contentOffset = previousContentOffset;
+  }
 }
 
 - (void) _centerEmptyStateContent {
@@ -1127,10 +1173,45 @@ static void __DisplayQueueCallBack(void* info) {
   scroll.contentInset = UIEdgeInsetsMake(topInset, 0, 0, 0);
 }
 
+- (void) _captureGridLayoutSnapshot {
+  self.gridSizeBeforeLayout = _gridView.bounds.size;
+  self.gridContentMarginsBeforeLayout = _gridView.contentMargins;
+  self.gridItemSpacingBeforeLayout = _gridView.itemSpacing;
+  self.hasGridLayoutSnapshot = YES;
+
+  NSArray* visibleItems = [_gridView visibleItems];
+  id anchor = nil;
+  if (self.adaptiveGridScrollAnchor) {
+    for (id item in visibleItems) {
+      if (item == self.adaptiveGridScrollAnchor || [item isEqual:self.adaptiveGridScrollAnchor]) {
+        anchor = item;
+        break;
+      }
+    }
+  }
+  if (!anchor) anchor = visibleItems.firstObject;
+  if (anchor) {
+    UIView* itemView = [_gridView viewForItem:anchor];
+    if (itemView) {
+      self.adaptiveGridScrollAnchor = anchor;
+      self.adaptiveGridScrollAnchorY = CGRectGetMinY([_gridView convertRect:itemView.bounds fromView:itemView]);
+    }
+  } else if (_gridView.empty) {
+    self.adaptiveGridScrollAnchor = nil;
+  }
+}
+
+- (void) viewWillLayoutSubviews {
+  [self _captureGridLayoutSnapshot];
+  [super viewWillLayoutSubviews];
+}
+
 - (void) viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
 
-  CGRect safeBounds = UIEdgeInsetsInsetRect(self.view.bounds, self.view.safeAreaInsets);
+  if (!self.hasGridLayoutSnapshot) [self _captureGridLayoutSnapshot];
+
+  CGRect safeBounds = CRSafeBoundsForView(self.view);
   BOOL isLandscape = CGRectGetWidth(safeBounds) > CGRectGetHeight(safeBounds);
   BOOL isCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
                    CGRectGetWidth(safeBounds) < 600.0;
@@ -1138,26 +1219,34 @@ static void __DisplayQueueCallBack(void* info) {
     [self _configureNavigationForCompactWidth:isCompact];
   }
 
-  CGFloat navigationHeight = 44.0;
+  CGFloat navigationHeight = MIN(44.0, CGRectGetHeight(safeBounds));
   _navigationBar.frame = CGRectMake(CGRectGetMinX(safeBounds), CGRectGetMinY(safeBounds),
                                     CGRectGetWidth(safeBounds), navigationHeight);
+  CGFloat contentTop = CGRectGetMaxY(_navigationBar.frame);
   CGFloat contentBottom = CGRectGetMaxY(safeBounds);
   if (isCompact) {
-    CGFloat toolbarHeight = 44.0;
-    _compactToolbar.frame = CGRectMake(CGRectGetMinX(self.view.bounds), contentBottom - toolbarHeight,
-                                       CGRectGetWidth(self.view.bounds),
-                                       toolbarHeight + self.view.safeAreaInsets.bottom);
+    CGFloat toolbarHeight = MIN(44.0, MAX(0.0, contentBottom - contentTop));
+    _compactToolbar.frame = CGRectMake(CGRectGetMinX(safeBounds), contentBottom - toolbarHeight,
+                                       CGRectGetWidth(safeBounds), toolbarHeight);
     contentBottom = CGRectGetMinY(_compactToolbar.frame);
   }
 
-  CGFloat contentTop = CGRectGetMaxY(_navigationBar.frame);
-  BOOL showBanner = _whatsNewBanner && !_releaseNewsDismissed && !(isCompact && isLandscape);
+  CGFloat bannerInset = MIN(10.0, floor(CGRectGetWidth(safeBounds) / 2.0));
+  CGFloat bannerWidth = MAX(0.0, CGRectGetWidth(safeBounds) - 2.0 * bannerInset);
+  CGFloat availableContentHeight = MAX(0.0, contentBottom - contentTop);
+  CGFloat bannerHeight = 0.0;
+  if (_whatsNewBanner && !_releaseNewsDismissed && bannerWidth > 0.0) {
+    CGFloat preferredHeight = [(CRWhatsNewBannerView*)_whatsNewBanner preferredHeightForWidth:bannerWidth];
+    CGFloat maximumHeight = MAX(130.0, availableContentHeight * 0.45);
+    bannerHeight = MIN(preferredHeight, maximumHeight);
+  }
+  CGFloat minimumGridHeight = MIN(kLibraryThumbnailHeight + 2.0 * kGridMargin, availableContentHeight);
+  BOOL showBanner = bannerHeight > 0.0 &&
+                    availableContentHeight - bannerHeight - 12.0 >= minimumGridHeight;
   if (_whatsNewBanner) _whatsNewBanner.hidden = !showBanner;
   if (showBanner) {
-    CGFloat width = MAX(1, CGRectGetWidth(safeBounds) - 20);
-    CGFloat height = [(CRWhatsNewBannerView*)_whatsNewBanner preferredHeightForWidth:width];
-    height = MIN(height, MAX(130, CGRectGetHeight(safeBounds) * 0.45));
-    _whatsNewBanner.frame = CGRectMake(CGRectGetMinX(safeBounds) + 10, contentTop + 6, width, height);
+    _whatsNewBanner.frame = CGRectMake(CGRectGetMinX(safeBounds) + bannerInset, contentTop + 6,
+                                       bannerWidth, bannerHeight);
     contentTop = CGRectGetMaxY(_whatsNewBanner.frame) + 6;
   }
   _gridView.frame = CGRectMake(CGRectGetMinX(safeBounds), contentTop,
@@ -1167,7 +1256,8 @@ static void __DisplayQueueCallBack(void* info) {
   if (isCompact) {
     CGFloat width = CGRectGetWidth(_gridView.bounds);
     CGFloat minimumGap = isLandscape ? 12.0 : 16.0;
-    CGFloat availableWidth = MAX(0.0, width - 2.0 * kGridMargin);
+    CGFloat outerMargin = MIN(kGridMargin, MAX(0.0, floor((width - kLibraryThumbnailWidth) / 2.0)));
+    CGFloat availableWidth = MAX(0.0, width - 2.0 * outerMargin);
     NSUInteger columns = MAX(1, (NSUInteger)floor((availableWidth + minimumGap) /
                                                   (kLibraryThumbnailWidth + minimumGap)));
     CGFloat gap = 0.0;
@@ -1176,8 +1266,8 @@ static void __DisplayQueueCallBack(void* info) {
       gap = MAX(0.0, MIN(isLandscape ? 16.0 : 20.0, maximumGap));
     }
     CGFloat groupWidth = columns * kLibraryThumbnailWidth + (columns - 1) * gap;
-    CGFloat leftMargin = MAX(kGridMargin, floor((width - groupWidth) / 2.0));
-    CGFloat rightMargin = MAX(kGridMargin, width - groupWidth - leftMargin);
+    CGFloat leftMargin = MAX(outerMargin, floor((width - groupWidth) / 2.0));
+    CGFloat rightMargin = MAX(outerMargin, width - groupWidth - leftMargin);
     _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin, leftMargin, kGridMargin, rightMargin);
     _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing, gap);
   } else {
@@ -1188,7 +1278,26 @@ static void __DisplayQueueCallBack(void* info) {
     _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing,
                                              isLandscape ? kItemHorizontalSpacing_Landscape : kItemHorizontalSpacing_Portrait);
   }
+  BOOL gridGeometryChanged = !CGSizeEqualToSize(self.gridSizeBeforeLayout, _gridView.bounds.size) ||
+                             !UIEdgeInsetsEqualToEdgeInsets(self.gridContentMarginsBeforeLayout, _gridView.contentMargins) ||
+                             !UIEdgeInsetsEqualToEdgeInsets(self.gridItemSpacingBeforeLayout, _gridView.itemSpacing);
   [_gridView setNeedsLayout];
+  if (gridGeometryChanged) {
+    self.suppressGridScrollingPersistence = YES;
+    [_gridView layoutIfNeeded];
+    if (self.adaptiveGridScrollAnchor) {
+      // GridView creates one view per item, including offscreen items, so the
+      // retained logical anchor remains addressable after a column reflow.
+      UIView* itemView = [_gridView viewForItem:self.adaptiveGridScrollAnchor];
+      if (itemView) {
+        CGFloat updatedAnchorY = CGRectGetMinY([_gridView convertRect:itemView.bounds fromView:itemView]);
+        _gridView.scrollingAmount += updatedAnchorY - self.adaptiveGridScrollAnchorY;
+      }
+    }
+    self.suppressGridScrollingPersistence = NO;
+    [self gridViewDidUpdateScrollingAmount:_gridView];
+  }
+  self.hasGridLayoutSnapshot = NO;
 
   // Keep the empty-state overlay exactly over the grid (below the nav bar).
   if (fabs(_emptyStateLayoutWidth - CGRectGetWidth(_gridView.bounds)) > 0.5) {
@@ -1223,6 +1332,7 @@ static void __DisplayQueueCallBack(void* info) {
 
 - (void) _reloadCurrentCollection {
   XLOG_VERBOSE(@"Reloading current collection");
+  self.adaptiveGridScrollAnchor = nil;
   NSInteger scrolling = _currentCollection ? _currentCollection.scrolling
                                            : [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_RootScrolling];
   if ((scrolling < 0) || (scrolling == NSNotFound)) {
@@ -1349,18 +1459,12 @@ static void __DisplayQueueCallBack(void* info) {
 
 - (void) viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
-  
-  BOOL isLandscape = self.view.bounds.size.width > self.view.bounds.size.height;
-  if (isLandscape) {
-    _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin, kGridMargin + kGridMarginExtra_Landscape, kGridMargin, kGridMargin);
-    _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing, kItemHorizontalSpacing_Landscape);
-  } else {
-    _gridView.contentMargins = UIEdgeInsetsMake(kGridMargin, kGridMargin + kGridMarginExtra_Portrait, kGridMargin, kGridMargin);
-    _gridView.itemSpacing = UIEdgeInsetsMake(0.0, 0.0, kItemVerticalSpacing, kItemHorizontalSpacing_Portrait);
-  }
-  
+
+  // A resized window can keep the same orientation and size class. Reuse the
+  // bounds-based layout instead of replacing its grid metrics here.
+  [self.view setNeedsLayout];
+  [self.view layoutIfNeeded];
   if (_gridView.empty) {
-    [_gridView layoutSubviews];
     [self _setCurrentCollection:_currentCollection];
   }
 }
@@ -1584,6 +1688,7 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) gridViewDidUpdateScrollingAmount:(GridView*)gridView {
+  if (self.suppressGridScrollingPersistence) return;
   if (!_gridView.empty) {
     int scrolling = (int)lroundf(_gridView.scrollingAmount);
     if (_currentCollection) {
@@ -1595,6 +1700,10 @@ static void __DisplayQueueCallBack(void* info) {
       [[NSUserDefaults standardUserDefaults] setInteger:scrolling forKey:kDefaultKey_RootScrolling];
     }
   }
+}
+
+- (void) gridViewDidBeginScrolling:(GridView*)gridView {
+  self.adaptiveGridScrollAnchor = nil;
 }
 
 #if __DISPLAY_THUMBNAILS_IN_BACKGROUND__
