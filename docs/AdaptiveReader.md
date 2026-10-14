@@ -22,10 +22,10 @@ page sizing. It does not change Plus pricing or free iCloud synchronization.
 - The library reflows its cover columns while retaining a visible comic as its
   scroll anchor. Empty-library content stacks at narrow widths.
 
-## Validation and release status
+## Installed-tool validation and release status
 
-Validated on 14 October 2026 using Xcode 27.0 and an iPhone 18 Pro simulator on
-iOS 27.0 (24A434):
+Adaptive behavior was validated on 14 October 2026 using Xcode 27.0 and an
+iPhone 18 Pro simulator on iOS 27.0 (24A434):
 
 - **35 hosted tests passed:** 17 library/import/state tests and 18 reader tests.
   The reader cases cover immediate panning before a resize, frame and bounds
@@ -40,6 +40,11 @@ iOS 27.0 (24A434):
   captures were visually checked: page 2 remains fully visible and centered.
 - **Release Mac Catalyst arm64 build passed**, without signing. This is a compile
   check, not a Mac runtime, distribution or universal-binary validation.
+- The installed simulator's `screenConfig geometry` command was also checked on
+  the disposable iPhone 18 Pro. Its primary display rejected a same-orientation
+  expansion to `2100x1800@3` because no compatible mode exists. This probe adds no
+  live-resize UI coverage; the non-rotation expansion/collapse evidence remains
+  the hosted frame/bounds tests.
 
 The hosted results are in `ComicReader-Duo-20261014-confirmed.xcresult`. That
 combined invocation also contains two UI startup failures caused by a legacy rating
@@ -56,14 +61,17 @@ installation failure was resolved by restarting it. Xcode also stalled collectin
 verbose failure diagnostics; the final runs use `-collect-test-diagnostics never`,
 which retains assertions and explicit screenshot attachments.
 
-The installed toolchain has no iPhone Duo simulator. Apple Developer sign-in is
-pending for downloading Xcode 27.1 RC and the matching runtime. Generic viewport
-and rotation tests do not establish actual Duo compatibility. This change has
-not been uploaded or submitted, and no "first reader" claim is substantiated.
+Duo-specific validation is deferred: the user chose to continue with the installed
+tools, which have no iPhone Duo simulator. Xcode 27.1 RC and its matching runtime
+were not downloaded. Hosted frame/bounds tests and iPhone simulator rotation do
+not establish actual outer/inner Duo transitions, device-specific safe areas or
+cross-display density behavior. This change has not been uploaded or submitted,
+and no "first reader" claim is substantiated.
 
 Apple's [Duo preparation guide](https://developer.apple.com/iphone-duo/prepare/)
 describes the SDK-dependent layouts; the iOS 27.1 SDK enables the full Duo layout.
-Use [Xcode 27.1 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes)
+When Duo-specific validation resumes, use
+[Xcode 27.1 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes)
 and the simulator's Device Hub for the final device checks:
 
 1. Import a multi-page comic and open a middle page.
@@ -82,6 +90,7 @@ based on approximated geometry alone.
 
 Select an available disposable simulator in the destination argument. These tests
 import and delete their own fixture comics; do not use a personal library.
+This reproduces the installed-tool regression path, not Duo-specific validation.
 
 ```sh
 xcodebuild -project ComicFlow.xcodeproj -scheme ComicFlow \
