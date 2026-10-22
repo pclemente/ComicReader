@@ -1,0 +1,90 @@
+{
+  "version": "1.5",
+  "build": "13",
+  "source_commit": "d569a4c554c92981b59e7e98cbac83137779f12e",
+  "source_tree": "4f750b362d64282aa2dc668fb47815121894d993",
+  "recorded_at": "2026-10-22T18:19:39.103921+00:00",
+  "app_id": "1597314495",
+  "automated_tests": {
+    "result": "Passed",
+    "hosted": 51,
+    "ui": 4,
+    "result_bundle": "/Users/pablocpe/Documents/ComicReader Releases/duo-20261022/validation/duo-final-55.xcresult",
+    "summary_sha256": "3084afb22d3a13a74a6c01d903ee2be1685f0bb33faa5092f9a6799dbde04953"
+  },
+  "screenshot_journey": {
+    "result": "Passed",
+    "ui_tests": 1,
+    "result_bundle": "/Users/pablocpe/Documents/ComicReader Releases/duo-20261022/validation/duo-store-capture-complete.xcresult",
+    "purchase": "StoreKitTest via purchase UI"
+  },
+  "manual_checks": [
+    "Duo open, closed, partial laptop, partial book, rotation",
+    "Selected page and zoom focus survive close/reopen",
+    "Text tools remain responsive within the usable pane",
+    "Compact portrait library toolbar visible",
+    "Reader background, close, resume, reopen keeps the fitted page"
+  ],
+  "duo_gallery": {
+    "app_store_connect_count": 5,
+    "proof": "evidence/asc-duo-five-screenshots.png",
+    "files": [
+      {
+        "file": "01-library.png",
+        "sha256": "a535b9506e32c0b180ebf3ad59233106aeda11b5f2b2d6c262e23d316449e772"
+      },
+      {
+        "file": "02-reader.png",
+        "sha256": "286cde9b10373602d159d532c87d3cae5026472fe11971ade7ae092c246545f0"
+      },
+      {
+        "file": "03-search.png",
+        "sha256": "2061f04e6f061985fd7a4df5248d4e905092853559dcf2c8ba6dbf807ba0fe86"
+      },
+      {
+        "file": "04-lists.png",
+        "sha256": "835ea4329c5005c9cfd68b11fdd6e657696ab48f65d17492519e6440ed6cae55"
+      },
+      {
+        "file": "05-icloud.png",
+        "sha256": "decbbd6a4f29ae6396e9e22e82a94f7931fa9aedec8f8d2ffdb5dac7ea87a9b0"
+      }
+    ]
+  },
+  "preserved_galleries": {
+    "iPhone": 5,
+    "iPad": 5,
+    "macOS": 5
+  },
+  "platforms": {
+    "iOS": {
+      "status": "Waiting for Review",
+      "build_selected": true,
+      "upload_status": "Upload succeeded; processing completed",
+      "build_id": "10be3623-55d5-40c6-927a-ae141700f11d",
+      "submission_id": "bc287921-fe82-48a9-aefc-3615ec57e0b7",
+      "submission_url": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/bc287921-fe82-48a9-aefc-3615ec57e0b7",
+      "proof": "evidence/asc-ios-waiting-review.png",
+      "submitted_at": "2026-10-22T18:18:00Z"
+    },
+    "macOS": {
+      "status": "Waiting for Review",
+      "build_selected": true,
+      "upload_status": "Upload succeeded; processing completed",
+      "build_id": "312a19e0-c38a-4c22-9710-2fc55eb5f229",
+      "submission_id": "5a899926-6f95-4aad-84ed-cfa1abd29db5",
+      "submission_url": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/5a899926-6f95-4aad-84ed-cfa1abd29db5",
+      "proof": "evidence/asc-macos-waiting-review.png",
+      "submitted_at": "2026-10-22T18:21:00Z"
+    }
+  },
+  "limitations": [
+    "Simulator validation; no physical Duo used",
+    "Live two-device iCloud and cross-platform production purchase propagation not reverified",
+    "OCR of century-old scan lettering is incomplete; screenshots use genuine recognition"
+  ],
+  "release_mode": "Automatically after App Review approval",
+  "status_verified_at": "2026-10-22T18:22:30.996993+00:00",
+  "overview_proof": "evidence/asc-both-waiting-review.png",
+  "submission_time_precision": "Minute precision, as displayed by App Store Connect"
+}

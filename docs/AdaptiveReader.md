@@ -111,21 +111,40 @@ the capture journey.
 The current bundles, logs and posture captures are in
 `~/Documents/ComicReader Releases/duo-20261022/validation/`.
 
-## Current limitations and release gate
+## App Store submission status
+
+The submitted source is commit `d569a4c554c92981b59e7e98cbac83137779f12e`
+with tree `4f750b362d64282aa2dc668fb47815121894d993`. No source or tests
+changed after that commit.
+
+- The iPhone/iPad 1.5 (13) build
+  `10be3623-55d5-40c6-927a-ae141700f11d` entered **Waiting for Review** in
+  submission `bc287921-fe82-48a9-aefc-3615ec57e0b7` at 20:18 CEST on
+  22 October 2026.
+- The Mac 1.5 (13) build `312a19e0-c38a-4c22-9710-2fc55eb5f229` entered
+  **Waiting for Review** in submission
+  `5a899926-6f95-4aad-84ed-cfa1abd29db5` at 20:21 CEST on 22 October 2026.
+- Both submissions are configured to release automatically after approval.
+- The signed archives and packages passed validation: iOS contains arm64, Mac
+  contains arm64 and x86_64, both use the Production iCloud environment, their
+  dSYMs match, and no test fixtures are present.
+- Five new Duo screenshots were uploaded. The ordinary galleries retain five
+  screenshots each for iPhone, iPad and Mac.
+
+Durable submission and package evidence is recorded in
+`release/app-store/1.5/submission-record.json` and
+`release/app-store/1.5/package-validation.json`.
+
+## Remaining evidence limits
 
 - The completed Duo work so far is simulator evidence; no physical iPhone Duo has
   been used to verify display density, touch behavior or repeated real-device folds.
 - No live two-device iCloud synchronization or production purchase/restore across
-  platforms has been verified for this candidate. Duo support and opt-in iCloud
+  platforms has been verified for this release. Duo support and opt-in iCloud
   remain free; the existing one-time Plus purchase and its €9.99 Spain base price
   are unchanged.
-- The five genuine full-inner-display App Store captures and composed outputs have
-  passed visual QA. The ordinary iPhone, iPad and Mac galleries are retained, so a
-  separate outer-display gallery is not required. Engineering pose captures must
-  not be used as store screenshots.
-- Store copy is saved in the iOS and Mac App Store Connect drafts, with no builds
-  selected. Release archives, binary upload, build selection and submission remain
-  pending. Do not publish an unsupported "first reader" claim.
+- Do not publish an unsupported "first reader" claim. Engineering pose captures
+  remain validation evidence rather than store screenshots.
 
 ## 14 October 2026 installed-tool baseline
 

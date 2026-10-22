@@ -1,0 +1,154 @@
+{
+  "version": "1.5",
+  "build": "13",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "appStoreAppID": "1597314495",
+  "teamID": "CEQU933V6W",
+  "scope": "iPhone Duo support and adaptive-layout release",
+  "sourceRepository": "/Users/pablocpe/Documents/GitHub/ComicReader",
+  "sourceCommit": "d569a4c554c92981b59e7e98cbac83137779f12e",
+  "sourceTree": "4f750b362d64282aa2dc668fb47815121894d993",
+  "sourceWorkingTreeExclusions": [
+    {
+      "path": "ComicFlow.xcodeproj/project.xcworkspace/xcuserdata/pablocpe.xcuserdatad/UserInterfaceState.xcuserstate",
+      "gitStatus": " M",
+      "reason": "Unstaged Xcode UI state; this tracked user-interface state is not an app source or build input"
+    }
+  ],
+  "sourceState": "Committed source used for both archives; the working tree matched the commit except for the recorded unstaged Xcode UI-state change",
+  "preparedAt": "2026-10-22T16:09:59Z",
+  "recordedAt": "2026-10-22T18:06:54.396028+00:00",
+  "validatedAt": "2026-10-22T18:12:03.973028+00:00",
+  "uploadedAt": "2026-10-22T18:16:51+00:00",
+  "runtimeRegressionTestsRerun": {
+    "result": "55 passed, no failures",
+    "resultBundle": "/Users/pablocpe/Documents/ComicReader Releases/duo-20261022/validation/duo-final-55.xcresult",
+    "additionalCaptureJourney": "duo-store-capture-complete.xcresult: one UI test passed, five genuine captures"
+  },
+  "reviewSubmissionPerformed": true,
+  "status": "Both platforms uploaded, processing completed, and submitted; Waiting for Review",
+  "validationScope": "Validation covers version and build metadata, signatures, production iCloud entitlements, architecture, matching dSYMs, installer signature, and absence of screenshot fixtures and test artifacts in both archives and exported packages.",
+  "platforms": {
+    "iOS": {
+      "platform": "iOS",
+      "version": "1.5",
+      "build": "13",
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/iOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/iOS/export/ComicReader.ipa",
+      "sha256": "1bc67223fef4dcb1480f25c4ad50e335a13f3bee5d899675df7cf9654a378b1f",
+      "validatedAt": "2026-10-22T18:09:02.956890+00:00",
+      "sourceProvenance": {
+        "repository": "/Users/pablocpe/Documents/GitHub/ComicReader",
+        "commit": "d569a4c554c92981b59e7e98cbac83137779f12e",
+        "tree": "4f750b362d64282aa2dc668fb47815121894d993",
+        "workingTreeExclusions": [
+          {
+            "path": "ComicFlow.xcodeproj/project.xcworkspace/xcuserdata/pablocpe.xcuserdatad/UserInterfaceState.xcuserstate",
+            "gitStatus": " M",
+            "reason": "Unstaged Xcode UI state; this tracked user-interface state is not an app source or build input"
+          }
+        ]
+      },
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "architectures": [
+        "arm64"
+      ],
+      "matchingDSYMs": true,
+      "uuids": {
+        "arm64": "3AEB96C9-18D3-3178-A427-6D1962C88A18"
+      },
+      "containsTestBundles": false,
+      "containsScreenshotLibrary": false,
+      "containsScreenshotFixtures": false,
+      "containsStoreKitTestArtifacts": false,
+      "containsUITestArtifacts": false,
+      "artifactScan": {
+        "archive": "passed",
+        "exportedPackage": "passed",
+        "forbiddenPaths": [],
+        "forbiddenRuntimeDependencies": [],
+        "forbiddenBinaryStrings": []
+      },
+      "deviceFamily": [
+        1,
+        2
+      ],
+      "status": "Waiting for Review",
+      "uploadedAt": "2026-10-22T18:14:26+00:00",
+      "uploadLog": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/iOS/upload.log",
+      "uploadTransportArtifacts": {
+        "assetDescription": "44DF4637-271F-49E2-80F4-C7BFA8AC35C3",
+        "appAnalyzerOutput": "1C916E1C-F03A-4F5E-BE0E-8E60AD20AD20"
+      },
+      "buildResourceID": "10be3623-55d5-40c6-927a-ae141700f11d",
+      "submissionID": "bc287921-fe82-48a9-aefc-3615ec57e0b7"
+    },
+    "macOS": {
+      "platform": "macOS",
+      "version": "1.5",
+      "build": "13",
+      "archive": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/macOS/ComicReader.xcarchive",
+      "package": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/macOS/export/ComicReader.pkg",
+      "sha256": "2475e0a8ee9eb8a4a9fdcaf189f0afcb1705273fb1f9e1e56470434de9b4e85b",
+      "validatedAt": "2026-10-22T18:12:03.973028+00:00",
+      "sourceProvenance": {
+        "repository": "/Users/pablocpe/Documents/GitHub/ComicReader",
+        "commit": "d569a4c554c92981b59e7e98cbac83137779f12e",
+        "tree": "4f750b362d64282aa2dc668fb47815121894d993",
+        "workingTreeExclusions": [
+          {
+            "path": "ComicFlow.xcodeproj/project.xcworkspace/xcuserdata/pablocpe.xcuserdatad/UserInterfaceState.xcuserstate",
+            "gitStatus": " M",
+            "reason": "Unstaged Xcode UI state; this tracked user-interface state is not an app source or build input"
+          }
+        ]
+      },
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "matchingDSYMs": true,
+      "uuids": {
+        "x86_64": "56B9DD69-B905-3BF8-AF57-4D5DC91061CF",
+        "arm64": "7C6DDA40-158B-3CF3-AE7D-0711DE950BDC"
+      },
+      "containsTestBundles": false,
+      "containsScreenshotLibrary": false,
+      "containsScreenshotFixtures": false,
+      "containsStoreKitTestArtifacts": false,
+      "containsUITestArtifacts": false,
+      "artifactScan": {
+        "archive": "passed",
+        "exportedPackage": "passed",
+        "forbiddenPaths": [],
+        "forbiddenRuntimeDependencies": [],
+        "forbiddenBinaryStrings": []
+      },
+      "installerSignatureValid": true,
+      "sandbox": true,
+      "userSelectedFiles": "read-only",
+      "status": "Waiting for Review",
+      "uploadedAt": "2026-10-22T18:16:51+00:00",
+      "uploadLog": "/Users/pablocpe/Documents/ComicReader Releases/1.5-build13/macOS/upload.log",
+      "uploadTransportArtifacts": {
+        "assetDescription": "4FEAFE05-FE33-4C41-8591-0DD0342A1AB3",
+        "appAnalyzerOutput": "94A05B57-1A3C-4CE1-81B7-1B3B2C7B0EA9"
+      },
+      "buildResourceID": "312a19e0-c38a-4c22-9710-2fc55eb5f229",
+      "submissionID": "5a899926-6f95-4aad-84ed-cfa1abd29db5"
+    }
+  },
+  "limitations": [
+    "No physical iPhone Duo tested; Device Hub outer, inner, partial-fold, rotation, zoom continuity and background/resume checks are recorded in docs/AdaptiveReader.md",
+    "Live two-device iCloud sync and cross-platform production purchase propagation were not reverified for this candidate"
+  ],
+  "submittedSourceCommit": "d569a4c554c92981b59e7e98cbac83137779f12e",
+  "reviewStatusVerifiedAt": "2026-10-22T18:22:30.996993+00:00",
+  "uploadMethod": "Xcode exportArchive with destination upload, using the same validated archive for each platform",
+  "packageHashScope": "SHA-256 values describe the local exported IPA and PKG. Xcode performed a subsequent export for upload from the same archives; uploaded transport bytes are not asserted to be identical to the local packages."
+}
