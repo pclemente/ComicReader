@@ -29,13 +29,34 @@ Restore Purchases is included; there is no subscription or bundled comic
 content. See [Plus setup and release validation](docs/PlusUpgrade.md) and the
 [monetization decision](docs/MonetizationReview.md).
 
+iPhone Duo support
+===================
+
+ComicReader 1.5 is being prepared with iPhone Duo support through the public iOS
+27.1 reserved-region APIs. The library, reader and app-owned tool sheets stay in
+one continuous pane around an active fold or occlusion. The reader preserves the
+selected page, relative zoom and source-page focus as the available display changes,
+and clips neighboring pages at the pane boundary. Earlier supported systems keep
+the existing safe-area behavior.
+
+On 22 October 2026, the implementation was exercised with Xcode 27.1 and an iOS
+27.1 iPhone Duo simulator. The latest candidate passed all 55 tests: 51 hosted
+tests and four UI tests, including the latest thumbnail-threading fix. Manual
+Device Hub checks also confirmed reopened zoom focus and responsive text tools
+through partial laptop, partial book and open postures. A separate successful
+StoreKitTest journey captured five genuine full-inner-display screenshots. The
+compositor validated five 2853×2007 opaque RGB outputs, and each passed individual
+high-resolution visual review. Store copy is saved in the iOS and Mac App Store
+Connect drafts, with no builds selected. Archives, binary upload and submission
+remain pending. See [adaptive reading and Duo validation](docs/AdaptiveReader.md)
+for details.
+
 Building and testing
 ====================
 
-Open `ComicFlow.xcodeproj` in Xcode 27 and select the shared `ComicFlow` scheme. ComicReader supports iPhone and iPad on iOS/iPadOS 15 or later, plus Mac Catalyst on macOS 12 or later. Run Product → Test on an iPad simulator for the regression suite.
+Open `ComicFlow.xcodeproj` in Xcode 27.1 and select the shared `ComicFlow` scheme. ComicReader supports iPhone and iPad on iOS/iPadOS 15 or later, plus Mac Catalyst on macOS 12 or later. Run Product → Test on an iPad simulator for the regression suite.
 
 See [the regression and compatibility review](docs/RegressionReview.md) for restored behavior, build commands, and validation details.
-See [adaptive reading and Duo validation](docs/AdaptiveReader.md) for the resize behavior, passing regression checks and remaining device-specific verification.
 
 License
 =======

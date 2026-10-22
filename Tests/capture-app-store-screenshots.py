@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture five genuine iPhone or iPad screenshots for ComicReader 1.4.1.
+"""Capture five genuine iPhone, iPad, or iPhone Duo screenshots for ComicReader.
 
 Use a dedicated, already booted simulator and a separate derived-data directory.
 For example, from the repository root:
@@ -9,6 +9,15 @@ For example, from the repository root:
       --fixtures /tmp/ComicReader-Screenshot-Library-54 \\
       --derived-data /tmp/ComicReader-1.4.1-Screenshots \\
       --result /tmp/ComicReader-1.4.1-iphone-NEW-RUN.xcresult --build
+
+For an iPhone Duo 1.5 capture:
+
+    python3 Tests/capture-app-store-screenshots.py \\
+      --device SIMULATOR_UDID --family duo \\
+      --fixtures /tmp/ComicReader-Screenshot-Library-54 \\
+      --derived-data /tmp/ComicReader-1.5-Duo-Screenshots \\
+      --result /tmp/ComicReader-1.5-duo-NEW-RUN.xcresult \\
+      --release-version 1.5 --build
 
 The default destination is release/app-store/1.4.1/captures/<family>. Existing
 captures and result bundles are never overwritten. To prepare a retake, provide
@@ -64,7 +73,7 @@ def protect_historical_release(path: Path) -> None:
 
 
 @contextmanager
-def staged_fixtures(test_bundle: Path, fixtures: list[Path], reuse_library: bool):
+def staged_fixtures(test_bundle: Path, fixtures: list[Path], reuse_library: bool, family: str):
     fixture_target = test_bundle / "ScreenshotLibrary"
     if fixture_target.exists():
         raise SystemExit("Screenshot resources already exist in this test bundle; use a fresh dedicated derived-data directory.")
@@ -74,6 +83,8 @@ def staged_fixtures(test_bundle: Path, fixtures: list[Path], reuse_library: bool
             shutil.copy2(fixture, fixture_target / fixture.name)
         if reuse_library:
             (fixture_target / "reuse-library").write_text("Reuse the existing screenshot fixture library.\n")
+        if family == "duo":
+            (fixture_target / "capture-family-duo").write_text("Capture the iPhone Duo layout.\n")
         (fixture_target / "capture-request").write_text("Run the explicit App Store screenshot journey.\n")
         yield
     finally:
@@ -83,7 +94,7 @@ def staged_fixtures(test_bundle: Path, fixtures: list[Path], reuse_library: bool
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--device", required=True, help="UDID of a dedicated, booted simulator")
-    parser.add_argument("--family", choices=("iphone", "ipad"), required=True)
+    parser.add_argument("--family", choices=("iphone", "ipad", "duo"), required=True)
     parser.add_argument("--fixtures", type=Path, required=True, help="Approved CBZ demo-library directory")
     parser.add_argument("--derived-data", type=Path, required=True)
     parser.add_argument("--result", type=Path, required=True, help="New .xcresult path")
@@ -124,7 +135,7 @@ def main() -> None:
     app_info = plistlib.loads((products / "Debug-iphonesimulator/ComicFlow.app/Info.plist").read_bytes())
     if app_info["CFBundleShortVersionString"] != args.release_version:
         raise SystemExit("The compiled app version does not match --release-version; rebuild the intended release.")
-    with staged_fixtures(test_bundle, fixtures, args.reuse_library):
+    with staged_fixtures(test_bundle, fixtures, args.reuse_library, args.family):
         run(["xcrun", "simctl", "status_bar", args.device, "override", "--time", "9:41",
              "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3",
              "--batteryState", "charged", "--batteryLevel", "100"], timeout=45)
@@ -132,7 +143,7 @@ def main() -> None:
              "-destination", f"platform=iOS Simulator,id={args.device}",
              "-resultBundlePath", str(args.result.resolve()), "-parallel-testing-enabled", "NO",
              "-maximum-concurrent-test-simulator-destinations", "1", "-testLanguage", "en",
-             "-testRegion", "GB", f"-only-testing:{TEST}"])
+             "-testRegion", "GB", "-collect-test-diagnostics", "never", f"-only-testing:{TEST}"])
 
     run(["xcrun", "xcresulttool", "export", "attachments", "--path", str(args.result.resolve()),
          "--output-path", str(exported)], timeout=60)

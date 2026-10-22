@@ -1,0 +1,7 @@
+Better page positioning as your window changes.
+
+• Keep your current comic, page and relative zoom when resizing the reader.
+• Enjoy improved controls and library layout in smaller windows.
+• Continue reading on iPhone Duo with a companion experience that adapts as its screen opens and closes.
+
+Free, opt-in iCloud synchronization connects your comic files and reading progress across iPhone, iPad and Mac. ComicReader Plus remains an optional one-time purchase, with no subscription.

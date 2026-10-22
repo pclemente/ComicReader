@@ -1,0 +1,61 @@
+{
+  "release": "ComicReader 1.5 (13)",
+  "gallery": "iPhone Duo inner display",
+  "capture_root": "captures/duo",
+  "output_root": "screenshots/en-GB/duo",
+  "output_size": [
+    2853,
+    2007
+  ],
+  "accepted_capture_sizes": [
+    [
+      2853,
+      2007
+    ],
+    [
+      2007,
+      2853
+    ],
+    [
+      2852,
+      2006
+    ],
+    [
+      2006,
+      2852
+    ]
+  ],
+  "capture_policy": "Use complete genuine iPhone Duo inner-display PNG captures. Preserve every app pixel and the original aspect ratio; do not crop, stretch, retouch, reconstruct, or fabricate application UI.",
+  "panels": [
+    {
+      "filename": "01-library.png",
+      "benefit": "Free iPhone Duo library layout",
+      "required_view": "Genuine library with imported comics and the cover grid visible"
+    },
+    {
+      "filename": "02-reader.png",
+      "benefit": "Free iPhone Duo reader layout and position continuity",
+      "required_view": "Genuine comic page with enough app context to identify the reader"
+    },
+    {
+      "filename": "03-search.png",
+      "benefit": "One-time Plus Search & Quotes",
+      "required_view": "Genuine current-comic search or quote interface"
+    },
+    {
+      "filename": "04-lists.png",
+      "benefit": "One-time Plus Reading Lists and Smart Queues",
+      "required_view": "Genuine Reading Lists or Smart Queues interface"
+    },
+    {
+      "filename": "05-icloud.png",
+      "benefit": "Free opt-in iCloud sync",
+      "required_view": "Genuine Free iCloud Sync interface with no purchase control"
+    }
+  ],
+  "compositor": "compose_duo_screenshots.py",
+  "composition_command": "python3 release/app-store/1.5/compose_duo_screenshots.py --captures release/app-store/1.5/captures/duo --output release/app-store/1.5/screenshots/en-GB/duo",
+  "validation_command": "python3 release/app-store/1.5/compose_duo_screenshots.py --captures release/app-store/1.5/captures/duo --output release/app-store/1.5/screenshots/en-GB/duo --check-only",
+  "publication_gate": "Visually approve every genuine raw capture and composed output after actual iPhone Duo outer, inner, and partial-fold validation. Do not publish generated placeholders or unsupported first-reader claims.",
+  "capture_rounding_note": "XCUIScreen on iOS27.1 returns complete inner captures one pixel smaller on each axis; composition preserves their aspect ratio and uses the App Store accepted output size."
+}

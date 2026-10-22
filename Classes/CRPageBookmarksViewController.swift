@@ -370,7 +370,7 @@ public final class CRPageBookmarksViewController: UITableViewController {
 
   private func presentPlus() {
     let plusViewController = CRPlusViewController()
-    let navigationController = UINavigationController(rootViewController: plusViewController)
+    let navigationController = CRAdaptiveToolNavigationController(rootViewController: plusViewController)
     navigationController.modalPresentationStyle = .formSheet
     present(navigationController, animated: true)
   }

@@ -1,0 +1,162 @@
+[
+  {
+    "filename": "01-library.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "IPHONE DUO · YOUR LIBRARY",
+    "title": "A library made for iPhone Duo.",
+    "subtitle": "Covers reflow around the active fold while keeping your place.",
+    "footnote": "iPhone Duo support is free for everyone.",
+    "source": "release/app-store/1.5/captures/duo/01-library.png",
+    "source_sha256": "41ddda5bb7e1e370e88272dc6bdbca2952e5dade1a1fce51e030b1f31a7aada4",
+    "output_sha256": "a535b9506e32c0b180ebf3ad59233106aeda11b5f2b2d6c262e23d316449e772",
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "filename": "02-reader.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "IPHONE DUO · THE READER",
+    "title": "Open every page on iPhone Duo.",
+    "subtitle": "Keep your comic, current page and relative zoom as the display changes.",
+    "footnote": "Pages and controls stay clear of the active fold.",
+    "source": "release/app-store/1.5/captures/duo/02-reader.png",
+    "source_sha256": "d2f30fa3e80391d7b9a2feb99c70bce3823fc130eb2b051085998f723965bad7",
+    "output_sha256": "286cde9b10373602d159d532c87d3cae5026472fe11971ade7ae092c246545f0",
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "filename": "03-search.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "ONE-TIME PLUS · SEARCH & QUOTES",
+    "title": "Find the line with one-time Plus.",
+    "subtitle": "Search the comic you’re reading and save editable quotes.",
+    "footnote": "ComicReader Plus · One purchase. No subscription.",
+    "source": "release/app-store/1.5/captures/duo/03-search.png",
+    "source_sha256": "3fc0a8a12fcf8d4fcdbd070e7bdd7f36697998a94246524932d126991b0fc6f8",
+    "output_sha256": "2061f04e6f061985fd7a4df5248d4e905092853559dcf2c8ba6dbf807ba0fe86",
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "filename": "04-lists.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "ONE-TIME PLUS · READING LISTS",
+    "title": "Line up your next read with one-time Plus.",
+    "subtitle": "Build custom lists. Let Smart Queues gather what’s next.",
+    "footnote": "ComicReader Plus · One purchase. No subscription.",
+    "source": "release/app-store/1.5/captures/duo/04-lists.png",
+    "source_sha256": "b24f1bc11422b99169cadbdc1f9d70ed91a955da0bca6adea8334fe667305dd7",
+    "output_sha256": "835ea4329c5005c9cfd68b11fdd6e657696ab48f65d17492519e6440ed6cae55",
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "filename": "05-icloud.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "FREE ICLOUD SYNC",
+    "title": "Free iCloud sync across your devices.",
+    "subtitle": "Sync comics, read status and your current page across iPhone, iPad and Mac.",
+    "footnote": "Free for everyone · Opt in with your personal iCloud storage.",
+    "source": "release/app-store/1.5/captures/duo/05-icloud.png",
+    "source_sha256": "2e33876fe9a7c6a309d7746c38d5a7831dd865e6628d85f1677d4cf5c24c2048",
+    "output_sha256": "decbbd6a4f29ae6396e9e22e82a94f7931fa9aedec8f8d2ffdb5dac7ea87a9b0",
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  }
+]

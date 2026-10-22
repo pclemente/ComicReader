@@ -32,8 +32,13 @@ typedef enum {
   UITapGestureRecognizer* _doubleTapRecognizer;
   CGSize _oldSize;
   CGSize _displaySize;
-  CGPoint _focusPoint;
+  CGPoint _sourceFocusPoint;
+  CGFloat _relativeZoomScale;
+  NSUInteger _geometryGeneration;
+  NSUInteger _zoomCaptureGeometryGeneration;
   BOOL _hasPendingSizeChangeFocus;
+  BOOL _isApplyingGeometryChange;
+  BOOL _hasActiveZoomCapture;
 }
 @property(nonatomic, retain) UIView* displayView;
 @property(nonatomic) ZoomViewDisplayMode displayMode;  // Default is kZoomViewDisplayMode_Centered

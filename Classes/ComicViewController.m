@@ -22,6 +22,7 @@
 #import "ImageDecompression.h"
 
 #import "Defaults.h"
+#import "CRAdaptiveViewport.h"
 #import "CRLibrarySyncCoordinator.h"
 #import "ComicFlow-Swift.h"
 
@@ -33,15 +34,7 @@
 #define kReaderCompactWidth 600.0
 
 CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
-  bounds = CGRectStandardize(bounds);
-  CGFloat left = MIN(MAX(safeAreaInsets.left, 0.0), CGRectGetWidth(bounds));
-  CGFloat right = MIN(MAX(safeAreaInsets.right, 0.0), CGRectGetWidth(bounds) - left);
-  CGFloat top = MIN(MAX(safeAreaInsets.top, 0.0), CGRectGetHeight(bounds));
-  CGFloat bottom = MIN(MAX(safeAreaInsets.bottom, 0.0), CGRectGetHeight(bounds) - top);
-  return CGRectMake(CGRectGetMinX(bounds) + left,
-                    CGRectGetMinY(bounds) + top,
-                    CGRectGetWidth(bounds) - left - right,
-                    CGRectGetHeight(bounds) - top - bottom);
+  return CRAdaptiveSafeBounds(bounds, safeAreaInsets);
 }
 
 @interface ComicDocumentView : DocumentView
@@ -120,9 +113,10 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
 
 @end
 
-@interface ComicViewController () <CRPageBookmarksViewControllerDelegate, CRReaderImageFiltersDelegate, CRComicTextViewControllerDelegate>
+@interface ComicViewController () <CRPageBookmarksViewControllerDelegate, CRReaderImageFiltersDelegate, CRComicTextViewControllerDelegate, CRAdaptiveViewportViewDelegate>
 - (void)_configureReaderChromeForNarrowWidth:(BOOL)narrow usesSeparateToolsToolbar:(BOOL)usesToolbar;
 - (void)_setReaderChromeHidden:(BOOL)hidden;
+- (CGRect)_readerViewportBounds;
 - (CGFloat)_displayScaleForPageView:(UIView*)pageView documentView:(DocumentView*)documentView;
 - (void)_scheduleSelectedPageScaleRefresh;
 - (void)_refreshSelectedPageScaleIfNeeded;
@@ -231,6 +225,8 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   [_filtersButtonItem release];
   [_textButtonItem release];
   [_toolsToolbar release];
+  _adaptiveViewportView.adaptiveViewportDelegate = nil;
+  [_adaptiveViewportView release];
   [_contents release];
   [_path release];
   [_comic release];
@@ -323,6 +319,12 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   [super viewDidLoad];
   
   self.view.clipsToBounds = YES;  // Required on iOS 7
+
+  _adaptiveViewportView = [[CRAdaptiveViewportView alloc] initWithFrame:self.view.bounds];
+  _adaptiveViewportView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _adaptiveViewportView.adaptiveViewportDelegate = self;
+  [self.view insertSubview:_adaptiveViewportView atIndex:0];
+  [_adaptiveViewportView refreshViewport];
   
   UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:[_path lastPathComponent]];
   _bookmarksButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"bookmark"]
@@ -359,6 +361,9 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   [self.view addSubview:_toolsToolbar];
   _contentView.backgroundColor = nil;
   _contentView.accessibilityIdentifier = @"reader.canvas";
+  // DocumentView keeps neighboring pages in a strip wider than its bounds.
+  // Mask that strip at the active pane, including while the pane is resizing.
+  _contentView.clipsToBounds = YES;
   
   _documentView = [[ComicDocumentView alloc] initWithFrame:_contentView.bounds];
   _documentView.delegate = self;
@@ -397,7 +402,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
     _toolsToolbar.scrollEdgeAppearance = toolbarAppearance;
     [toolbarAppearance release];
   }
-  CGRect initialBounds = CRReaderContentBounds(self.view.bounds, self.view.safeAreaInsets);
+  CGRect initialBounds = [self _readerViewportBounds];
   BOOL startsNarrow = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
                       CGRectGetWidth(initialBounds) < kReaderCompactWidth;
   BOOL startsWithToolbar = startsNarrow && CGRectGetHeight(initialBounds) >= 3.0 * kReaderChromeHeight;
@@ -437,6 +442,20 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   _toolsToolbar.hidden = hidden || !_usingCompactLayout;
 }
 
+- (CGRect) _readerViewportBounds {
+  if (!_adaptiveViewportView) {
+    return CRReaderContentBounds(self.view.bounds, self.view.safeAreaInsets);
+  }
+  _adaptiveViewportView.frame = self.view.bounds;
+  [_adaptiveViewportView refreshViewport];
+  return [_adaptiveViewportView convertRect:_adaptiveViewportView.viewportBounds toView:self.view];
+}
+
+- (void) adaptiveViewportView:(CRAdaptiveViewportView*)view
+      didChangeViewportBounds:(CGRect)viewportBounds {
+  [self.view setNeedsLayout];
+}
+
 
 - (void) _tapAction:(UITapGestureRecognizer*)recognizer {
   if (recognizer.state == UIGestureRecognizerStateEnded) {
@@ -460,7 +479,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
 
 - (void) viewDidLayoutSubviews {
   [super viewDidLayoutSubviews];
-  CGRect safeBounds = CRReaderContentBounds(self.view.bounds, self.view.safeAreaInsets);
+  CGRect safeBounds = [self _readerViewportBounds];
   _contentView.frame = safeBounds;
   _documentView.frame = _contentView.bounds;
 
@@ -621,7 +640,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   if (!_readerReady || self.presentedViewController) return;
   CRReaderImageFiltersViewController* controller = [[CRReaderImageFiltersViewController alloc] init];
   controller.delegate = self;
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   navigation.modalInPresentation = YES;
   _preservingReaderForToolsSheet = YES;
@@ -634,7 +653,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   if (!_readerReady || !_documentView.pageViews.count || self.presentedViewController) return;
   CRComicTextViewController* controller = [[CRComicTextViewController alloc] initWithComicPath:_path currentPageIndex:_documentView.selectedPageIndex];
   controller.delegate = self;
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   navigation.modalInPresentation = YES;
   _preservingReaderForToolsSheet = YES;
@@ -676,7 +695,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
                                            currentPageIndex:_documentView.selectedPageIndex
                                                     pageCount:_documentView.pageViews.count];
   controller.delegate = self;
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   navigation.modalInPresentation = YES;
   _preservingReaderForToolsSheet = YES;

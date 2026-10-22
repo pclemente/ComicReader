@@ -1,0 +1,21 @@
+COMICREADER 1.5 (13)
+
+This release adds iPhone Duo support using the iOS 27.1 SDK and UIKit's public reserved-region APIs. Opening and closing the display retains the selected comic, current page and relative zoom. Fully open reading uses the available display; an active fold keeps the page and controls in a continuous readable pane. The library adapts its cover grid and retains the visible comic. A dismissible What's New banner introduces this update.
+
+Duo support is free. Comic files, read/unread status and the current page synchronize through free, opt-in iCloud Drive sync across iPhone, iPad and Mac. Sync uses the user's personal iCloud storage and starts only after consent. Plus never enables or expands sync.
+
+COMICREADER PLUS
+
+The existing com.pabloclementeperez.ComicFlow.plus non-consumable remains a one-time purchase, priced at €9.99 in Spain. StoreKit displays the buyer's localized price and Restore Purchases is available. There is no subscription or bundled comic content.
+
+Plus includes current-comic Search & Quotes, custom Reading Lists and Smart Queues, named Page Bookmarks, and Clear Ink, Grayscale and Warm Paper filters. Search indexes, quotes, lists and bookmarks stay on each device. Reading, importing, transfers, current-page text recognition, copying and system sharing remain free. Filters never modify comic files and Original rendering is always available.
+
+TEST PATH
+
+No app login is needed. Use a PDF, CBZ/ZIP or classic CBR/RAR file. The attached review-sample.zip contains a public-domain CBZ; unzip the outer ZIP and import the inner CBZ without extracting its contents, using Settings > Add Files.
+
+1. On iPhone Duo, open a comic and move to a middle page. Open and close the display, then repeat after zooming and panning. Rotate the inner display and try a partial fold. Check the page, reader tools and library.
+2. Dismiss the news banner and relaunch. The banner stays dismissed and reading remains available without purchasing Plus.
+3. Open Free iCloud Sync and inspect its consent prompt. No purchase is required.
+4. Open Comic text and search > This Page to recognize, copy and share text for free. Purchase Plus in the sandbox or restore the existing purchase to index/search the comic, save quotes, create lists and bookmarks, and apply filters.
+5. On Mac, Command-O imports, Command-R refreshes, and arrow keys navigate pages. The same app listing and non-consumable are used for iPhone, iPad and Mac.

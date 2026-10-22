@@ -17,6 +17,8 @@
 #import "NavigationControl.h"
 #import "Library.h"
 
+@class CRAdaptiveViewportView;
+
 typedef enum {
   kComicType_PDF,
   kComicType_ZIP,
@@ -44,6 +46,7 @@ FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeA
   UIBarButtonItem* _filtersButtonItem;
   UIBarButtonItem* _textButtonItem;
   UIToolbar* _toolsToolbar;
+  CRAdaptiveViewportView* _adaptiveViewportView;
   BOOL _usingNarrowLayout;
   BOOL _usingCompactLayout;
   BOOL _adaptiveLayoutConfigured;

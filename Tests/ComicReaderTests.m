@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
+#import "CRAdaptiveViewport.h"
 #import "CRLibrarySyncCoordinator.h"
 #import "Library.h"
 #import "LibraryViewController.h"
@@ -9,6 +10,52 @@
 
 @interface ApplicationDelegate (RegressionTesting)
 - (void)_dismissAlertWithButtonIndex:(NSInteger)index;
+@end
+
+// The Swift class is supplied by the test host. Its generated interface header
+// is private to the app target, so declare the public surface exercised here.
+@interface CRComicTextViewController : UIViewController
+- (instancetype)initWithComicPath:(NSString*)comicPath currentPageIndex:(NSInteger)currentPageIndex;
+@end
+
+@interface LibraryViewController (AdaptiveViewportTesting)
+@property(nonatomic, retain) CRAdaptiveViewportView* adaptiveViewportView;
+@end
+
+@interface CRFixedAdaptiveViewportView : CRAdaptiveViewportView
+@property(nonatomic) CGRect fixedViewportBounds;
+@end
+
+@implementation CRFixedAdaptiveViewportView
+- (CGRect)viewportBounds {
+  return self.fixedViewportBounds;
+}
+- (void)refreshViewport {
+}
+@end
+
+@interface CRAdaptiveToolNavigationController (AdaptiveViewportTesting)
+- (void)_adaptiveObserver:(UIView*)observer
+    didReadDivisionFrames:(NSArray<NSValue*>*)divisionFrames
+          occlusionFrames:(NSArray<NSValue*>*)occlusionFrames;
+@end
+
+@interface CRAdaptiveToolSafeAreaTestView : UIView
+@property(nonatomic) UIEdgeInsets baselineSafeAreaInsets;
+@property(nonatomic, assign) CRAdaptiveToolNavigationController* adaptiveNavigationController;
+@end
+
+@implementation CRAdaptiveToolSafeAreaTestView
+- (UIEdgeInsets)safeAreaInsets {
+  UIEdgeInsets additional = UIEdgeInsetsZero;
+  if (self.adaptiveNavigationController) {
+    additional = self.adaptiveNavigationController.additionalSafeAreaInsets;
+  }
+  return UIEdgeInsetsMake(self.baselineSafeAreaInsets.top + additional.top,
+                          self.baselineSafeAreaInsets.left + additional.left,
+                          self.baselineSafeAreaInsets.bottom + additional.bottom,
+                          self.baselineSafeAreaInsets.right + additional.right);
+}
 @end
 
 @interface AlertRecorder : NSObject
@@ -54,6 +101,58 @@
     XCTAssertGreaterThanOrEqual(CGRectGetWidth(subview.frame), 0.0);
     XCTAssertLessThanOrEqual(CGRectGetMaxX(subview.frame), CGRectGetWidth(view.bounds) + 0.5);
     [self assertSubviewsFitHorizontallyInView:subview];
+  }
+}
+- (CGRect)assertComicTextControllerBodyFitsSafeArea:(CRComicTextViewController*)controller {
+  [controller.view setNeedsLayout];
+  [controller.view layoutIfNeeded];
+  UIView* mode = [self viewWithAccessibilityIdentifier:@"reader.text.mode" underView:controller.view];
+  UIView* body = mode.superview;
+  XCTAssertNotNil(mode);
+  XCTAssertTrue([body isKindOfClass:[UIStackView class]]);
+  CGRect safeFrame = controller.view.safeAreaLayoutGuide.layoutFrame;
+  if (body) {
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(body.frame), CGRectGetMinX(safeFrame) + 16.0, 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMaxX(body.frame), CGRectGetMaxX(safeFrame) - 16.0, 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMinY(body.frame), CGRectGetMinY(safeFrame) + 12.0, 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMaxY(body.frame), CGRectGetMaxY(safeFrame) - 12.0, 0.5);
+    XCTAssertTrue(CGRectContainsRect(CGRectInset(safeFrame, -0.5, -0.5), body.frame));
+  }
+  return safeFrame;
+}
+- (void)assertLibraryController:(LibraryViewController*)controller fitsViewport:(CGRect)viewport {
+  UIView* rootView = controller.view;
+  UIToolbar* toolbar = (UIToolbar*)[self viewWithAccessibilityIdentifier:@"library.compactToolbar"
+                                                               underView:rootView];
+  XCTAssertEqualWithAccuracy(CGRectGetMinX(controller.navigationBar.frame), CGRectGetMinX(viewport), 0.5);
+  XCTAssertEqualWithAccuracy(CGRectGetMinY(controller.navigationBar.frame), CGRectGetMinY(viewport), 0.5);
+  XCTAssertEqualWithAccuracy(CGRectGetWidth(controller.navigationBar.frame), CGRectGetWidth(viewport), 0.5);
+  XCTAssertEqualWithAccuracy(CGRectGetMinX(controller.gridView.frame), CGRectGetMinX(viewport), 0.5);
+  XCTAssertEqualWithAccuracy(CGRectGetWidth(controller.gridView.frame), CGRectGetWidth(viewport), 0.5);
+  XCTAssertGreaterThanOrEqual(CGRectGetMinY(controller.gridView.frame),
+                              CGRectGetMaxY(controller.navigationBar.frame) - 0.5);
+  if (toolbar && !toolbar.hidden) {
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(toolbar.frame), CGRectGetMinX(viewport), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetWidth(toolbar.frame), CGRectGetWidth(viewport), 0.5);
+    XCTAssertEqualWithAccuracy(CGRectGetMaxY(toolbar.frame), CGRectGetMaxY(viewport), 0.5);
+    XCTAssertLessThanOrEqual(CGRectGetMaxY(controller.gridView.frame), CGRectGetMinY(toolbar.frame) + 0.5);
+  } else {
+    XCTAssertLessThanOrEqual(CGRectGetMaxY(controller.gridView.frame), CGRectGetMaxY(viewport) + 0.5);
+  }
+
+  UIView* emptyState = [controller valueForKey:@"emptyStateView"];
+  XCTAssertTrue(CGRectEqualToRect(emptyState.frame, controller.gridView.frame));
+  UIScrollView* emptyScroll = (UIScrollView*)[emptyState viewWithTag:9901];
+  UIView* emptyContent = [emptyState viewWithTag:9902];
+  XCTAssertEqualWithAccuracy(CGRectGetWidth(emptyContent.frame), CGRectGetWidth(emptyScroll.bounds), 0.5);
+  [self assertSubviewsFitHorizontallyInView:emptyContent];
+
+  UIView* banner = [self viewWithAccessibilityIdentifier:@"library.whatsNew" underView:rootView];
+  if (banner && !banner.hidden) {
+    XCTAssertGreaterThanOrEqual(CGRectGetMinX(banner.frame), CGRectGetMinX(viewport) - 0.5);
+    XCTAssertLessThanOrEqual(CGRectGetMaxX(banner.frame), CGRectGetMaxX(viewport) + 0.5);
+    XCTAssertGreaterThanOrEqual(CGRectGetMinY(banner.frame), CGRectGetMaxY(controller.navigationBar.frame) - 0.5);
+    XCTAssertLessThanOrEqual(CGRectGetMaxY(banner.frame), CGRectGetMinY(controller.gridView.frame) + 0.5);
   }
 }
 - (UIContextMenuInteraction*)contextMenuInteractionForView:(UIView*)view {
@@ -164,6 +263,308 @@
     view.frame = originalFrame;
     [view setNeedsLayout];
     [view layoutIfNeeded];
+  }
+}
+- (void)testLibraryNavigationKeepsEveryPrimaryActionVisibleAtDuoAndNarrowWidths {
+  LibraryViewController* controller = (LibraryViewController*)[AppDelegate sharedDelegate].viewController;
+  XCTAssertTrue([controller isKindOfClass:[LibraryViewController class]]);
+  UIView* view = controller.view;
+  CGRect originalFrame = view.frame;
+  UIEdgeInsets originalAdditionalInsets = controller.additionalSafeAreaInsets;
+  CRAdaptiveViewportView* originalTracker = controller.adaptiveViewportView;
+  CRFixedAdaptiveViewportView* fixedTracker = [[CRFixedAdaptiveViewportView alloc] initWithFrame:view.bounds];
+  NSArray<NSString*>* expectedActions = @[@"library.readingLists", @"library.icloud",
+                                          @"library.plus", @"library.settings"];
+
+  @try {
+    [originalTracker removeFromSuperview];
+    fixedTracker.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    fixedTracker.adaptiveViewportDelegate = (id<CRAdaptiveViewportViewDelegate>)controller;
+    [view insertSubview:fixedTracker atIndex:0];
+    controller.adaptiveViewportView = fixedTracker;
+    controller.additionalSafeAreaInsets = UIEdgeInsetsZero;
+
+    NSArray<NSValue*>* viewportSizes = @[[NSValue valueWithCGSize:CGSizeMake(669.0, 951.0)],
+                                         [NSValue valueWithCGSize:CGSizeMake(430.0, 700.0)]];
+    for (NSValue* viewportSizeValue in viewportSizes) {
+      CGSize viewportSize = viewportSizeValue.CGSizeValue;
+      view.frame = (CGRect){originalFrame.origin, viewportSize};
+      fixedTracker.fixedViewportBounds = (CGRect){CGPointZero, viewportSize};
+      [view setNeedsLayout];
+      [view layoutIfNeeded];
+
+      UIToolbar* toolbar = (UIToolbar*)[self viewWithAccessibilityIdentifier:@"library.compactToolbar"
+                                                                   underView:view];
+      XCTAssertNotNil(toolbar);
+      XCTAssertFalse(toolbar.hidden, @"The %.0f-point viewport must not overflow primary actions",
+                     viewportSize.width);
+      NSMutableArray<NSString*>* visibleActions = [NSMutableArray array];
+      for (UIBarButtonItem* item in toolbar.items) {
+        if (item.accessibilityIdentifier.length) [visibleActions addObject:item.accessibilityIdentifier];
+      }
+      XCTAssertEqualObjects(visibleActions, expectedActions);
+      XCTAssertEqualObjects(controller.navigationBar.topItem.rightBarButtonItems.firstObject.accessibilityIdentifier,
+                            @"library.sort");
+      XCTAssertEqual(controller.navigationBar.topItem.rightBarButtonItems.count, (NSUInteger)1);
+      [self assertLibraryController:controller
+                       fitsViewport:(CGRect){CGPointZero, viewportSize}];
+    }
+  } @finally {
+    fixedTracker.adaptiveViewportDelegate = nil;
+    [fixedTracker removeFromSuperview];
+    controller.adaptiveViewportView = originalTracker;
+    originalTracker.adaptiveViewportDelegate = (id<CRAdaptiveViewportViewDelegate>)controller;
+    controller.additionalSafeAreaInsets = originalAdditionalInsets;
+    view.frame = originalFrame;
+    originalTracker.frame = view.bounds;
+    [view insertSubview:originalTracker atIndex:0];
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+  }
+}
+- (void)testAdaptiveToolNavigationKeepsSafeAreaInOnePaneWithoutAccumulatingInsets {
+  CGRect bounds = CGRectMake(0, 0, 820, 720);
+  UIEdgeInsets baselineInsets = UIEdgeInsetsMake(17, 23, 29, 41);
+  UIViewController* root = [[UIViewController alloc] init];
+  CRAdaptiveToolNavigationController* navigation =
+    [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:root];
+  UIView* originalView = navigation.view;
+  UIView* observer = [navigation valueForKey:@"adaptiveReservedRegionObserverView"];
+  XCTAssertNotNil(originalView);
+  XCTAssertNotNil(observer);
+
+  CRAdaptiveToolSafeAreaTestView* testView =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  CRAdaptiveToolSafeAreaTestView* presentationContainer =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  presentationContainer.baselineSafeAreaInsets = baselineInsets;
+  testView.baselineSafeAreaInsets = baselineInsets;
+  testView.adaptiveNavigationController = navigation;
+  [observer removeFromSuperview];
+  navigation.view = testView;
+  [presentationContainer addSubview:testView];
+  observer.frame = testView.bounds;
+  [testView addSubview:observer];
+
+  CGRect horizontalDivision = CGRectMake(0, 340, CGRectGetWidth(bounds), 18);
+  NSArray<NSValue*>* horizontalFrames = @[[NSValue valueWithCGRect:horizontalDivision]];
+  CGRect topViewport = CRAdaptiveViewportBounds(bounds, baselineInsets, horizontalFrames, @[],
+                                                UIUserInterfaceLayoutDirectionLeftToRight);
+  [navigation _adaptiveObserver:observer
+         didReadDivisionFrames:horizontalFrames
+               occlusionFrames:@[]];
+  UIEdgeInsets firstInsets = navigation.additionalSafeAreaInsets;
+  XCTAssertEqualWithAccuracy(firstInsets.top, 0.0, 0.001);
+  XCTAssertEqualWithAccuracy(firstInsets.left, 0.0, 0.001);
+  XCTAssertEqualWithAccuracy(firstInsets.bottom, 351.0, 0.001);
+  XCTAssertEqualWithAccuracy(firstInsets.right, 0.0, 0.001);
+  XCTAssertTrue(CGRectEqualToRect(CRAdaptiveSafeBounds(bounds, testView.safeAreaInsets), topViewport));
+
+  [navigation _adaptiveObserver:observer
+         didReadDivisionFrames:horizontalFrames
+               occlusionFrames:@[]];
+  XCTAssertTrue(UIEdgeInsetsEqualToEdgeInsets(navigation.additionalSafeAreaInsets, firstInsets));
+  XCTAssertTrue(CGRectEqualToRect(CRAdaptiveSafeBounds(bounds, testView.safeAreaInsets), topViewport));
+
+  [navigation _adaptiveObserver:observer didReadDivisionFrames:@[] occlusionFrames:@[]];
+  XCTAssertTrue(UIEdgeInsetsEqualToEdgeInsets(navigation.additionalSafeAreaInsets, UIEdgeInsetsZero));
+  XCTAssertTrue(CGRectEqualToRect(CRAdaptiveSafeBounds(bounds, testView.safeAreaInsets),
+                                  CRAdaptiveSafeBounds(bounds, baselineInsets)));
+
+  CGRect verticalDivision = CGRectMake(400, 0, 20, CGRectGetHeight(bounds));
+  NSArray<NSValue*>* verticalFrames = @[[NSValue valueWithCGRect:verticalDivision]];
+  CGRect leadingViewport = CRAdaptiveViewportBounds(bounds, baselineInsets, verticalFrames, @[],
+                                                    UIUserInterfaceLayoutDirectionLeftToRight);
+  [navigation _adaptiveObserver:observer
+         didReadDivisionFrames:verticalFrames
+               occlusionFrames:@[]];
+  XCTAssertEqualWithAccuracy(navigation.additionalSafeAreaInsets.right, 379.0, 0.001);
+  XCTAssertTrue(CGRectEqualToRect(CRAdaptiveSafeBounds(bounds, testView.safeAreaInsets),
+                                  leadingViewport));
+}
+- (void)testAdaptiveToolNavigationIgnoresFractionalChildSafeAreaDriftAcrossUpdates {
+  CGRect bounds = CGRectMake(0, 0, 653, 943);
+  UIEdgeInsets stableContainerInsets = UIEdgeInsetsMake(17, 0, 34, 0);
+  UIViewController* root = [[UIViewController alloc] init];
+  CRAdaptiveToolNavigationController* navigation =
+    [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:root];
+  UIView* originalView = navigation.view;
+  UIView* originalObserver = [navigation valueForKey:@"adaptiveReservedRegionObserverView"];
+  XCTAssertNotNil(originalView);
+  XCTAssertNotNil(originalObserver);
+
+  CRAdaptiveToolSafeAreaTestView* presentationContainer =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  presentationContainer.baselineSafeAreaInsets = stableContainerInsets;
+  CRAdaptiveToolSafeAreaTestView* navigationView =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  navigationView.adaptiveNavigationController = navigation;
+  CRAdaptiveToolSafeAreaTestView* observer =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  observer.adaptiveNavigationController = navigation;
+
+  [originalObserver removeFromSuperview];
+  navigation.view = navigationView;
+  [presentationContainer addSubview:navigationView];
+  [navigationView addSubview:observer];
+
+  CGRect division = CGRectMake(0, 447.5, CGRectGetWidth(bounds), 16.667);
+  NSArray<NSValue*>* divisionFrames = @[[NSValue valueWithCGRect:division]];
+  UIEdgeInsets expectedInsets = UIEdgeInsetsZero;
+  for (NSUInteger pass = 0; pass < 8; pass++) {
+    CGFloat drift = pass % 2 == 0 ? 1.0 / 6.0 : -1.0 / 6.0;
+    navigationView.baselineSafeAreaInsets = UIEdgeInsetsMake(17, 0, 34 + drift, 0);
+    observer.baselineSafeAreaInsets = UIEdgeInsetsMake(17, 0, 34 - drift, 0);
+    XCTAssertNotEqualWithAccuracy(navigationView.safeAreaInsets.bottom,
+                                  observer.safeAreaInsets.bottom, 0.001);
+    [navigation _adaptiveObserver:observer
+           didReadDivisionFrames:divisionFrames
+                 occlusionFrames:@[]];
+    if (pass == 0) {
+      expectedInsets = navigation.additionalSafeAreaInsets;
+      XCTAssertEqualWithAccuracy(expectedInsets.bottom, 461.5, 0.001);
+      XCTAssertEqualWithAccuracy(navigationView.safeAreaInsets.bottom, 495.667, 0.001);
+      XCTAssertEqualWithAccuracy(observer.safeAreaInsets.bottom, 495.333, 0.001);
+    } else {
+      XCTAssertTrue(UIEdgeInsetsEqualToEdgeInsets(navigation.additionalSafeAreaInsets,
+                                                  expectedInsets));
+    }
+  }
+}
+- (void)testComicTextBodyTracksAdaptiveToolSafeAreaInBothFoldOrientations {
+  CGRect bounds = CGRectMake(0, 0, 653, 943);
+  NSURL* comicURL = [self createPDFNamed:[NSString stringWithFormat:@"Text-Geometry-%@.pdf",
+                                                                    NSUUID.UUID.UUIDString]
+                             inDirectory:NSTemporaryDirectory()];
+  CRComicTextViewController* controller =
+    [[CRComicTextViewController alloc] initWithComicPath:comicURL.path currentPageIndex:0];
+  CRAdaptiveToolNavigationController* navigation =
+    [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
+  UIViewController* host = [[UIViewController alloc] init];
+  CRAdaptiveToolSafeAreaTestView* presentationContainer =
+    [[CRAdaptiveToolSafeAreaTestView alloc] initWithFrame:bounds];
+  presentationContainer.baselineSafeAreaInsets = UIEdgeInsetsZero;
+  host.view = presentationContainer;
+  UIWindow* window = [[UIWindow alloc] initWithFrame:bounds];
+  window.rootViewController = host;
+  [window addSubview:host.view];
+  [host addChildViewController:navigation];
+  navigation.view.frame = presentationContainer.bounds;
+  [presentationContainer addSubview:navigation.view];
+  [navigation didMoveToParentViewController:host];
+
+  UIView* systemObserver = [navigation valueForKey:@"adaptiveReservedRegionObserverView"];
+  XCTAssertNotNil(systemObserver);
+  [systemObserver removeFromSuperview];
+  UIView* observer = [[UIView alloc] initWithFrame:navigation.view.bounds];
+  observer.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  observer.userInteractionEnabled = NO;
+  [navigation.view insertSubview:observer atIndex:0];
+  [host.view setNeedsLayout];
+  [host.view layoutIfNeeded];
+  [navigation.view setNeedsLayout];
+  [navigation.view layoutIfNeeded];
+  CGRect fullSafeFrame = [self assertComicTextControllerBodyFitsSafeArea:controller];
+
+  CGRect horizontalDivision = CGRectMake(0, 447.5, CGRectGetWidth(bounds), 16.667);
+  [navigation _adaptiveObserver:observer
+         didReadDivisionFrames:@[[NSValue valueWithCGRect:horizontalDivision]]
+               occlusionFrames:@[]];
+  [navigation.view setNeedsLayout];
+  [navigation.view layoutIfNeeded];
+  CGRect horizontalSafeFrame = [self assertComicTextControllerBodyFitsSafeArea:controller];
+  XCTAssertGreaterThan(navigation.additionalSafeAreaInsets.bottom, 0.0);
+  XCTAssertEqualWithAccuracy(navigation.additionalSafeAreaInsets.right, 0.0, 0.001);
+  XCTAssertLessThan(CGRectGetMaxY(horizontalSafeFrame), CGRectGetMaxY(fullSafeFrame) - 100.0);
+
+  CGRect verticalDivision = CGRectMake(318.333, 0, 16.667, CGRectGetHeight(bounds));
+  [navigation _adaptiveObserver:observer
+         didReadDivisionFrames:@[[NSValue valueWithCGRect:verticalDivision]]
+               occlusionFrames:@[]];
+  [navigation.view setNeedsLayout];
+  [navigation.view layoutIfNeeded];
+  CGRect verticalSafeFrame = [self assertComicTextControllerBodyFitsSafeArea:controller];
+  XCTAssertEqualWithAccuracy(navigation.additionalSafeAreaInsets.bottom, 0.0, 0.001);
+  XCTAssertGreaterThan(navigation.additionalSafeAreaInsets.right, 0.0);
+  XCTAssertLessThan(CGRectGetMaxX(verticalSafeFrame), CGRectGetMaxX(fullSafeFrame) - 100.0);
+}
+- (void)testLibraryChromeUsesContinuousViewportAcrossBookAndLaptopPostures {
+  LibraryViewController* controller = (LibraryViewController*)[AppDelegate sharedDelegate].viewController;
+  XCTAssertTrue([controller isKindOfClass:[LibraryViewController class]]);
+  UIView* view = controller.view;
+  GridView* grid = controller.gridView;
+  CGRect originalFrame = view.frame;
+  UIEdgeInsets originalAdditionalInsets = controller.additionalSafeAreaInsets;
+  CRAdaptiveViewportView* originalTracker = controller.adaptiveViewportView;
+  NSArray* originalItems = grid.items;
+  UINavigationItem* originalNavigationItem = controller.navigationBar.topItem;
+  ComicCollection* originalCollection = [controller valueForKey:@"currentCollection"];
+  UIView* originalEmptyState = [controller valueForKey:@"emptyStateView"];
+  CGPoint originalEmptyOffset = [(UIScrollView*)[originalEmptyState viewWithTag:9901] contentOffset];
+  CRFixedAdaptiveViewportView* fixedTracker = [[CRFixedAdaptiveViewportView alloc] initWithFrame:view.bounds];
+
+  @try {
+    [originalTracker removeFromSuperview];
+    fixedTracker.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    fixedTracker.adaptiveViewportDelegate = (id<CRAdaptiveViewportViewDelegate>)controller;
+    [view insertSubview:fixedTracker atIndex:0];
+    controller.adaptiveViewportView = fixedTracker;
+    view.frame = CGRectMake(originalFrame.origin.x, originalFrame.origin.y, 820, 720);
+    controller.additionalSafeAreaInsets = UIEdgeInsetsZero;
+
+    UIEdgeInsets asymmetricInsets = UIEdgeInsetsMake(17, 23, 29, 41);
+    CGRect openViewport = CRAdaptiveViewportBounds(view.bounds, asymmetricInsets, @[], @[],
+                                                   UIUserInterfaceLayoutDirectionLeftToRight);
+    fixedTracker.fixedViewportBounds = openViewport;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [self assertLibraryController:controller fitsViewport:openViewport];
+
+    UIScrollView* emptyScroll = (UIScrollView*)[[controller valueForKey:@"emptyStateView"] viewWithTag:9901];
+    emptyScroll.contentOffset = CGPointMake(0, 40);
+
+    CGRect verticalDivision = CGRectMake(400, 0, 20, CGRectGetHeight(view.bounds));
+    CGRect bookViewport = CRAdaptiveViewportBounds(view.bounds, asymmetricInsets,
+                                                   @[[NSValue valueWithCGRect:verticalDivision]], @[],
+                                                   UIUserInterfaceLayoutDirectionLeftToRight);
+    fixedTracker.fixedViewportBounds = bookViewport;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [self assertLibraryController:controller fitsViewport:bookViewport];
+    emptyScroll = (UIScrollView*)[[controller valueForKey:@"emptyStateView"] viewWithTag:9901];
+    XCTAssertEqualWithAccuracy(emptyScroll.contentOffset.y, 40, 0.5);
+
+    CGRect horizontalDivision = CGRectMake(0, 340, CGRectGetWidth(view.bounds), 18);
+    CGRect laptopViewport = CRAdaptiveViewportBounds(view.bounds, asymmetricInsets,
+                                                     @[[NSValue valueWithCGRect:horizontalDivision]], @[],
+                                                     UIUserInterfaceLayoutDirectionLeftToRight);
+    fixedTracker.fixedViewportBounds = laptopViewport;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [self assertLibraryController:controller fitsViewport:laptopViewport];
+    emptyScroll = (UIScrollView*)[[controller valueForKey:@"emptyStateView"] viewWithTag:9901];
+    XCTAssertEqualWithAccuracy(emptyScroll.contentOffset.y, 40, 0.5);
+
+    fixedTracker.fixedViewportBounds = openViewport;
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    [self assertLibraryController:controller fitsViewport:openViewport];
+    XCTAssertEqualObjects(grid.items, originalItems);
+    XCTAssertEqual(controller.navigationBar.topItem, originalNavigationItem);
+    XCTAssertEqual([controller valueForKey:@"currentCollection"], originalCollection);
+  } @finally {
+    fixedTracker.adaptiveViewportDelegate = nil;
+    [fixedTracker removeFromSuperview];
+    controller.adaptiveViewportView = originalTracker;
+    originalTracker.adaptiveViewportDelegate = (id<CRAdaptiveViewportViewDelegate>)controller;
+    controller.additionalSafeAreaInsets = originalAdditionalInsets;
+    view.frame = originalFrame;
+    originalTracker.frame = view.bounds;
+    [view insertSubview:originalTracker atIndex:0];
+    [view setNeedsLayout];
+    [view layoutIfNeeded];
+    UIScrollView* restoredEmptyScroll = (UIScrollView*)[[controller valueForKey:@"emptyStateView"] viewWithTag:9901];
+    restoredEmptyScroll.contentOffset = originalEmptyOffset;
   }
 }
 - (void)testLibraryResizePreservesGridStateAndShortLayoutGeometry {

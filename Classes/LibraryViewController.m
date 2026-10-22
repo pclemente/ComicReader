@@ -19,6 +19,7 @@
 #import "LibraryViewController.h"
 #import "ComicViewController.h"
 #import "AppDelegate.h"
+#import "CRAdaptiveViewport.h"
 #import "CRLibrarySyncCoordinator.h"
 #import "CRReadingLists.h"
 #import "ComicFlow-Swift.h"
@@ -31,8 +32,9 @@
 
 @class ThumbnailView;
 
-@interface LibraryViewController () <CRWhatsNewBannerDelegate>
+@interface LibraryViewController () <CRWhatsNewBannerDelegate, CRAdaptiveViewportViewDelegate>
 @property(nonatomic, retain) id adaptiveGridScrollAnchor;
+@property(nonatomic, retain) CRAdaptiveViewportView* adaptiveViewportView;
 @property(nonatomic) CGFloat adaptiveGridScrollAnchorY;
 @property(nonatomic) CGSize gridSizeBeforeLayout;
 @property(nonatomic) UIEdgeInsets gridContentMarginsBeforeLayout;
@@ -43,6 +45,7 @@
 - (void)_captureGridLayoutSnapshot;
 - (void)_configureNavigationForCompactWidth:(BOOL)compact;
 - (void)_centerEmptyStateContent;
+- (CGRect)_libraryViewportBounds;
 - (void)_updateCompactSortMenu;
 - (void)_openComicFilesCommand:(UIKeyCommand*)command;
 - (void)_refreshLibraryCommand:(UIKeyCommand*)command;
@@ -105,6 +108,12 @@
 #define kItemHorizontalSpacing_Portrait 17.0
 #define kItemHorizontalSpacing_Landscape 9.0
 
+// The regular navigation bar combines the 332-point sort control with four
+// primary actions. Below this width UIKit moves Plus and Settings into its More
+// menu, so use the dedicated toolbar while leaving grid spacing independent.
+#define kLibraryCompactGridWidth 600.0
+#define kLibraryRegularNavigationMinimumWidth 760.0
+
 #define kNewImageX 67.0
 #define kNewImageY 6.0
 #define kNewImageWidth 60.0
@@ -119,16 +128,6 @@
 #define kShowRatingDelay 1.0
 
 #define kUpdateTimerInterval 1.0
-
-static CGRect CRSafeBoundsForView(UIView* view) {
-  CGRect bounds = view.bounds;
-  UIEdgeInsets insets = view.safeAreaInsets;
-  CGFloat minX = MIN(CGRectGetMaxX(bounds), MAX(CGRectGetMinX(bounds), CGRectGetMinX(bounds) + insets.left));
-  CGFloat maxX = MAX(CGRectGetMinX(bounds), MIN(CGRectGetMaxX(bounds), CGRectGetMaxX(bounds) - insets.right));
-  CGFloat minY = MIN(CGRectGetMaxY(bounds), MAX(CGRectGetMinY(bounds), CGRectGetMinY(bounds) + insets.top));
-  CGFloat maxY = MAX(CGRectGetMinY(bounds), MIN(CGRectGetMaxY(bounds), CGRectGetMaxY(bounds) - insets.bottom));
-  return CGRectMake(minX, minY, MAX(0.0, maxX - minX), MAX(0.0, maxY - minY));
-}
 
 #if __DISPLAY_THUMBNAILS_IN_BACKGROUND__
 @interface ThumbnailView : UIView
@@ -169,8 +168,11 @@ static CGRect CRSafeBoundsForView(UIView* view) {
             forceUpdateButton=_forceUpdateButton, serverControl=_serverControl, addressLabel=_addressLabel,
             infoLabel=_infoLabel, versionLabel=_versionLabel, dimmingSwitch=_dimmingSwitch, purchaseButton=_purchaseButton,
             restoreButton=_restoreButton;
+@synthesize adaptiveViewportView=_adaptiveViewportView;
 
 - (void) dealloc {
+  _adaptiveViewportView.adaptiveViewportDelegate = nil;
+  [_adaptiveViewportView release];
   [_adaptiveGridScrollAnchor release];
   _adaptiveGridScrollAnchor = nil;
   [super dealloc];
@@ -259,6 +261,39 @@ static CGRect CRSafeBoundsForView(UIView* view) {
 
 #if __DISPLAY_THUMBNAILS_IN_BACKGROUND__
 
+typedef struct {
+  ThumbnailView* view;
+  DatabaseObject* item;
+  CGImageRef image;
+} CRThumbnailDisplayResult;
+
+// Called from the main thread only.
+static void __ApplyThumbnailContents(ThumbnailView* view, DatabaseObject* item, CGImageRef image) {
+  NSCAssert([NSThread isMainThread], @"Thumbnail layers must be updated on the main thread");
+  if ((view.item != item) || (view.superview == nil) || view.hidden) return;
+
+  [CATransaction begin];
+  [CATransaction setDisableActions:YES];
+  view.layer.contents = (id)image;
+  [CATransaction commit];
+}
+
+// Called from the main thread by dispatch_async_f.
+static void __ApplyThumbnailDisplayResult(void* context) {
+  CRThumbnailDisplayResult* result = (CRThumbnailDisplayResult*)context;
+  __ApplyThumbnailContents(result->view, result->item, result->image);
+  [result->view release];
+  [result->item release];
+  CGImageRelease(result->image);
+  free(result);
+}
+
+// Keeps the batch's UIKit keys alive until every preceding main-queue apply.
+static void __ReleaseThumbnailDisplayBatch(void* context) {
+  NSCAssert([NSThread isMainThread], @"Thumbnail view batches must be released on the main thread");
+  CFRelease((CFDictionaryRef)context);
+}
+
 // Called from main thread or display thread
 static void __DisplayQueueApplierFunction(const void* key, const void* value, void* context) {
   ThumbnailView* view = (ThumbnailView*)key;
@@ -279,12 +314,19 @@ static void __DisplayQueueApplierFunction(const void* key, const void* value, vo
   }
 #endif
   if (image) {
-    if (params[0]) {
-      [CATransaction begin];
-    }
-    view.layer.contents = (id)[image CGImage];
-    if (params[0]) {
-      [CATransaction commit];
+    CGImageRef contents = [image CGImage];
+    if (contents) {
+      if (params[0]) {
+        CRThumbnailDisplayResult* result = malloc(sizeof(CRThumbnailDisplayResult));
+        if (result) {
+          result->view = [view retain];
+          result->item = [item retain];
+          result->image = CGImageRetain(contents);
+          dispatch_async_f(dispatch_get_main_queue(), result, __ApplyThumbnailDisplayResult);
+        }
+      } else {
+        __ApplyThumbnailContents(view, item, contents);
+      }
     }
     [image release];
   }
@@ -293,10 +335,10 @@ static void __DisplayQueueApplierFunction(const void* key, const void* value, vo
 // Called from main thread or display thread
 - (void) _processDisplayQueue:(BOOL)inBackground {
 #if __STORE_THUMBNAILS_IN_DATABASE__
-  void** params[] = {inBackground ? (void*)self : NULL,
-                     inBackground ? (void*)_displayConnection : (void*)[LibraryConnection mainConnection]};
+  void* params[] = {inBackground ? (void*)self : NULL,
+                    inBackground ? (void*)_displayConnection : (void*)[LibraryConnection mainConnection]};
 #else
-  void** params[] = {inBackground ? (void*)self : NULL, [LibraryConnection libraryApplicationDataPath]};
+  void* params[] = {inBackground ? (void*)self : NULL, [LibraryConnection libraryApplicationDataPath]};
 #endif
   while (1) {
     CFDictionaryRef dictionary = NULL;
@@ -312,7 +354,11 @@ static void __DisplayQueueApplierFunction(const void* key, const void* value, vo
       NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
       CFDictionaryApplyFunction(dictionary, __DisplayQueueApplierFunction, params);
       [pool release];
-      CFRelease(dictionary);
+      if (inBackground) {
+        dispatch_async_f(dispatch_get_main_queue(), (void*)dictionary, __ReleaseThumbnailDisplayBatch);
+      } else {
+        CFRelease(dictionary);
+      }
     } else {
       break;
     }
@@ -497,7 +543,7 @@ static void __DisplayQueueCallBack(void* info) {
     return;
   }
   CRPlusViewController* controller = [[CRPlusViewController alloc] init];
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   [self presentViewController:navigation animated:YES completion:nil];
   [controller release];
@@ -526,7 +572,7 @@ static void __DisplayQueueCallBack(void* info) {
         }
       }];
     }];
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   [self presentViewController:navigation animated:YES completion:nil];
   [controller release];
@@ -537,7 +583,7 @@ static void __DisplayQueueCallBack(void* info) {
   if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed) return;
   CRPlusViewController* controller = [[CRPlusViewController alloc] init];
   controller.showsOnlyCloud = YES;
-  UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   [self presentViewController:navigation animated:YES completion:nil];
   [controller release];
@@ -679,6 +725,12 @@ static void __DisplayQueueCallBack(void* info) {
     self.view.backgroundColor = [UIColor whiteColor];
   }
 
+  _adaptiveViewportView = [[CRAdaptiveViewportView alloc] initWithFrame:self.view.bounds];
+  _adaptiveViewportView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _adaptiveViewportView.adaptiveViewportDelegate = self;
+  [self.view insertSubview:_adaptiveViewportView atIndex:0];
+  [_adaptiveViewportView refreshViewport];
+
   // Grid background (XIB has it red by mistake — fix here)
   _gridView.backgroundColor = [UIColor clearColor];
   // This controller sets the grid frame after capturing its pre-layout geometry.
@@ -737,9 +789,11 @@ static void __DisplayQueueCallBack(void* info) {
   _compactToolbar.accessibilityIdentifier = @"library.compactToolbar";
   [self.view addSubview:_compactToolbar];
   [self updatePurchase];
-  BOOL startsCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
-                       CGRectGetWidth(self.view.bounds) < 600.0;
-  [self _configureNavigationForCompactWidth:startsCompact];
+  CGRect initialViewport = [self _libraryViewportBounds];
+  BOOL startsWithCompactNavigation =
+    self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
+    CGRectGetWidth(initialViewport) < kLibraryRegularNavigationMinimumWidth;
+  [self _configureNavigationForCompactWidth:startsWithCompactNavigation];
   
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_cloudReadingChanged:) name:@"CRLibraryReadingStateDidChangeNotification" object:nil];
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_sceneDidActivate:) name:UISceneDidActivateNotification object:nil];
@@ -1201,6 +1255,20 @@ static void __DisplayQueueCallBack(void* info) {
   }
 }
 
+- (CGRect) _libraryViewportBounds {
+  if (!_adaptiveViewportView) {
+    return CRAdaptiveSafeBounds(self.view.bounds, self.view.safeAreaInsets);
+  }
+  _adaptiveViewportView.frame = self.view.bounds;
+  [_adaptiveViewportView refreshViewport];
+  return [_adaptiveViewportView convertRect:_adaptiveViewportView.viewportBounds toView:self.view];
+}
+
+- (void) adaptiveViewportView:(CRAdaptiveViewportView*)view
+      didChangeViewportBounds:(CGRect)viewportBounds {
+  [self.view setNeedsLayout];
+}
+
 - (void) viewWillLayoutSubviews {
   [self _captureGridLayoutSnapshot];
   [super viewWillLayoutSubviews];
@@ -1211,12 +1279,15 @@ static void __DisplayQueueCallBack(void* info) {
 
   if (!self.hasGridLayoutSnapshot) [self _captureGridLayoutSnapshot];
 
-  CGRect safeBounds = CRSafeBoundsForView(self.view);
+  CGRect safeBounds = [self _libraryViewportBounds];
   BOOL isLandscape = CGRectGetWidth(safeBounds) > CGRectGetHeight(safeBounds);
-  BOOL isCompact = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact ||
-                   CGRectGetWidth(safeBounds) < 600.0;
-  if (!_adaptiveLayoutConfigured || isCompact != _usingCompactLayout) {
-    [self _configureNavigationForCompactWidth:isCompact];
+  BOOL hasCompactSizeClass = self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact;
+  BOOL usesCompactNavigation = hasCompactSizeClass ||
+                               CGRectGetWidth(safeBounds) < kLibraryRegularNavigationMinimumWidth;
+  BOOL usesCompactGrid = hasCompactSizeClass ||
+                         CGRectGetWidth(safeBounds) < kLibraryCompactGridWidth;
+  if (!_adaptiveLayoutConfigured || usesCompactNavigation != _usingCompactLayout) {
+    [self _configureNavigationForCompactWidth:usesCompactNavigation];
   }
 
   CGFloat navigationHeight = MIN(44.0, CGRectGetHeight(safeBounds));
@@ -1224,7 +1295,7 @@ static void __DisplayQueueCallBack(void* info) {
                                     CGRectGetWidth(safeBounds), navigationHeight);
   CGFloat contentTop = CGRectGetMaxY(_navigationBar.frame);
   CGFloat contentBottom = CGRectGetMaxY(safeBounds);
-  if (isCompact) {
+  if (usesCompactNavigation) {
     CGFloat toolbarHeight = MIN(44.0, MAX(0.0, contentBottom - contentTop));
     _compactToolbar.frame = CGRectMake(CGRectGetMinX(safeBounds), contentBottom - toolbarHeight,
                                        CGRectGetWidth(safeBounds), toolbarHeight);
@@ -1253,7 +1324,7 @@ static void __DisplayQueueCallBack(void* info) {
                                CGRectGetWidth(safeBounds),
                                MAX(0.0, contentBottom - contentTop));
 
-  if (isCompact) {
+  if (usesCompactGrid) {
     CGFloat width = CGRectGetWidth(_gridView.bounds);
     CGFloat minimumGap = isLandscape ? 12.0 : 16.0;
     CGFloat outerMargin = MIN(kGridMargin, MAX(0.0, floor((width - kLibraryThumbnailWidth) / 2.0)));

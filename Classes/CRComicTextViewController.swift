@@ -95,11 +95,15 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
         body.translatesAutoresizingMaskIntoConstraints = false
         for child in [modes, status, actions, searchBar, pageContent, table] { body.addArrangedSubview(child) }
         view.addSubview(body)
+        let preferredBottom = body.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+        preferredBottom.priority = .defaultHigh
         NSLayoutConstraint.activate([
             body.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             body.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             body.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            body.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -12)
+            body.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            body.bottomAnchor.constraint(lessThanOrEqualTo: view.keyboardLayoutGuide.topAnchor, constant: -12),
+            preferredBottom
         ])
         status.setContentCompressionResistancePriority(.required, for: .vertical)
         modes.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -454,11 +458,15 @@ private final class CRQuoteEditorViewController: UIViewController, UITextViewDel
         textView.textContainerInset = UIEdgeInsets(top: 20, left: 16, bottom: 20, right: 16)
         textView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(textView)
+        let preferredBottom = textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        preferredBottom.priority = .defaultHigh
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             textView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
+            textView.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor),
+            textView.bottomAnchor.constraint(lessThanOrEqualTo: view.keyboardLayoutGuide.topAnchor),
+            preferredBottom
         ])
         let cancel = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
         cancel.accessibilityIdentifier = "reader.quote.cancel"

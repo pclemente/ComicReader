@@ -19,6 +19,8 @@
 #define kZoomTolerance 0.01
 
 @interface ZoomView (UIScrollViewDelegate) <UIScrollViewDelegate>
+- (void) _saveCurrentFocusPoint;
+- (void) _saveRelativeZoomScale:(CGFloat)zoomScale;
 @end
 
 @implementation ZoomView
@@ -30,24 +32,35 @@
 }
 
 - (void) _resetFocusPoint {
-  _focusPoint.x = _displaySize.width / 2.0;
-  _focusPoint.y = _displaySize.height / 2.0;
+  _sourceFocusPoint.x = _displaySize.width / 2.0;
+  _sourceFocusPoint.y = _displaySize.height / 2.0;
+  _relativeZoomScale = 1.0;
 }
 
-- (void) _saveFocusPointForBoundsSize:(CGSize)boundsSize {
-  CGPoint offset = self.contentOffset;
-  CGFloat zoomScale = self.zoomScale;
+- (void) _saveFocusPointForContentOffset:(CGPoint)offset boundsSize:(CGSize)boundsSize zoomScale:(CGFloat)zoomScale {
   if (zoomScale > 0.0) {
-    _focusPoint.x = MIN(MAX((offset.x + boundsSize.width / 2.0) / zoomScale, 0.0), _displaySize.width);
-    _focusPoint.y = MIN(MAX((offset.y + boundsSize.height / 2.0) / zoomScale, 0.0), _displaySize.height);
+    _sourceFocusPoint.x = MIN(MAX((offset.x + boundsSize.width / 2.0) / zoomScale, 0.0), _displaySize.width);
+    _sourceFocusPoint.y = MIN(MAX((offset.y + boundsSize.height / 2.0) / zoomScale, 0.0), _displaySize.height);
+  }
+}
+
+- (void) _saveCurrentFocusPoint {
+  if (_displayView && !_isApplyingGeometryChange) {
+    [self _saveFocusPointForContentOffset:self.contentOffset boundsSize:self.bounds.size zoomScale:self.zoomScale];
+  }
+}
+
+- (void) _saveRelativeZoomScale:(CGFloat)zoomScale {
+  if (_displayView && !_isApplyingGeometryChange && self.minimumZoomScale > 0.0) {
+    CGFloat relativeZoomScale = zoomScale / self.minimumZoomScale;
+    _relativeZoomScale = relativeZoomScale <= 1.0 + kZoomTolerance ? 1.0 : relativeZoomScale;
   }
 }
 
 - (void) _preserveFocusBeforeSizeChange {
   if (!_hasPendingSizeChangeFocus && _displayView && !CGSizeEqualToSize(_oldSize, CGSizeZero)) {
-    // Capture before UIScrollView sees the new geometry. Its superclass may
-    // clamp contentOffset immediately when the viewport grows.
-    [self _saveFocusPointForBoundsSize:self.bounds.size];
+    // _sourceFocusPoint already records the last user-selected position.
+    // Geometry may clamp the visible midpoint, but must not replace that intent.
     _hasPendingSizeChangeFocus = YES;
   }
 }
@@ -55,10 +68,17 @@
 - (void) setFrame:(CGRect)frame {
   CGSize oldBoundsSize = self.bounds.size;
   BOOL alreadyPending = _hasPendingSizeChangeFocus;
-  if (!CGSizeEqualToSize(frame.size, self.frame.size)) {
+  BOOL sizeChanged = !CGSizeEqualToSize(frame.size, self.frame.size);
+  if (sizeChanged) {
+    _geometryGeneration += 1;
     [self _preserveFocusBeforeSizeChange];
   }
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  if (sizeChanged) {
+    _isApplyingGeometryChange = YES;
+  }
   [super setFrame:frame];
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
   // A transform can change frame.size without changing the viewport. Do not
   // leave a false pending capture that would mask the next real bounds change.
   if (!alreadyPending && _hasPendingSizeChangeFocus && CGSizeEqualToSize(oldBoundsSize, self.bounds.size)) {
@@ -67,10 +87,17 @@
 }
 
 - (void) setBounds:(CGRect)bounds {
-  if (!CGSizeEqualToSize(bounds.size, self.bounds.size)) {
+  BOOL sizeChanged = !CGSizeEqualToSize(bounds.size, self.bounds.size);
+  if (sizeChanged) {
+    _geometryGeneration += 1;
     [self _preserveFocusBeforeSizeChange];
   }
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  if (sizeChanged) {
+    _isApplyingGeometryChange = YES;
+  }
   [super setBounds:bounds];
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
 }
 
 - (void) _restoreFocusPoint {
@@ -81,9 +108,71 @@
   CGFloat minimumY = -self.contentInset.top;
   CGFloat maximumX = MAX(minimumX, contentSize.width - boundsSize.width + self.contentInset.right);
   CGFloat maximumY = MAX(minimumY, contentSize.height - boundsSize.height + self.contentInset.bottom);
-  CGPoint point = CGPointMake(MIN(MAX(zoomScale * _focusPoint.x - boundsSize.width / 2.0, minimumX), maximumX),
-                              MIN(MAX(zoomScale * _focusPoint.y - boundsSize.height / 2.0, minimumY), maximumY));
+  CGPoint point = CGPointMake(MIN(MAX(zoomScale * _sourceFocusPoint.x - boundsSize.width / 2.0, minimumX), maximumX),
+                              MIN(MAX(zoomScale * _sourceFocusPoint.y - boundsSize.height / 2.0, minimumY), maximumY));
   self.contentOffset = point;
+}
+
+// Public positioning calls are intentional viewport changes. Internal layout
+// uses _isApplyingGeometryChange so its temporary clamps cannot replace them.
+- (void) setContentOffset:(CGPoint)contentOffset {
+  [super setContentOffset:contentOffset];
+  [self _saveCurrentFocusPoint];
+}
+
+- (void) setContentOffset:(CGPoint)contentOffset animated:(BOOL)animated {
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  if (animated && _displayView && !wasApplyingGeometryChange) {
+    [self _saveFocusPointForContentOffset:contentOffset boundsSize:self.bounds.size zoomScale:self.zoomScale];
+    _isApplyingGeometryChange = YES;
+  }
+  [super setContentOffset:contentOffset animated:animated];
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
+  if (!animated) {
+    [self _saveCurrentFocusPoint];
+  }
+}
+
+- (void) setZoomScale:(CGFloat)scale {
+  [super setZoomScale:scale];
+  [self _saveRelativeZoomScale:self.zoomScale];
+  [self _saveCurrentFocusPoint];
+}
+
+- (void) setZoomScale:(CGFloat)scale animated:(BOOL)animated {
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  if (!wasApplyingGeometryChange) {
+    CGFloat targetScale = MIN(MAX(scale, self.minimumZoomScale), self.maximumZoomScale);
+    [self _saveRelativeZoomScale:targetScale];
+  }
+  if (animated) {
+    _isApplyingGeometryChange = YES;
+  }
+  [super setZoomScale:scale animated:animated];
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
+  if (!animated) {
+    [self _saveRelativeZoomScale:self.zoomScale];
+    [self _saveCurrentFocusPoint];
+  }
+}
+
+- (void) zoomToRect:(CGRect)rect animated:(BOOL)animated {
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  if (_displayView && !wasApplyingGeometryChange && !CGRectIsEmpty(rect)) {
+    _sourceFocusPoint.x = MIN(MAX(CGRectGetMidX(rect), 0.0), _displaySize.width);
+    _sourceFocusPoint.y = MIN(MAX(CGRectGetMidY(rect), 0.0), _displaySize.height);
+    CGFloat targetScale = MIN(CGRectGetWidth(self.bounds) / CGRectGetWidth(rect),
+                              CGRectGetHeight(self.bounds) / CGRectGetHeight(rect));
+    targetScale = MIN(MAX(targetScale, self.minimumZoomScale), self.maximumZoomScale);
+    [self _saveRelativeZoomScale:targetScale];
+  }
+  _isApplyingGeometryChange = YES;
+  [super zoomToRect:rect animated:animated];
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
+  if (!animated) {
+    [self _saveRelativeZoomScale:self.zoomScale];
+    [self _saveCurrentFocusPoint];
+  }
 }
 
 - (void) _handleDoubleTap:(UIGestureRecognizer*)gestureRecognizer {
@@ -93,6 +182,8 @@
       CGRect zoomRect = CGRectMake(point.x - 1.0, point.y - 1.0, 2.0, 2.0);
       [self zoomToRect:zoomRect animated:YES];
     } else {
+      BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+      _isApplyingGeometryChange = YES;
       BOOL atOrigin = CGPointEqualToPoint(self.contentOffset, CGPointZero);  // Work around a strange behavior where if zooming out while changing contentInset from zero to non-zero at the same time
       if (atOrigin) {
         self.contentOffset = CGPointMake(1.0, 1.0);
@@ -101,6 +192,8 @@
       if (atOrigin) {
         self.contentOffset = CGPointMake(0.0, 0.0);
       }
+      _isApplyingGeometryChange = wasApplyingGeometryChange;
+      [self _resetFocusPoint];
     }
   }
 }
@@ -163,6 +256,8 @@
     UIView* oldDisplayView = [_displayView autorelease];
     _displayView = [view retain];
     _displaySize = view.frame.size;
+    [self _resetFocusPoint];
+    _hasPendingSizeChangeFocus = NO;
     if (animated) {
       [UIView transitionWithView:self duration:[[self class] defaultAnimationDuration] options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
         [oldDisplayView removeFromSuperview];
@@ -184,12 +279,15 @@
 }
 
 - (void) layoutSubviews {
+  BOOL wasApplyingGeometryChange = _isApplyingGeometryChange;
+  _isApplyingGeometryChange = YES;
   [super layoutSubviews];
   
   // Update layout if we have a display view
   if (_displayView) {
     CGSize boundsSize = self.bounds.size;
     if (boundsSize.width <= 0.0 || boundsSize.height <= 0.0 || _displaySize.width <= 0.0 || _displaySize.height <= 0.0) {
+      _isApplyingGeometryChange = wasApplyingGeometryChange;
       return;
     }
     
@@ -197,8 +295,7 @@
     if (!CGSizeEqualToSize(boundsSize, _oldSize)) {
       // Preserve the reader's magnification relative to a fitted page. This
       // keeps the same reading zoom as the window grows or shrinks.
-      CGFloat oldZoomScale = self.zoomScale;
-      CGFloat oldRelativeZoom = self.minimumZoomScale > 0.0 ? oldZoomScale / self.minimumZoomScale : 1.0;
+      CGFloat oldRelativeZoom = _relativeZoomScale > 0.0 ? _relativeZoomScale : 1.0;
       
       // Compute new min and max zoom
       CGFloat fitZoomScale = MIN(boundsSize.width / _displaySize.width, boundsSize.height / _displaySize.height);
@@ -278,15 +375,13 @@
       }
       if (_hasPendingSizeChangeFocus) {
         // Multiple geometry updates may return to _oldSize before a layout.
-        // UIKit may still have clamped the intermediate offset, so consume the
-        // snapshot captured before the first mutation even though sizes match.
+        // UIKit may still have clamped the intermediate offset, so restore the
+        // retained user focus even though the final size matches _oldSize.
         [self _restoreFocusPoint];
         _hasPendingSizeChangeFocus = NO;
       }
     }
 
-    // Save the current source-space focal point for a future bounds change.
-    [self _saveFocusPointForBoundsSize:boundsSize];
   }
   // Otherwise reset everything
   else {
@@ -296,6 +391,7 @@
     self.maximumZoomScale = 1.0;
     self.zoomScale = 1.0;
   }
+  _isApplyingGeometryChange = wasApplyingGeometryChange;
 }
 
 @end
@@ -304,6 +400,50 @@
 
 - (UIView*) viewForZoomingInScrollView:(UIScrollView*)scrollView {
   return _displayView;
+}
+
+- (void) scrollViewWillBeginZooming:(UIScrollView*)scrollView withView:(UIView*)view {
+  _zoomCaptureGeometryGeneration = _geometryGeneration;
+  _hasActiveZoomCapture = YES;
+}
+
+- (void) scrollViewDidScroll:(UIScrollView*)scrollView {
+  if (scrollView.dragging || scrollView.decelerating) {
+    [self _saveCurrentFocusPoint];
+  }
+}
+
+- (void) scrollViewDidEndDragging:(UIScrollView*)scrollView willDecelerate:(BOOL)decelerate {
+  if (!decelerate) {
+    [self _saveCurrentFocusPoint];
+  }
+}
+
+- (void) scrollViewDidEndDecelerating:(UIScrollView*)scrollView {
+  [self _saveCurrentFocusPoint];
+}
+
+- (void) scrollViewDidZoom:(UIScrollView*)scrollView {
+  UIGestureRecognizerState pinchState = scrollView.pinchGestureRecognizer.state;
+  BOOL userIsPinching = pinchState == UIGestureRecognizerStateBegan ||
+                        pinchState == UIGestureRecognizerStateChanged;
+  if (userIsPinching && _hasActiveZoomCapture &&
+      _zoomCaptureGeometryGeneration == _geometryGeneration) {
+    [self _saveRelativeZoomScale:scrollView.zoomScale];
+    [self _saveCurrentFocusPoint];
+  }
+}
+
+- (void) scrollViewDidEndZooming:(UIScrollView*)scrollView withView:(UIView*)view atScale:(CGFloat)scale {
+  if (_hasActiveZoomCapture && _zoomCaptureGeometryGeneration == _geometryGeneration) {
+    [self _saveRelativeZoomScale:scale];
+    [self _saveCurrentFocusPoint];
+  }
+  _hasActiveZoomCapture = NO;
+}
+
+- (void) scrollViewDidEndScrollingAnimation:(UIScrollView*)scrollView {
+  [self _saveCurrentFocusPoint];
 }
 
 @end

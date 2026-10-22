@@ -7,8 +7,23 @@
 
 @implementation ComicReaderUITests
 - (void)saveScreenshot:(NSString*)name ofApp:(XCUIApplication*)app {
-  (void)app;
-  XCTAttachment* attachment = [XCTAttachment attachmentWithScreenshot:XCUIScreen.mainScreen.screenshot];
+  // Duo's primary screen can be its inactive outer display. Match the active
+  // scene's aspect ratio so attachments retain the complete visible display.
+  CGSize windowSize = app.windows.firstMatch.frame.size;
+  CGFloat windowRatio = MIN(windowSize.width, windowSize.height) / MAX(windowSize.width, windowSize.height);
+  XCUIScreenshot* screenshot = XCUIScreen.mainScreen.screenshot;
+  CGFloat bestDifference = CGFLOAT_MAX;
+  for (XCUIScreen* screen in XCUIScreen.screens) {
+    XCUIScreenshot* candidate = screen.screenshot;
+    CGSize size = candidate.image.size;
+    CGFloat ratio = MIN(size.width, size.height) / MAX(size.width, size.height);
+    CGFloat difference = fabs(ratio - windowRatio);
+    if (difference < bestDifference) {
+      screenshot = candidate;
+      bestDifference = difference;
+    }
+  }
+  XCTAttachment* attachment = [XCTAttachment attachmentWithScreenshot:screenshot];
   attachment.name = name;
   attachment.lifetime = XCTAttachmentLifetimeKeepAlways;
   [self addAttachment:attachment];
@@ -16,7 +31,7 @@
 
 - (NSArray<NSString*>*)standardLaunchArguments {
   return @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0",
-           @"-plusIntroductionShown", @"YES", @"-releaseNews1_4Shown", @"YES"];
+           @"-plusIntroductionShown", @"YES", @"-releaseNews1_5Shown", @"YES"];
 }
 
 - (NSURL*)createPDFUIFixtureNamed:(NSString*)name {
@@ -531,7 +546,7 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_4Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
   [app launch];
   XCUIElement* plus = app.buttons[@"library.plus"];
   XCTAssertTrue([plus waitForExistenceWithTimeout:15]);
@@ -569,7 +584,7 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_4Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
   [app launch];
   XCTAssertTrue([app.buttons[@"library.settings"] waitForExistenceWithTimeout:15]);
   [app.buttons[@"By Name"] tap];
@@ -599,7 +614,7 @@
 - (void)testSettingsAndFilesPickerWithServerOff {
   self.continueAfterFailure = NO;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_4Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
   [app launch];
   XCUIElement* settings = app.buttons[@"library.settings"];
   XCTAssertTrue([settings waitForExistenceWithTimeout:15]);
@@ -632,10 +647,12 @@
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
   NSArray* normalArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-plusIntroductionShown", @"YES"];
-  app.launchArguments = [normalArguments arrayByAddingObjectsFromArray:@[@"-releaseNews1_4Shown", @"NO"]];
+  app.launchArguments = [normalArguments arrayByAddingObjectsFromArray:@[@"-releaseNews1_5Shown", @"NO"]];
   [app launch];
+  [self dismissLegacyRatingPromptIfPresentInApp:app];
   XCUIElement* close = app.buttons[@"news.dismiss"];
   XCTAssertTrue([close waitForExistenceWithTimeout:15]);
+  XCTAssertTrue(app.staticTexts[@"Open up your comics on iPhone Duo."].exists);
   XCTAssertTrue(app.buttons[@"news.icloud"].hittable);
   XCTAssertTrue(app.buttons[@"news.plus"].hittable);
   XCTAssertFalse(app.alerts[@"Introducing ComicReader Plus"].exists);
@@ -648,6 +665,7 @@
   [app terminate];
   app.launchArguments = normalArguments;
   [app launch];
+  [self dismissLegacyRatingPromptIfPresentInApp:app];
   XCTAssertTrue([app.buttons[@"library.icloud"] waitForExistenceWithTimeout:15]);
   XCTAssertFalse(close.exists);
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
@@ -657,8 +675,9 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_4Shown", @"NO"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"NO"];
   [app launch];
+  [self dismissLegacyRatingPromptIfPresentInApp:app];
   XCTAssertTrue([app.buttons[@"news.icloud"] waitForExistenceWithTimeout:15]);
   [app.buttons[@"news.icloud"] tap];
   XCUIElement* toggle = app.switches[@"Sync all comics with iCloud"];
@@ -748,7 +767,10 @@
     for (NSString* identifier in @[@"library.plus", @"library.icloud", @"library.settings"]) {
       XCUIElement* button = app.buttons[identifier];
       XCTAssertTrue([self waitForElementToBecomeHittable:button timeout:15], @"%@", identifier);
-      XCTAssertTrue(CGRectContainsRect(app.frame, button.frame), @"%@ must fit on screen", identifier);
+      // Duo can report a portrait application frame while its active scene is
+      // landscape. Element coordinates belong to the window, so validate there.
+      CGRect windowFrame = app.windows.firstMatch.frame;
+      XCTAssertTrue(CGRectContainsRect(windowFrame, button.frame), @"%@ must fit in window %@: %@", identifier, NSStringFromCGRect(windowFrame), NSStringFromCGRect(button.frame));
     }
     [self saveScreenshot:@"Adaptive library portrait" ofApp:app];
     [app.buttons[@"library.plus"] tap];
@@ -767,10 +789,12 @@
     XCUIElement* preview = app.images[@"plus.filterPreview.image"];
     XCTAssertEqualObjects(preview.label, @"Grayscale sample comic artwork");
     [self saveScreenshot:@"Free real filter preview" ofApp:app];
-    XCUIElement* previewBack = app.navigationBars[@"Preview Image Filters"].buttons[@"BackButton"];
-    XCTAssertTrue([self waitForElementToBecomeHittable:previewBack timeout:5]);
+    // Duo places navigation actions in a vertical system bar, outside the
+    // title's UINavigationBar accessibility container.
+    XCUIElement* previewBack = app.buttons[@"BackButton"];
+    XCTAssertTrue([self waitForElementToBecomeHittable:previewBack timeout:5], @"%@", app.debugDescription);
     [previewBack tap];
-    XCUIElement* plusDone = app.navigationBars[@"ComicReader Plus"].buttons[@"Done"];
+    XCUIElement* plusDone = app.buttons[@"Done"];
     XCTAssertTrue([self waitForElementToBecomeHittable:plusDone timeout:5]);
     [plusDone tap];
     XCUIDevice.sharedDevice.orientation = UIDeviceOrientationLandscapeLeft;
@@ -824,12 +848,13 @@
       XCUIDevice.sharedDevice.orientation = orientations[index].integerValue;
       XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
         [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
-      XCTAssertTrue(CGRectContainsRect(app.frame, canvas.frame));
+      CGRect windowFrame = app.windows.firstMatch.frame;
+      XCTAssertTrue(CGRectContainsRect(windowFrame, canvas.frame), @"Window %@, canvas %@", NSStringFromCGRect(windowFrame), NSStringFromCGRect(canvas.frame));
       XCTAssertGreaterThan(CGRectGetWidth(canvas.frame), 0.0);
       XCTAssertGreaterThan(CGRectGetHeight(canvas.frame), 0.0);
       for (NSString* identifier in @[@"reader.bookmarks.open", @"reader.filters.open", @"reader.text.open"]) {
         XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[identifier] timeout:10]);
-        XCTAssertTrue(CGRectContainsRect(app.frame, app.buttons[identifier].frame));
+        XCTAssertTrue(CGRectContainsRect(windowFrame, app.buttons[identifier].frame));
       }
       [[canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)] tap];
       XCTAssertTrue([app.buttons[@"reader.bookmarks.open"] waitForNonExistenceWithTimeout:10]);
@@ -862,7 +887,9 @@
     [[fixtureDirectory URLByAppendingPathComponent:@"capture-request"] path]],
     @"Use the screenshot helper to install fixtures and explicitly enable this capture journey.");
   self.continueAfterFailure = NO;
-  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  BOOL captureDuo = [[NSFileManager defaultManager] fileExistsAtPath:
+    [[fixtureDirectory URLByAppendingPathComponent:@"capture-family-duo"] path]];
+  XCUIDevice.sharedDevice.orientation = captureDuo ? UIDeviceOrientationLandscapeLeft : UIDeviceOrientationPortrait;
   NSMutableArray<NSString*>* sources = [@[
     @"little-nemo-01-bed-adrift.cbz", @"little-nemo-02-moving-island.cbz",
     @"little-nemo-03-claws-in-the-current.cbz", @"little-nemo-04-moons-mouth.cbz",
@@ -931,6 +958,11 @@
       [[app.segmentedControls[@"library.sort.segmented"].buttons elementBoundByIndex:1] tap];
     }
     XCUIElement* cover = [app descendantsMatchingType:XCUIElementTypeAny][[@"library.comic." stringByAppendingString:names[0]]];
+    // A reused screenshot library preserves its scroll position. Bring its
+    // first title into view through the normal grid rather than resetting data.
+    for (NSUInteger scroll = 0; scroll < 12 && !cover.hittable; scroll++) {
+      [app.scrollViews.firstMatch swipeDown];
+    }
     XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:45]);
     // Wait for the last asynchronous import by checking the complete library in
     // the real Add Comic picker, then return to the cover grid for the capture.
@@ -951,18 +983,25 @@
         [cell tap];
         XCTAssertTrue([app.navigationBars[listName] waitForExistenceWithTimeout:10]);
       }
-      [app.navigationBars[listName].buttons[@"Reading Lists"] tap];
+      XCUIElement* backButton = app.buttons[@"BackButton"];
+      if ([backButton waitForExistenceWithTimeout:2]) {
+        [backButton tap];
+      } else {
+        [app.navigationBars[listName].buttons[@"Reading Lists"] tap];
+      }
       XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForExistenceWithTimeout:10]);
     }
-    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    [app.buttons[@"Done"] tap];
     XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:15]);
     [self saveScreenshot:@"01-library" ofApp:app];
 
     [cover tap];
-    XCUICoordinate* center = [app coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)];
+    XCUIElement* readerCanvas = app.otherElements[@"reader.canvas"];
+    XCTAssertTrue([readerCanvas waitForExistenceWithTimeout:15]);
+    XCUICoordinate* center = [readerCanvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)];
     XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
     // Advance from the designed cover to a genuine complete 1905 comic page.
-    [[app coordinateWithNormalizedOffset:CGVectorMake(0.95, 0.5)] tap];
+    [[readerCanvas coordinateWithNormalizedOffset:CGVectorMake(0.9, 0.5)] tap];
     XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
     [self saveScreenshot:@"02-reader" ofApp:app];
     [app.buttons[@"reader.text.open"] tap];
@@ -976,20 +1015,30 @@
     if (indexButton.enabled) [indexButton tap];
     XCUIElement* query = app.searchFields[@"reader.text.query"];
     XCTAssertTrue([self waitForElementToBecomeEnabled:query timeout:120]);
-    [self replaceTextInElement:query withText:@"child"];
+    // Use a phrase present in the current runtime's genuine recognition of the
+    // approved scan; OCR of small, century-old lettering varies by OS version.
+    [self replaceTextInElement:query withText:@"watch"];
     [query typeText:@"\n"];
     XCUIElement* result = [app.cells matchingPredicate:[NSPredicate predicateWithFormat:@"identifier BEGINSWITH %@", @"reader.text.result."]].firstMatch;
-    XCTAssertTrue([self waitForElementToBecomeHittable:result timeout:30]);
+    XCTAssertTrue([self waitForElementToBecomeHittable:result timeout:30], @"%@", app.debugDescription);
     XCTAssertTrue([app.buttons[@"reader.text.index"] waitForExistenceWithTimeout:120]);
     [self saveScreenshot:@"03-search" ofApp:app];
     [app.buttons[@"reader.text.done"] tap];
+    XCTAssertTrue([modes waitForNonExistenceWithTimeout:10]);
     XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
     [app.buttons[@"Library"] tap];
+    // The library's toolbar is exposed during the dismissal animation, before
+    // its presentation guard permits another sheet. Wait for the reader to go.
+    XCTAssertTrue([readerCanvas waitForNonExistenceWithTimeout:10]);
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:10]);
 
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.readingLists"] timeout:10]);
     [app.buttons[@"library.readingLists"] tap];
     XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForExistenceWithTimeout:10]);
     [self saveScreenshot:@"04-lists" ofApp:app];
-    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    [app.buttons[@"Done"] tap];
+    XCTAssertTrue([app.navigationBars[@"Reading Lists"] waitForNonExistenceWithTimeout:10]);
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.icloud"] timeout:10]);
     [app.buttons[@"library.icloud"] tap];
     XCTAssertTrue([app.switches[@"Sync all comics with iCloud"] waitForExistenceWithTimeout:10]);
     [self saveScreenshot:@"05-icloud" ofApp:app];

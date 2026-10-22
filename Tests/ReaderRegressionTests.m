@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <QuartzCore/QuartzCore.h>
 
+#import "CRAdaptiveViewport.h"
 #import "ComicViewController.h"
 #import "DocumentView.h"
 #import "ImageDecompression.h"
@@ -89,6 +90,83 @@
                                                     UIEdgeInsetsMake(0.0, 80.0, 0.0, 50.0));
   XCTAssertEqual(CGRectGetMinX(constrainedBounds), 80.0);
   XCTAssertEqual(CGRectGetWidth(constrainedBounds), 0.0);
+}
+
+- (void) testAdaptiveViewportUsesAllSafeAreaWithoutActiveRegions {
+  CGRect viewport = CRAdaptiveViewportBounds(CGRectMake(20.0, 30.0, 800.0, 600.0),
+                                             UIEdgeInsetsMake(10.0, 30.0, 20.0, 40.0),
+                                             @[], @[], UIUserInterfaceLayoutDirectionLeftToRight);
+  XCTAssertTrue(CGRectEqualToRect(viewport, CGRectMake(50.0, 40.0, 730.0, 570.0)));
+}
+
+- (void) testAdaptiveViewportSelectsTopPaneAndAvoidsAnOcclusion {
+  CGRect bounds = CGRectMake(0.0, 0.0, 800.0, 1000.0);
+  UIEdgeInsets safeArea = UIEdgeInsetsMake(20.0, 10.0, 30.0, 10.0);
+  NSArray<NSValue*>* divisions = @[[NSValue valueWithCGRect:CGRectMake(0.0, 480.0, 800.0, 40.0)]];
+
+  CGRect topPane = CRAdaptiveViewportBounds(bounds, safeArea, divisions, @[],
+                                            UIUserInterfaceLayoutDirectionLeftToRight);
+  XCTAssertTrue(CGRectEqualToRect(topPane, CGRectMake(10.0, 20.0, 780.0, 460.0)));
+
+  // The region frame already contains UIKit's interaction margin. Keeping the
+  // page below it yields more usable area than placing it to either side.
+  NSArray<NSValue*>* occlusions = @[[NSValue valueWithCGRect:CGRectMake(300.0, 20.0, 200.0, 80.0)]];
+  CGRect clearTopPane = CRAdaptiveViewportBounds(bounds, safeArea, divisions, occlusions,
+                                                 UIUserInterfaceLayoutDirectionLeftToRight);
+  XCTAssertTrue(CGRectEqualToRect(clearTopPane, CGRectMake(10.0, 100.0, 780.0, 380.0)));
+}
+
+- (void) testAdaptiveViewportSelectsLeadingPaneForVerticalDivision {
+  NSArray<NSValue*>* divisions = @[[NSValue valueWithCGRect:CGRectMake(490.0, 0.0, 20.0, 600.0)]];
+  CGRect leftToRight = CRAdaptiveViewportBounds(CGRectMake(0.0, 0.0, 1000.0, 600.0),
+                                                UIEdgeInsetsZero, divisions, @[],
+                                                UIUserInterfaceLayoutDirectionLeftToRight);
+  CGRect rightToLeft = CRAdaptiveViewportBounds(CGRectMake(0.0, 0.0, 1000.0, 600.0),
+                                                UIEdgeInsetsZero, divisions, @[],
+                                                UIUserInterfaceLayoutDirectionRightToLeft);
+  XCTAssertTrue(CGRectEqualToRect(leftToRight, CGRectMake(0.0, 0.0, 490.0, 600.0)));
+  XCTAssertTrue(CGRectEqualToRect(rightToLeft, CGRectMake(510.0, 0.0, 490.0, 600.0)));
+}
+
+- (void) testAdaptiveViewportUsesLargestRectangleBesideAnOcclusion {
+  CGRect viewport = CRAdaptiveViewportBounds(CGRectMake(0.0, 0.0, 800.0, 600.0),
+                                             UIEdgeInsetsZero,
+                                             @[],
+                                             @[[NSValue valueWithCGRect:CGRectMake(0.0, 0.0, 120.0, 120.0)]],
+                                             UIUserInterfaceLayoutDirectionLeftToRight);
+  XCTAssertTrue(CGRectEqualToRect(viewport, CGRectMake(120.0, 0.0, 680.0, 600.0)));
+}
+
+- (void) testReaderCanvasClipsAdjacentPagesOutsideTheActivePane {
+  ComicViewController* controller = [[ComicViewController alloc] initWithNibName:@"ComicViewController" bundle:nil];
+  UIWindow* window = [[UIWindow alloc] initWithFrame:CGRectMake(0.0, 0.0, 320.0, 240.0)];
+  window.rootViewController = controller;
+  [controller loadViewIfNeeded];
+  // The test window stays hidden; UIKit attaches its root automatically only
+  // when presented. Attach explicitly without replacing the app's key window.
+  [window addSubview:controller.view];
+  [controller.view layoutIfNeeded];
+  XCTAssertEqual(controller.view.window, window);
+
+  // Model the reader's leading pane after a vertical Duo division. DocumentView
+  // keeps adjacent pages in one wide internal strip, so the second page really
+  // does extend into the reserved half of the hosted root view.
+  UIView* canvas = controller.contentView;
+  canvas.frame = CGRectMake(0.0, 0.0, 140.0, 240.0);
+  DocumentView* documentView = [controller valueForKey:@"documentView"];
+  documentView.delegate = nil;
+  documentView.frame = canvas.bounds;
+  UIView* currentPage = [[UIView alloc] init];
+  UIView* adjacentPage = [[UIView alloc] init];
+  [documentView setPageViews:@[currentPage, adjacentPage] initialPageIndex:0];
+  [documentView layoutIfNeeded];
+
+  CGRect adjacentPageInRoot = [adjacentPage convertRect:adjacentPage.bounds toView:controller.view];
+  XCTAssertEqualWithAccuracy(CGRectGetMinX(adjacentPageInRoot), CGRectGetMaxX(canvas.frame), 0.001);
+  XCTAssertGreaterThan(CGRectGetMaxX(adjacentPageInRoot), CGRectGetMaxX(canvas.frame));
+  XCTAssertTrue(CGRectContainsRect(controller.view.bounds, adjacentPageInRoot));
+  XCTAssertTrue(canvas.clipsToBounds,
+                @"The active reader pane must mask DocumentView's adjacent pages");
 }
 
 - (void) testComicReaderTapZonesUseTheVisibleScrolledViewport {
@@ -233,6 +311,166 @@
   XCTAssertLessThanOrEqual(zoomView.contentOffset.y, maximumY + 0.001);
 }
 
+- (void) testZoomViewRestoresUserFocusAfterSettledClampAndReopen {
+  CGSize openSize = CGSizeMake(710.0, 995.0);
+  CGSize closedSize = CGSizeMake(630.0, 445.0);
+  ZoomView* zoomView = [[ZoomView alloc] initWithFrame:(CGRect){CGPointZero, openSize}];
+  zoomView.displayMode = kZoomViewDisplayMode_Fit;
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 1000.0, 1600.0)];
+  [zoomView layoutIfNeeded];
+
+  zoomView.zoomScale = zoomView.minimumZoomScale * 2.0;
+  CGPoint requestedFocus = CGPointMake(680.0, 1120.0);
+  zoomView.contentOffset = CGPointMake(requestedFocus.x * zoomView.zoomScale - openSize.width / 2.0,
+                                       requestedFocus.y * zoomView.zoomScale - openSize.height / 2.0);
+  CGPoint selectedFocus = [self sourceFocusForZoomView:zoomView];
+  CGFloat relativeZoom = zoomView.zoomScale / zoomView.minimumZoomScale;
+
+  zoomView.frame = (CGRect){CGPointZero, closedSize};
+  [zoomView layoutIfNeeded];
+  CGPoint clampedFocus = [self sourceFocusForZoomView:zoomView];
+  XCTAssertGreaterThan(fabs(clampedFocus.x - selectedFocus.x), 100.0,
+                       @"The closed viewport must actually clamp the horizontal focus");
+
+  // Let the clamped geometry settle through another ordinary layout before
+  // reopening. That layout must not replace the user's source-space intent.
+  [zoomView setNeedsLayout];
+  [zoomView layoutIfNeeded];
+  zoomView.frame = (CGRect){CGPointZero, openSize};
+  [zoomView layoutIfNeeded];
+
+  CGPoint reopenedFocus = [self sourceFocusForZoomView:zoomView];
+  CGFloat displayScale = MAX(zoomView.traitCollection.displayScale, 1.0);
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale / zoomView.minimumZoomScale, relativeZoom, 0.001);
+  XCTAssertLessThanOrEqual(fabs(reopenedFocus.x - selectedFocus.x) * zoomView.zoomScale * displayScale, 1.001);
+  XCTAssertLessThanOrEqual(fabs(reopenedFocus.y - selectedFocus.y) * zoomView.zoomScale * displayScale, 1.001);
+}
+
+- (void) testZoomViewRestoresIdealZoomAfterTransientMaximumClamp {
+  CGSize openSize = CGSizeMake(710.0, 974.0);
+  CGSize foldedSize = CGSizeMake(445.0, 445.0);
+  ZoomView* zoomView = [[ZoomView alloc] initWithFrame:(CGRect){CGPointZero, openSize}];
+  zoomView.displayMode = kZoomViewDisplayMode_Fit;
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 700.0, 930.0)];
+  [zoomView layoutIfNeeded];
+
+  // Double-tap zoom requests the current maximum. The folded viewport has a
+  // lower maximum relative to its fitted scale, so it must clamp temporarily
+  // without replacing the user's requested magnification.
+  [zoomView zoomToRect:CGRectMake(349.0, 464.0, 2.0, 2.0) animated:NO];
+  CGFloat idealRelativeZoom = zoomView.zoomScale / zoomView.minimumZoomScale;
+  CGFloat openZoomScale = zoomView.zoomScale;
+
+  zoomView.frame = (CGRect){CGPointZero, foldedSize};
+  [zoomView layoutIfNeeded];
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale, zoomView.maximumZoomScale, 0.001);
+  XCTAssertLessThan(zoomView.zoomScale / zoomView.minimumZoomScale, idealRelativeZoom - 0.01);
+
+  // Exercise the settled-clamp path seen between the close and reopen events.
+  [zoomView setNeedsLayout];
+  [zoomView layoutIfNeeded];
+  zoomView.frame = (CGRect){CGPointZero, openSize};
+  [zoomView layoutIfNeeded];
+
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale / zoomView.minimumZoomScale, idealRelativeZoom, 0.001);
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale, openZoomScale, 0.001);
+}
+
+- (void) testLateZoomDelegateAfterFoldDoesNotReplaceDoubleTapIntent {
+  CGSize openSize = CGSizeMake(710.0, 974.0);
+  CGSize foldedSize = CGSizeMake(445.0, 445.0);
+  ZoomView* zoomView = [[ZoomView alloc] initWithFrame:(CGRect){CGPointZero, openSize}];
+  zoomView.displayMode = kZoomViewDisplayMode_Fit;
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 700.0, 930.0)];
+  [zoomView layoutIfNeeded];
+
+  [zoomView zoomToRect:CGRectMake(349.0, 464.0, 2.0, 2.0) animated:NO];
+  CGFloat idealRelativeZoom = zoomView.zoomScale / zoomView.minimumZoomScale;
+  CGFloat openZoomScale = zoomView.zoomScale;
+
+  // Model UIKit's zoom delegate epoch without depending on animation timing.
+  // A posture resize then clamps the actual scale before the old epoch ends.
+  id<UIScrollViewDelegate> delegate = (id<UIScrollViewDelegate>)zoomView;
+  [delegate scrollViewWillBeginZooming:zoomView withView:zoomView.displayView];
+  zoomView.frame = (CGRect){CGPointZero, foldedSize};
+  [zoomView layoutIfNeeded];
+  CGFloat foldedScale = zoomView.zoomScale;
+  XCTAssertLessThan(foldedScale / zoomView.minimumZoomScale, idealRelativeZoom - 0.01);
+
+  // This delayed callback belongs to the invalidated pre-fold epoch and must
+  // not promote the folded clamp to the user's new zoom intent.
+  [delegate scrollViewDidEndZooming:zoomView withView:zoomView.displayView atScale:foldedScale];
+  zoomView.frame = (CGRect){CGPointZero, openSize};
+  [zoomView layoutIfNeeded];
+
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale / zoomView.minimumZoomScale, idealRelativeZoom, 0.001);
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale, openZoomScale, 0.001);
+}
+
+- (void) testZoomViewUsesUserPanAfterSettledClampAsNewFocus {
+  CGSize openSize = CGSizeMake(710.0, 995.0);
+  CGSize closedSize = CGSizeMake(630.0, 445.0);
+  ZoomView* zoomView = [[ZoomView alloc] initWithFrame:(CGRect){CGPointZero, openSize}];
+  zoomView.displayMode = kZoomViewDisplayMode_Fit;
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 1000.0, 1600.0)];
+  [zoomView layoutIfNeeded];
+
+  zoomView.zoomScale = zoomView.minimumZoomScale * 2.0;
+  CGPoint originalFocus = CGPointMake(680.0, 1120.0);
+  zoomView.contentOffset = CGPointMake(originalFocus.x * zoomView.zoomScale - openSize.width / 2.0,
+                                       originalFocus.y * zoomView.zoomScale - openSize.height / 2.0);
+  zoomView.frame = (CGRect){CGPointZero, closedSize};
+  [zoomView layoutIfNeeded];
+
+  // UIScrollView performs a drag by moving its bounds and then notifying its
+  // delegate. Simulate that path directly so this exercises user-pan capture,
+  // rather than the public programmatic contentOffset setter used above.
+  CGFloat pannedSourceY = 650.0;
+  CGRect pannedBounds = zoomView.bounds;
+  pannedBounds.origin.y = pannedSourceY * zoomView.zoomScale - closedSize.height / 2.0;
+  zoomView.bounds = pannedBounds;
+  [(id<UIScrollViewDelegate>)zoomView scrollViewDidEndDragging:zoomView willDecelerate:NO];
+  CGPoint pannedFocus = [self sourceFocusForZoomView:zoomView];
+  CGFloat closedDisplayScale = MAX(zoomView.traitCollection.displayScale, 1.0);
+  XCTAssertLessThanOrEqual(fabs(pannedFocus.y - pannedSourceY) * zoomView.zoomScale * closedDisplayScale, 1.001);
+  XCTAssertGreaterThan(fabs(pannedFocus.x - originalFocus.x), 100.0,
+                       @"Panning after the clamp must supersede the earlier focus on both axes");
+
+  [zoomView setNeedsLayout];
+  [zoomView layoutIfNeeded];
+  zoomView.frame = (CGRect){CGPointZero, openSize};
+  [zoomView layoutIfNeeded];
+
+  CGPoint reopenedFocus = [self sourceFocusForZoomView:zoomView];
+  CGFloat displayScale = MAX(zoomView.traitCollection.displayScale, 1.0);
+  XCTAssertLessThanOrEqual(fabs(reopenedFocus.x - pannedFocus.x) * zoomView.zoomScale * displayScale, 1.001);
+  XCTAssertLessThanOrEqual(fabs(reopenedFocus.y - pannedFocus.y) * zoomView.zoomScale * displayScale, 1.001);
+}
+
+- (void) testZoomViewDoesNotRestoreFocusFromReplacedPage {
+  CGSize openSize = CGSizeMake(710.0, 995.0);
+  ZoomView* zoomView = [[ZoomView alloc] initWithFrame:(CGRect){CGPointZero, openSize}];
+  zoomView.displayMode = kZoomViewDisplayMode_Fit;
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 1000.0, 1600.0)];
+  [zoomView layoutIfNeeded];
+  zoomView.zoomScale = zoomView.minimumZoomScale * 2.0;
+  zoomView.contentOffset = CGPointMake(490.0, 895.0);
+
+  // Begin a geometry change, then replace the page before its pending layout.
+  // The replacement has a different source coordinate space and must start at
+  // its own center rather than consuming the old page's retained focus.
+  zoomView.frame = CGRectMake(0.0, 0.0, 630.0, 445.0);
+  zoomView.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 800.0, 1200.0)];
+  [zoomView layoutIfNeeded];
+  zoomView.frame = (CGRect){CGPointZero, openSize};
+  [zoomView layoutIfNeeded];
+
+  CGPoint focus = [self sourceFocusForZoomView:zoomView];
+  XCTAssertEqualWithAccuracy(zoomView.zoomScale, zoomView.minimumZoomScale, 0.001);
+  XCTAssertEqualWithAccuracy(focus.x, 400.0, 1.0);
+  XCTAssertEqualWithAccuracy(focus.y, 600.0, 1.0);
+}
+
 - (void) testZoomViewRestoresFocusAfterCoalescedExpandAndCollapse {
   ZoomView* zoomView = [[ZoomView alloc] initWithFrame:CGRectMake(0.0, 0.0, 300.0, 400.0)];
   zoomView.displayMode = kZoomViewDisplayMode_Fit;
@@ -282,6 +520,55 @@
   XCTAssertEqual(documentView.selectedPageIndex, (NSUInteger)1);
   XCTAssertEqual(documentView.selectedPageView, pages[1]);
   XCTAssertTrue(CGSizeEqualToSize(documentView.selectedPageView.bounds.size, CGSizeMake(700.0, 300.0)));
+}
+
+- (void) testFoldedViewportPreservesSelectedPageZoomAndFocus {
+  CGRect openViewport = CRAdaptiveViewportBounds(CGRectMake(0.0, 0.0, 800.0, 1000.0),
+                                                 UIEdgeInsetsMake(20.0, 10.0, 30.0, 10.0),
+                                                 @[], @[], UIUserInterfaceLayoutDirectionLeftToRight);
+  NSArray<NSValue*>* divisions = @[[NSValue valueWithCGRect:CGRectMake(0.0, 480.0, 800.0, 40.0)]];
+  CGRect foldedViewport = CRAdaptiveViewportBounds(CGRectMake(0.0, 0.0, 800.0, 1000.0),
+                                                   UIEdgeInsetsMake(20.0, 10.0, 30.0, 10.0),
+                                                   divisions, @[], UIUserInterfaceLayoutDirectionLeftToRight);
+
+  DocumentView* documentView = [[DocumentView alloc] initWithFrame:(CGRect){CGPointZero, openViewport.size}];
+  NSMutableArray<ZoomView*>* pages = [NSMutableArray array];
+  for (NSUInteger index = 0; index < 3; index += 1) {
+    ZoomView* page = [[ZoomView alloc] initWithFrame:documentView.bounds];
+    page.displayMode = kZoomViewDisplayMode_Fit;
+    page.displayView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, 1000.0, 1600.0)];
+    [pages addObject:page];
+  }
+  [documentView setPageViews:pages initialPageIndex:1];
+  [documentView layoutIfNeeded];
+
+  ZoomView* selectedPage = (ZoomView*)documentView.selectedPageView;
+  [selectedPage layoutIfNeeded];
+  selectedPage.zoomScale = selectedPage.minimumZoomScale * 2.0;
+  CGPoint requestedFocus = CGPointMake(500.0, 700.0);
+  selectedPage.contentOffset = CGPointMake(requestedFocus.x * selectedPage.zoomScale - CGRectGetWidth(selectedPage.bounds) / 2.0,
+                                           requestedFocus.y * selectedPage.zoomScale - CGRectGetHeight(selectedPage.bounds) / 2.0);
+  // UIScrollView can quantize the requested offset to the display's pixel grid
+  // immediately. Resize continuity starts from the focus the reader actually
+  // displays, rather than the fractional offset requested above.
+  CGPoint expectedFocus = [self sourceFocusForZoomView:selectedPage];
+  CGFloat relativeZoom = selectedPage.zoomScale / selectedPage.minimumZoomScale;
+
+  NSArray<NSValue*>* viewportValues = @[[NSValue valueWithCGRect:foldedViewport],
+                                        [NSValue valueWithCGRect:openViewport]];
+  for (NSValue* viewportValue in viewportValues) {
+    documentView.frame = (CGRect){CGPointZero, viewportValue.CGRectValue.size};
+    [documentView layoutIfNeeded];
+    [selectedPage layoutIfNeeded];
+
+    XCTAssertEqual(documentView.selectedPageIndex, (NSUInteger)1);
+    XCTAssertEqual(documentView.selectedPageView, selectedPage);
+    XCTAssertEqualWithAccuracy(selectedPage.zoomScale / selectedPage.minimumZoomScale, relativeZoom, 0.001);
+    CGPoint focus = [self sourceFocusForZoomView:selectedPage];
+    CGFloat displayScale = MAX(selectedPage.traitCollection.displayScale, 1.0);
+    XCTAssertLessThanOrEqual(fabs(focus.x - expectedFocus.x) * selectedPage.zoomScale * displayScale, 1.001);
+    XCTAssertLessThanOrEqual(fabs(focus.y - expectedFocus.y) * selectedPage.zoomScale * displayScale, 1.001);
+  }
 }
 
 - (void) testDocumentViewCancelsAStalePageAnimationWhenResized {

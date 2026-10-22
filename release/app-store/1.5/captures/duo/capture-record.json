@@ -1,0 +1,63 @@
+{
+  "family": "duo",
+  "device_id": "A0716C2E-4E8A-49C5-92AF-84F45F4829C6",
+  "version": "1.5",
+  "build": "13",
+  "result_bundle": "/Users/pablocpe/Documents/ComicReader Releases/duo-20261022/validation/duo-store-capture-complete.xcresult",
+  "test": "ComicReaderUITests/ComicReaderUITests/testCaptureAppStoreScreenshots",
+  "capture_method": "Unmodified XCUIScreen PNG attachments from the real application UI",
+  "entitlement": "Local StoreKitTest non-consumable purchase through the app purchase UI",
+  "fixtures": "Existing approved public-domain demo library in the app's Documents folder",
+  "reuse_fixture_library": true,
+  "production_purchase_or_cloud_verification": false,
+  "visual_review_required": false,
+  "screenshots": [
+    {
+      "file": "01-library.png",
+      "width": 2006,
+      "height": 2852,
+      "sha256": "41ddda5bb7e1e370e88272dc6bdbca2952e5dade1a1fce51e030b1f31a7aada4",
+      "device": "ComicReader Duo Validation 20261022",
+      "timestamp": 1792692113.357
+    },
+    {
+      "file": "02-reader.png",
+      "width": 2006,
+      "height": 2852,
+      "sha256": "d2f30fa3e80391d7b9a2feb99c70bce3823fc130eb2b051085998f723965bad7",
+      "device": "ComicReader Duo Validation 20261022",
+      "timestamp": 1792692122.721
+    },
+    {
+      "file": "03-search.png",
+      "width": 2006,
+      "height": 2852,
+      "sha256": "3fc0a8a12fcf8d4fcdbd070e7bdd7f36697998a94246524932d126991b0fc6f8",
+      "device": "ComicReader Duo Validation 20261022",
+      "timestamp": 1792692138.992
+    },
+    {
+      "file": "04-lists.png",
+      "width": 2006,
+      "height": 2852,
+      "sha256": "b24f1bc11422b99169cadbdc1f9d70ed91a955da0bca6adea8334fe667305dd7",
+      "device": "ComicReader Duo Validation 20261022",
+      "timestamp": 1792692152.609
+    },
+    {
+      "file": "05-icloud.png",
+      "width": 2006,
+      "height": 2852,
+      "sha256": "2e33876fe9a7c6a309d7746c38d5a7831dd865e6628d85f1677d4cf5c24c2048",
+      "device": "ComicReader Duo Validation 20261022",
+      "timestamp": 1792692158.374
+    }
+  ],
+  "visual_review": {
+    "reviewed_at": "2026-10-22T18:06:16.594630+00:00",
+    "raw": "All five genuine captures inspected as a contact sheet",
+    "composed": "All five composed outputs inspected individually at high resolution; no clipped typography or fabricated app UI",
+    "output": "Five opaque RGB PNG files, each 2853x2007",
+    "ocr": "Search uses watch from the genuine recognized cover text; recognition of century-old scan lettering remains incomplete"
+  }
+}

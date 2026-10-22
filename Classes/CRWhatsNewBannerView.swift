@@ -22,7 +22,7 @@ public final class CRWhatsNewBannerView: UIView {
         layer.cornerRadius = 16
         directionalLayoutMargins = .init(top: 12, leading: 16, bottom: 12, trailing: 12)
 
-        heading.text = "Your comics. iPhone, iPad and Mac."
+        heading.text = "Open up your comics on iPhone Duo."
         heading.font = .preferredFont(forTextStyle: .headline)
         heading.adjustsFontForContentSizeCategory = true
         heading.numberOfLines = 0
@@ -38,7 +38,7 @@ public final class CRWhatsNewBannerView: UIView {
         addSubview(titleRow)
 
         let message = UILabel()
-        message.text = "New in 1.4: take your library and reading progress between devices with free iCloud sync. Plus adds smart reading queues, comic search, saved quotes, bookmarks and filters. One purchase, no subscription."
+        message.text = "New in 1.5: open Duo for a larger comic view. Keep your page and zoom as the screen changes, with pages and controls clear of the fold. Duo support and iCloud sync across iPhone, iPad and Mac are free. Plus is still one purchase, no subscription."
         message.font = .preferredFont(forTextStyle: .subheadline)
         message.adjustsFontForContentSizeCategory = true
         message.textColor = .secondaryLabel

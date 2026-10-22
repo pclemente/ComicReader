@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D02715000000000000000003 /* CRAdaptiveViewport.m in Sources */ = {isa = PBXBuildFile; fileRef = D02715000000000000000002 /* CRAdaptiveViewport.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		07DBFC17D7C3CDAB72EAC294 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E5A886E2BB61406AE2B140E /* Foundation.framework */; };
 		1B236502154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364F9154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png */; };
 		1B236503154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364FA154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png */; };
@@ -199,6 +200,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D02715000000000000000001 /* CRAdaptiveViewport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/CRAdaptiveViewport.h; sourceTree = SOURCE_ROOT; };
+		D02715000000000000000002 /* CRAdaptiveViewport.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRAdaptiveViewport.m; sourceTree = SOURCE_ROOT; };
 		0E5A886E2BB61406AE2B140E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1B2364F9154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DocumentView-Shadow-Left@2x.png"; sourceTree = "<group>"; };
 		1B2364FA154FABBA00A13B0D /* DocumentView-Shadow-Right@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DocumentView-Shadow-Right@2x.png"; sourceTree = "<group>"; };
@@ -616,6 +619,8 @@
 				7D4AAD47664A4462DED86072 /* CRPlusStoreTests.swift */,
 				A7DEF12C164E4B5909138CFD /* CRLibrarySyncCoordinator.m */,
 				7E0F27AC3E0ACA43BD403D11 /* CRLibrarySyncCoordinator.h */,
+				D02715000000000000000001 /* CRAdaptiveViewport.h */,
+				D02715000000000000000002 /* CRAdaptiveViewport.m */,
 				CA8822000000000000000001 /* CRWhatsNewBannerView.swift */,
 				3752411CB7D49405CB870A08 /* CRReadingLists.h */,
 				ED3C12B388EF36C4FBF98806 /* CRReadingLists.m */,
@@ -1265,6 +1270,7 @@
 				22C61AD13860B7AFF8954757 /* CRPlusStore.swift in Sources */,
 				4DD82037605E47A104B5E211 /* CRCloudSyncModel.swift in Sources */,
 				5C7C2841B8AB018A9C98BD60 /* CRCloudSyncManager.swift in Sources */,
+				D02715000000000000000003 /* CRAdaptiveViewport.m in Sources */,
 				CA8822000000000000000002 /* CRWhatsNewBannerView.swift in Sources */,
 				515C29371B4F74DD55CE909D /* CRReadingLists.m in Sources */,
 				D8D523104D5F785F9ED675D4 /* CRReadingListsViewController.m in Sources */,
@@ -1447,7 +1453,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1460,7 +1466,7 @@
 				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5;
 				OTHER_LDFLAGS = "-Wl,-search_paths_first";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
 				PRODUCT_NAME = ComicFlow;
@@ -1485,7 +1491,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1498,7 +1504,7 @@
 				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.5;
 				OTHER_LDFLAGS = "-Wl,-search_paths_first";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
 				PRODUCT_NAME = ComicFlow;

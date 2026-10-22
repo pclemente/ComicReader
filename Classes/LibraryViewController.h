@@ -18,6 +18,8 @@
 #import "GridView.h"
 #import "Library.h"
 
+@class CRAdaptiveViewportView;
+
 @interface LibraryViewController : UIViewController <UINavigationBarDelegate, UIPopoverPresentationControllerDelegate, UIDocumentPickerDelegate, UIContextMenuInteractionDelegate> {
 @private
   GridView* _gridView;
@@ -71,6 +73,7 @@
   UIBarButtonItem* _cloudButtonItem;
   UIBarButtonItem* _readingListsButtonItem;
   UIToolbar* _compactToolbar;
+  CRAdaptiveViewportView* _adaptiveViewportView;
   BOOL _usingCompactLayout;
   BOOL _adaptiveLayoutConfigured;
   CGFloat _emptyStateLayoutWidth;
