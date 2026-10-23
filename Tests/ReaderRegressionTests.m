@@ -305,10 +305,13 @@
   CGFloat minimumY = -zoomView.contentInset.top;
   CGFloat maximumX = MAX(minimumX, zoomView.contentSize.width - CGRectGetWidth(zoomView.bounds) + zoomView.contentInset.right);
   CGFloat maximumY = MAX(minimumY, zoomView.contentSize.height - CGRectGetHeight(zoomView.bounds) + zoomView.contentInset.bottom);
-  XCTAssertGreaterThanOrEqual(zoomView.contentOffset.x, minimumX - 0.001);
-  XCTAssertLessThanOrEqual(zoomView.contentOffset.x, maximumX + 0.001);
-  XCTAssertGreaterThanOrEqual(zoomView.contentOffset.y, minimumY - 0.001);
-  XCTAssertLessThanOrEqual(zoomView.contentOffset.y, maximumY + 0.001);
+  // UIScrollView rounds the clamped offset to display pixels, including on
+  // Mac Catalyst. Allow one physical pixel at a fractional content edge.
+  CGFloat offsetTolerance = 1.001 / MAX(zoomView.traitCollection.displayScale, 1.0);
+  XCTAssertGreaterThanOrEqual(zoomView.contentOffset.x, minimumX - offsetTolerance);
+  XCTAssertLessThanOrEqual(zoomView.contentOffset.x, maximumX + offsetTolerance);
+  XCTAssertGreaterThanOrEqual(zoomView.contentOffset.y, minimumY - offsetTolerance);
+  XCTAssertLessThanOrEqual(zoomView.contentOffset.y, maximumY + offsetTolerance);
 }
 
 - (void) testZoomViewRestoresUserFocusAfterSettledClampAndReopen {

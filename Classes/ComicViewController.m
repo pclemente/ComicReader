@@ -23,6 +23,7 @@
 
 #import "Defaults.h"
 #import "CRAdaptiveViewport.h"
+#import "CRComicPageSource.h"
 #import "CRLibrarySyncCoordinator.h"
 #import "ComicFlow-Swift.h"
 
@@ -35,6 +36,25 @@
 
 CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   return CRAdaptiveSafeBounds(bounds, safeAreaInsets);
+}
+
+NSString* CRDirectOpenTemporaryRootPath(void) {
+  return [NSTemporaryDirectory() stringByAppendingPathComponent:@"ComicReaderDirectOpen"];
+}
+
+void CRRemoveDirectOpenTemporaryFileAtURL(NSURL* url) {
+  if (!url.isFileURL) return;
+  NSString* root = [CRDirectOpenTemporaryRootPath() stringByStandardizingPath];
+  NSString* directory = [[url.path stringByDeletingLastPathComponent] stringByStandardizingPath];
+  // Every direct-open selection gets its own UUID directory. Restrict cleanup
+  // to one of those immediate children so an ownership bug cannot remove a
+  // user-selected source or the temporary directory itself.
+  if (![[directory stringByDeletingLastPathComponent] isEqualToString:root]) return;
+  NSError* error = nil;
+  if (![[NSFileManager defaultManager] removeItemAtPath:directory error:&error] &&
+      error.code != NSFileNoSuchFileError) {
+    XLOG_ERROR(@"Unable to remove direct-open temporary directory at \"%@\": %@", directory, error);
+  }
 }
 
 @interface ComicDocumentView : DocumentView
@@ -122,11 +142,26 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
 - (void)_refreshSelectedPageScaleIfNeeded;
 - (void)_previousPageCommand:(UIKeyCommand*)command;
 - (void)_nextPageCommand:(UIKeyCommand*)command;
+- (void)_openComicFilesCommand:(UIKeyCommand*)command;
+#if TARGET_OS_MACCATALYST
+- (void)open:(id)sender;
+#endif
+- (BOOL)_loadComicContentsAtPath:(NSString*)path;
+- (void)_logComicReadEvent;
+- (void)_addExternalComicToLibrary:(id)sender;
+- (BOOL)_reviewPromptNotificationMatchesCurrentScene:(NSNotification*)notification;
+- (void)_reviewPromptSceneWillDeactivate:(NSNotification*)notification;
+- (void)_reviewPromptSceneDidActivate:(NSNotification*)notification;
 @end
 
 @implementation ComicViewController
 
 @synthesize navigationBar=_navigationBar, navigationControl=_navigationControl, contentView=_contentView;
+
++ (BOOL)isSupportedComicFileURL:(NSURL*)url {
+  if (!url.isFileURL || [url.lastPathComponent hasPrefix:@"."]) return NO;
+  return [@[@"pdf", @"cbz", @"zip", @"cbr", @"rar"] containsObject:url.pathExtension.lowercaseString];
+}
 
 - (BOOL) prefersStatusBarHidden {
   return YES;
@@ -150,6 +185,32 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   return @[previous, next];
 }
 
+#if TARGET_OS_MACCATALYST
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+  if (action == @selector(open:)) {
+    return _externalComicDelegate != nil && self.presentedViewController == nil &&
+      !self.isBeingPresented && !self.isBeingDismissed;
+  }
+  return [super canPerformAction:action withSender:sender];
+}
+
+- (void)validateCommand:(UICommand*)command {
+  [super validateCommand:command];
+  if (command.action == @selector(open:)) {
+    command.title = @"Open Comic…";
+    if ([self canPerformAction:command.action withSender:command]) {
+      command.attributes &= ~UIMenuElementAttributesDisabled;
+    } else {
+      command.attributes |= UIMenuElementAttributesDisabled;
+    }
+  }
+}
+
+- (void)open:(id)sender {
+  [self _openComicFilesCommand:nil];
+}
+#endif
+
 - (void) _previousPageCommand:(UIKeyCommand*)command {
   if (_readerReady && !self.presentedViewController) {
     [_documentView goToPreviousPage:NO];
@@ -162,7 +223,17 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   }
 }
 
+- (void)_openComicFilesCommand:(UIKeyCommand*)command {
+  if (!self.presentedViewController && _externalComicDelegate) {
+    [_externalComicDelegate comicViewControllerDidRequestOpenComicFiles:self];
+  }
+}
+
 - (id) initWithComic:(Comic*)comic {
+  return [self initWithComic:comic delegate:nil];
+}
+
+- (id)initWithComic:(Comic*)comic delegate:(id<CRExternalComicReaderDelegate>)delegate {
   [CATransaction begin];
   [[AppDelegate sharedInstance] showSpinnerWithMessage:NSLocalizedString(@"SPINNER_MESSAGE", nil) fullScreen:NO animated:YES];
   [CATransaction flush];
@@ -170,44 +241,113 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   
   XLOG_DEBUG_CHECK(comic.sqlRowID);
   if ((self = [super init])) {
+    _externalComicDelegate = delegate;
     _comic = [comic retain];
     _path = [[[LibraryConnection mainConnection] pathForComic:_comic] copy];
-    
-    if ([[NSFileManager defaultManager] fileExistsAtPath:_path]) {
-      NSString* extension = [_path pathExtension];
-      if (![extension caseInsensitiveCompare:@"pdf"]) {
-        _type = kComicType_PDF;
-        CGPDFDocumentRef document = CGPDFDocumentCreateWithURL((CFURLRef)[NSURL fileURLWithPath:_path]);
-        if (document) {
-          _contents = [[NSNumber alloc] initWithInteger:CGPDFDocumentGetNumberOfPages(document)];
-          CGPDFDocumentRelease(document);
-        }
-      } else if (![extension caseInsensitiveCompare:@"zip"] || ![extension caseInsensitiveCompare:@"cbz"] || ![extension caseInsensitiveCompare:@"rar"] || ![extension caseInsensitiveCompare:@"cbr"]) {
-        _type = kComicType_ZIP;
-        _contents = [[MiniZip alloc] initWithArchiveAtPath:_path];
-        if (_contents == nil) {
-          _type = kComicType_RAR;
-          _contents = [[UnRAR alloc] initWithArchiveAtPath:_path];
-        }
-      }
-    }
-    if (!_contents) {
+    if (![self _loadComicContentsAtPath:_path]) {
       XLOG_ERROR(@"Failed loading comic at \"%@\"", _path);
       [self release];
       return nil;
     }
-    
-    // wantsFullScreenLayout was removed in iOS 7; fullscreen is controlled via modalPresentationStyle instead
-    
-    NSString* type = @"";
-    switch (_type) {
-      case kComicType_PDF: type = @"PDF"; break;
-      case kComicType_ZIP: type = @"ZIP"; break;
-      case kComicType_RAR: type = @"RAR"; break;
-    }
-    [[AppDelegate sharedDelegate] logEvent:@"comic.read" withParameterName:@"type" value:type];
+    [self _logComicReadEvent];
   }
   return self;
+}
+
+- (id)initWithExternalFileURL:(NSURL*)url delegate:(id<CRExternalComicReaderDelegate>)delegate {
+  return [self initWithExternalFileURL:url delegate:delegate deletesFileOnDealloc:NO];
+}
+
+- (id)initWithExternalFileURL:(NSURL*)url
+                     delegate:(id<CRExternalComicReaderDelegate>)delegate
+         deletesFileOnDealloc:(BOOL)deletesFileOnDealloc {
+  if (![[self class] isSupportedComicFileURL:url]) {
+    if (deletesFileOnDealloc) CRRemoveDirectOpenTemporaryFileAtURL(url);
+    [self release];
+    return nil;
+  }
+
+  [CATransaction begin];
+  [[AppDelegate sharedInstance] showSpinnerWithMessage:NSLocalizedString(@"SPINNER_MESSAGE", nil) fullScreen:NO animated:YES];
+  [CATransaction flush];
+  [CATransaction commit];
+
+  if ((self = [super init])) {
+    _externalFileURL = [url copy];
+    _externalComicDelegate = delegate;
+    _deletesExternalFileOnDealloc = deletesFileOnDealloc;
+    _securityScopedAccessStarted = [_externalFileURL startAccessingSecurityScopedResource];
+
+    __block BOOL valid = NO;
+    __block NSError* validationError = nil;
+    NSError* coordinationError = nil;
+    NSFileCoordinator* coordinator = [[[NSFileCoordinator alloc] initWithFilePresenter:nil] autorelease];
+    [coordinator coordinateReadingItemAtURL:_externalFileURL
+                                    options:NSFileCoordinatorReadingWithoutChanges
+                                      error:&coordinationError
+                                 byAccessor:^(NSURL* readableURL) {
+      NSNumber* regularFile = nil;
+      CRComicPageSource* source = nil;
+      if ([readableURL getResourceValue:&regularFile
+                                 forKey:NSURLIsRegularFileKey
+                                  error:&validationError] && regularFile.boolValue) {
+        source = [[CRComicPageSource alloc] initWithPath:readableURL.path error:&validationError];
+      }
+      self->_path = [readableURL.path copy];
+      valid = source.pageCount > 0 && [self _loadComicContentsAtPath:self->_path];
+      [source release];
+    }];
+    if (!valid) {
+      XLOG_ERROR(@"Failed loading external comic at \"%@\": %@", _externalFileURL.path,
+                 coordinationError ?: validationError);
+      [self release];
+      return nil;
+    }
+    [self _logComicReadEvent];
+  } else if (deletesFileOnDealloc) {
+    CRRemoveDirectOpenTemporaryFileAtURL(url);
+  }
+  return self;
+}
+
+- (BOOL)_loadComicContentsAtPath:(NSString*)path {
+  if (![[NSFileManager defaultManager] fileExistsAtPath:path]) return NO;
+  NSString* extension = path.pathExtension;
+  if (![extension caseInsensitiveCompare:@"pdf"]) {
+    _type = kComicType_PDF;
+    CGPDFDocumentRef document = CGPDFDocumentCreateWithURL((CFURLRef)[NSURL fileURLWithPath:path]);
+    if (document) {
+      _contents = [[NSNumber alloc] initWithInteger:CGPDFDocumentGetNumberOfPages(document)];
+      CGPDFDocumentRelease(document);
+    }
+  } else if (![extension caseInsensitiveCompare:@"zip"] || ![extension caseInsensitiveCompare:@"cbz"] ||
+             ![extension caseInsensitiveCompare:@"rar"] || ![extension caseInsensitiveCompare:@"cbr"]) {
+    _type = kComicType_ZIP;
+    _contents = [[MiniZip alloc] initWithArchiveAtPath:path];
+    if (_contents == nil) {
+      _type = kComicType_RAR;
+      _contents = [[UnRAR alloc] initWithArchiveAtPath:path];
+    }
+  }
+  return _contents != nil;
+}
+
+- (void)_logComicReadEvent {
+  NSString* type = @"";
+  switch (_type) {
+    case kComicType_PDF: type = @"PDF"; break;
+    case kComicType_ZIP: type = @"ZIP"; break;
+    case kComicType_RAR: type = @"RAR"; break;
+  }
+  [[AppDelegate sharedDelegate] logEvent:@"comic.read" withParameterName:@"type" value:type];
+}
+
+- (NSURL*)externalFileURL {
+  return _externalFileURL;
+}
+
+- (BOOL)isExternalComic {
+  return _externalFileURL != nil;
 }
 
 - (void) dealloc {
@@ -224,12 +364,20 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   [_bookmarksButtonItem release];
   [_filtersButtonItem release];
   [_textButtonItem release];
+  [_addToLibraryButtonItem release];
   [_toolsToolbar release];
   _adaptiveViewportView.adaptiveViewportDelegate = nil;
   [_adaptiveViewportView release];
   [_contents release];
   [_path release];
   [_comic release];
+  if (_securityScopedAccessStarted) {
+    [_externalFileURL stopAccessingSecurityScopedResource];
+  }
+  if (_deletesExternalFileOnDealloc) {
+    CRRemoveDirectOpenTemporaryFileAtURL(_externalFileURL);
+  }
+  [_externalFileURL release];
   
   [[AppDelegate sharedInstance] hideSpinner:NO];  // Just in case
   
@@ -237,7 +385,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
 }
 
 - (void) saveState {
-  if (!_readerReady || _documentView.pageViews.count == 0) {
+  if (!_comic || !_readerReady || _documentView.pageViews.count == 0) {
     return;
   }
   NSInteger status = (_documentView.selectedPageIndex < _documentView.pageViews.count - 1 ? _documentView.selectedPageIndex : 0);
@@ -317,6 +465,20 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
 
 - (void) viewDidLoad {
   [super viewDidLoad];
+
+  NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+  [notificationCenter addObserver:self
+                         selector:@selector(_reviewPromptSceneWillDeactivate:)
+                             name:UISceneWillDeactivateNotification
+                           object:nil];
+  [notificationCenter addObserver:self
+                         selector:@selector(_reviewPromptSceneWillDeactivate:)
+                             name:UISceneDidDisconnectNotification
+                           object:nil];
+  [notificationCenter addObserver:self
+                         selector:@selector(_reviewPromptSceneDidActivate:)
+                             name:UISceneDidActivateNotification
+                           object:nil];
   
   self.view.clipsToBounds = YES;  // Required on iOS 7
 
@@ -345,6 +507,14 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
                                                     action:@selector(_showComicText:)];
   _textButtonItem.accessibilityLabel = @"Comic text and search";
   _textButtonItem.accessibilityIdentifier = @"reader.text.open";
+  if (_externalFileURL) {
+    _addToLibraryButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Add to Library"
+                                                               style:UIBarButtonItemStylePlain
+                                                              target:self
+                                                              action:@selector(_addExternalComicToLibrary:)];
+    _addToLibraryButtonItem.accessibilityIdentifier = @"reader.external.addToLibrary";
+    _addToLibraryButtonItem.accessibilityLabel = @"Add to Library";
+  }
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(readerImageFiltersDidChange) name:[CRPlusStore entitlementDidChangeNotification] object:[CRPlusStore sharedStore]];
   [_navigationBar pushNavigationItem:item animated:NO];
   [item release];
@@ -418,7 +588,7 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   UINavigationItem* readerItem = _navigationBar.topItem;
   previousItem.backButtonDisplayMode = narrow ? UINavigationItemBackButtonDisplayModeMinimal : UINavigationItemBackButtonDisplayModeDefault;
   if (usesToolbar) {
-    readerItem.rightBarButtonItems = nil;
+    readerItem.rightBarButtonItems = _addToLibraryButtonItem ? @[_addToLibraryButtonItem] : nil;
     UIBarButtonItem* flexible1 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                                  target:nil action:nil] autorelease];
     UIBarButtonItem* flexible2 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
@@ -431,7 +601,9 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
                             flexible3, _textButtonItem, flexible4];
   } else {
     _toolsToolbar.items = nil;
-    readerItem.rightBarButtonItems = @[_bookmarksButtonItem, _filtersButtonItem, _textButtonItem];
+    readerItem.rightBarButtonItems = _addToLibraryButtonItem
+      ? @[_addToLibraryButtonItem, _bookmarksButtonItem, _filtersButtonItem, _textButtonItem]
+      : @[_bookmarksButtonItem, _filtersButtonItem, _textButtonItem];
   }
   _toolsToolbar.hidden = !usesToolbar || _navigationBar.hidden;
 }
@@ -556,8 +728,11 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
       }
     }
   }
-  [[CRLibrarySyncCoordinator sharedCoordinator] beginReadingComic:_comic];
-  NSInteger initialPage = [[CRLibrarySyncCoordinator sharedCoordinator] initialPageForComic:_comic pageCount:array.count];
+  NSInteger initialPage = 0;
+  if (_comic) {
+    [[CRLibrarySyncCoordinator sharedCoordinator] beginReadingComic:_comic];
+    initialPage = [[CRLibrarySyncCoordinator sharedCoordinator] initialPageForComic:_comic pageCount:array.count];
+  }
   [_documentView setPageViews:array initialPageIndex:initialPage];
   _readerReady = YES;
   _navigationControl.numberOfPages = array.count;
@@ -573,6 +748,12 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   [super viewDidAppear:animated];
   
   [[AppDelegate sharedInstance] hideSpinner:YES];
+  if (_readerReady && _documentView.pageViews.count > 0) {
+    [[CRReviewPrompt sharedPrompt] beginReading];
+    if (self.view.window.windowScene.activationState != UISceneActivationStateForegroundActive) {
+      [[CRReviewPrompt sharedPrompt] pauseReading];
+    }
+  }
   [self becomeFirstResponder];
 }
 
@@ -591,9 +772,43 @@ CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets) {
   }
   
   _preservingReaderForToolsSheet = NO;
+  [[CRReviewPrompt sharedPrompt] endReading];
   _readerReady = NO;
-  [[CRLibrarySyncCoordinator sharedCoordinator] endReadingComic:_comic];
+  if (_comic) {
+    [[CRLibrarySyncCoordinator sharedCoordinator] endReadingComic:_comic];
+  }
   _documentView.pageViews = nil;
+}
+
+- (void)_addExternalComicToLibrary:(id)sender {
+  if (!_externalFileURL || !_externalComicDelegate || !_readerReady || !_addToLibraryButtonItem.enabled) return;
+  _addToLibraryButtonItem.enabled = NO;
+  _addToLibraryButtonItem.title = @"Adding…";
+  [_externalComicDelegate comicViewController:self
+                didRequestAddExternalComicAtURL:_externalFileURL
+                               currentPageIndex:_documentView.selectedPageIndex
+                                      pageCount:_documentView.pageViews.count];
+}
+
+- (void)externalComicImportDidFail {
+  _addToLibraryButtonItem.enabled = YES;
+  _addToLibraryButtonItem.title = @"Add to Library";
+}
+
+- (BOOL) _reviewPromptNotificationMatchesCurrentScene:(NSNotification*)notification {
+  UIWindowScene* scene = self.view.window.windowScene;
+  return scene && notification.object == scene;
+}
+
+- (void) _reviewPromptSceneWillDeactivate:(NSNotification*)notification {
+  if (![self _reviewPromptNotificationMatchesCurrentScene:notification]) return;
+  [[CRReviewPrompt sharedPrompt] pauseReading];
+}
+
+- (void) _reviewPromptSceneDidActivate:(NSNotification*)notification {
+  if (![self _reviewPromptNotificationMatchesCurrentScene:notification] ||
+      !_readerReady || self.isBeingDismissed || !self.view.window) return;
+  [[CRReviewPrompt sharedPrompt] resumeReading];
 }
 
 - (void) documentViewDidChangePage:(DocumentView*)documentView {

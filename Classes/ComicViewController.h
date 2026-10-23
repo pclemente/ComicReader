@@ -18,6 +18,15 @@
 #import "Library.h"
 
 @class CRAdaptiveViewportView;
+@class ComicViewController;
+
+@protocol CRExternalComicReaderDelegate <NSObject>
+- (void)comicViewController:(ComicViewController*)controller
+    didRequestAddExternalComicAtURL:(NSURL*)url
+                   currentPageIndex:(NSInteger)currentPageIndex
+                          pageCount:(NSInteger)pageCount;
+- (void)comicViewControllerDidRequestOpenComicFiles:(ComicViewController*)controller;
+@end
 
 typedef enum {
   kComicType_PDF,
@@ -27,6 +36,8 @@ typedef enum {
 
 // Returns the usable reader rectangle while preserving asymmetric safe-area insets.
 FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeAreaInsets);
+FOUNDATION_EXPORT NSString* CRDirectOpenTemporaryRootPath(void);
+FOUNDATION_EXPORT void CRRemoveDirectOpenTemporaryFileAtURL(NSURL* url);
 
 @interface ComicViewController : UIViewController <UINavigationBarDelegate, DocumentViewDelegate, NavigationControlDelegate> {
 @private
@@ -36,6 +47,10 @@ FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeA
   
   Comic* _comic;
   NSString* _path;
+  NSURL* _externalFileURL;
+  BOOL _securityScopedAccessStarted;
+  BOOL _deletesExternalFileOnDealloc;
+  id<CRExternalComicReaderDelegate> _externalComicDelegate;
   ComicType _type;
   id _contents;
   DocumentView* _documentView;
@@ -45,6 +60,7 @@ FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeA
   UIBarButtonItem* _bookmarksButtonItem;
   UIBarButtonItem* _filtersButtonItem;
   UIBarButtonItem* _textButtonItem;
+  UIBarButtonItem* _addToLibraryButtonItem;
   UIToolbar* _toolsToolbar;
   CRAdaptiveViewportView* _adaptiveViewportView;
   BOOL _usingNarrowLayout;
@@ -57,6 +73,15 @@ FOUNDATION_EXPORT CGRect CRReaderContentBounds(CGRect bounds, UIEdgeInsets safeA
 @property(nonatomic, retain) IBOutlet NavigationControl* navigationControl;
 @property(nonatomic, retain) IBOutlet UIView* contentView;
 - (id) initWithComic:(Comic*)comic;
+- (id)initWithComic:(Comic*)comic delegate:(id<CRExternalComicReaderDelegate>)delegate;
++ (BOOL)isSupportedComicFileURL:(NSURL*)url;
+- (id)initWithExternalFileURL:(NSURL*)url delegate:(id<CRExternalComicReaderDelegate>)delegate;
+- (id)initWithExternalFileURL:(NSURL*)url
+                     delegate:(id<CRExternalComicReaderDelegate>)delegate
+         deletesFileOnDealloc:(BOOL)deletesFileOnDealloc;
+@property(nonatomic, readonly, copy) NSURL* externalFileURL;
+@property(nonatomic, readonly, getter=isExternalComic) BOOL externalComic;
+- (void)externalComicImportDidFail;
 - (IBAction) selectPage:(id)sender;
 - (void) saveState;
 @end

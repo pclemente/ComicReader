@@ -32,6 +32,86 @@
 
 @class ThumbnailView;
 
+static NSString* CRResolvedComicPath(NSURL* url) {
+  return [[url.path stringByResolvingSymlinksInPath] stringByStandardizingPath];
+}
+
+static BOOL CRIsIndexedLibraryComicPath(NSString* path) {
+  NSString* root = [[[LibraryConnection libraryRootPath] stringByResolvingSymlinksInPath] stringByStandardizingPath];
+  NSString* prefix = [root stringByAppendingString:@"/"];
+  if (![path hasPrefix:prefix]) return NO;
+  NSArray<NSString*>* components = [[path substringFromIndex:prefix.length] pathComponents];
+  if (components.count < 1 || components.count > 2 ||
+      [components.firstObject isEqualToString:@"Inbox"]) return NO;
+  for (NSString* component in components) {
+    if ([component hasPrefix:@"."]) return NO;
+  }
+  return YES;
+}
+
+static BOOL CRPathIsInsideDirectory(NSString* path, NSString* directory) {
+  NSString* standardizedPath = [path.stringByStandardizingPath stringByResolvingSymlinksInPath];
+  NSString* standardizedDirectory = [directory.stringByStandardizingPath stringByResolvingSymlinksInPath];
+  if (!standardizedPath || !standardizedDirectory) return NO;
+  return [standardizedPath isEqualToString:standardizedDirectory] ||
+    [standardizedPath hasPrefix:[standardizedDirectory stringByAppendingString:@"/"]];
+}
+
+static BOOL CRIsPickerOwnedCopyURL(NSURL* url) {
+  if (!url.isFileURL) return NO;
+  NSString* inbox = [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:@"Inbox"];
+  return CRPathIsInsideDirectory(url.path, NSTemporaryDirectory()) ||
+    CRPathIsInsideDirectory(url.path, inbox);
+}
+
+static NSURL* CRStageDirectOpenPickerCopy(NSURL* sourceURL, NSError** error) {
+  if (![ComicViewController isSupportedComicFileURL:sourceURL]) return nil;
+  NSString* root = CRDirectOpenTemporaryRootPath();
+  NSString* directory = [root stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
+  NSString* destinationPath = [directory stringByAppendingPathComponent:sourceURL.lastPathComponent];
+  if (CRPathIsInsideDirectory(destinationPath, [LibraryConnection libraryRootPath])) return nil;
+
+  NSFileManager* manager = [NSFileManager defaultManager];
+  if (![manager createDirectoryAtPath:directory
+          withIntermediateDirectories:YES
+                           attributes:nil
+                                error:error]) return nil;
+
+  NSURL* destinationURL = [NSURL fileURLWithPath:destinationPath];
+  BOOL scoped = [sourceURL startAccessingSecurityScopedResource];
+  NSNumber* regularFile = nil;
+  BOOL readable = [sourceURL getResourceValue:&regularFile
+                                       forKey:NSURLIsRegularFileKey
+                                        error:error] && regularFile.boolValue;
+  BOOL success = NO;
+  if (readable && CRIsPickerOwnedCopyURL(sourceURL)) {
+    success = [manager moveItemAtURL:sourceURL toURL:destinationURL error:error];
+    if (!success) {
+      // A provider can put its copy on a different volume. Copy it across and
+      // remove only paths known to be picker-owned container locations.
+      success = [manager copyItemAtURL:sourceURL toURL:destinationURL error:error];
+      if (success) [manager removeItemAtURL:sourceURL error:NULL];
+    }
+  } else if (readable) {
+    // Be conservative for unexpected provider URLs: preserve the possible
+    // original and create our own short-lived reader copy.
+    success = [manager copyItemAtURL:sourceURL toURL:destinationURL error:error];
+  }
+  if (scoped) [sourceURL stopAccessingSecurityScopedResource];
+  if (!success) {
+    [manager removeItemAtPath:directory error:NULL];
+    return nil;
+  }
+  return destinationURL;
+}
+
+@interface CRComicDocumentPickerViewController : UIDocumentPickerViewController
+@property(nonatomic) BOOL opensComicsDirectly;
+@end
+
+@implementation CRComicDocumentPickerViewController
+@end
+
 @interface LibraryViewController () <CRWhatsNewBannerDelegate, CRAdaptiveViewportViewDelegate>
 @property(nonatomic, retain) id adaptiveGridScrollAnchor;
 @property(nonatomic, retain) CRAdaptiveViewportView* adaptiveViewportView;
@@ -48,7 +128,16 @@
 - (CGRect)_libraryViewportBounds;
 - (void)_updateCompactSortMenu;
 - (void)_openComicFilesCommand:(UIKeyCommand*)command;
+#if TARGET_OS_MACCATALYST
+- (void)open:(id)sender;
+#endif
 - (void)_refreshLibraryCommand:(UIKeyCommand*)command;
+- (Comic*)_indexedComicForURL:(NSURL*)url;
+- (void)_drainExternalComicURLQueue;
+- (void)_enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls
+             deletesFilesOnClose:(BOOL)deletesFilesOnClose;
+- (void)_showDirectOpenFailureAlertForFilenames:(NSArray<NSString*>*)filenames;
+- (void)_externalComicOpenAlertDidDismiss:(id)argument;
 @end
 
 @interface CRSettingsScrollView : UIScrollView {
@@ -94,10 +183,6 @@
 
 @end
 
-#define kAppStoreAppID @"1597314495"
-#define kiOSAppStoreURLFormat @"itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=%@"
-#define kiOS7AppStoreURLFormat @"itms-apps://itunes.apple.com/app/id%@"
-
 #define kBackgroundOffset 6.0
 
 #define kGridMargin 10.0
@@ -108,11 +193,11 @@
 #define kItemHorizontalSpacing_Portrait 17.0
 #define kItemHorizontalSpacing_Landscape 9.0
 
-// The regular navigation bar combines the 332-point sort control with four
+// The regular navigation bar combines the 332-point sort control with five
 // primary actions. Below this width UIKit moves Plus and Settings into its More
 // menu, so use the dedicated toolbar while leaving grid spacing independent.
 #define kLibraryCompactGridWidth 600.0
-#define kLibraryRegularNavigationMinimumWidth 760.0
+#define kLibraryRegularNavigationMinimumWidth 820.0
 
 #define kNewImageX 67.0
 #define kNewImageY 6.0
@@ -124,8 +209,7 @@
 #define kRibbonImageWidth 60.0
 #define kRibbonImageHeight 60.0
 
-#define kLaunchCountBeforeRating 10
-#define kShowRatingDelay 1.0
+#define kShowRatingDelay 2.0
 
 #define kUpdateTimerInterval 1.0
 
@@ -175,6 +259,13 @@
   [_adaptiveViewportView release];
   [_adaptiveGridScrollAnchor release];
   _adaptiveGridScrollAnchor = nil;
+  [_browserButtonItem release];
+  [_pendingWebComicURL release];
+  for (NSURL* url in _directOpenTemporaryURLs) {
+    CRRemoveDirectOpenTemporaryFileAtURL(url);
+  }
+  [_directOpenTemporaryURLs release];
+  [_externalComicURLQueue release];
   [super dealloc];
 }
 
@@ -219,7 +310,7 @@
   if (compact) {
     rootItem.leftBarButtonItem = nil;
     for (UINavigationItem* item in _navigationBar.items) {
-      item.rightBarButtonItems = @[_compactSortButtonItem];
+      item.rightBarButtonItems = @[_compactSortButtonItem, _browserButtonItem];
     }
     UIBarButtonItem* flexible1 = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                                  target:nil action:nil] autorelease];
@@ -235,7 +326,7 @@
     _compactToolbar.items = nil;
     _compactToolbar.hidden = YES;
     rootItem.leftBarButtonItem = _sortBarButtonItem;
-    NSArray* rightItems = @[_settingsButtonItem, _plusButtonItem, _cloudButtonItem, _readingListsButtonItem];
+    NSArray* rightItems = @[_settingsButtonItem, _plusButtonItem, _cloudButtonItem, _readingListsButtonItem, _browserButtonItem];
     for (UINavigationItem* item in _navigationBar.items) {
       item.rightBarButtonItems = rightItems;
     }
@@ -381,6 +472,7 @@ static void __DisplayQueueCallBack(void* info) {
 - (id) initWithWindow:(UIWindow*)window {
   if ((self = [super init])) {
     _window = window;
+    _externalComicURLQueue = [[NSMutableArray alloc] init];
     _releaseNewsDismissed = [[NSUserDefaults standardUserDefaults] boolForKey:kDefaultKey_ReleaseNewsDismissed];
     
     _comicImage = [[UIImage imageNamed: @"Comic-Background"] retain];
@@ -428,20 +520,59 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (NSArray<UIKeyCommand*>*) keyCommands {
+#if !TARGET_OS_MACCATALYST
   UIKeyCommand* open = [UIKeyCommand keyCommandWithInput:@"o"
                                            modifierFlags:UIKeyModifierCommand
                                                   action:@selector(_openComicFilesCommand:)];
   open.discoverabilityTitle = @"Open Comic Files";
+#endif
   UIKeyCommand* refresh = [UIKeyCommand keyCommandWithInput:@"r"
                                               modifierFlags:UIKeyModifierCommand
                                                      action:@selector(_refreshLibraryCommand:)];
   refresh.discoverabilityTitle = @"Refresh Library";
-  return @[open, refresh];
+  UIKeyCommand* browse = [UIKeyCommand keyCommandWithInput:@"b"
+                                             modifierFlags:UIKeyModifierCommand | UIKeyModifierShift
+                                                    action:@selector(_showWebBrowser:)];
+  browse.discoverabilityTitle = @"Browse for Comics";
+#if TARGET_OS_MACCATALYST
+  return @[refresh, browse];
+#else
+  return @[open, refresh, browse];
+#endif
 }
+
+#if TARGET_OS_MACCATALYST
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+  if (action == @selector(open:)) {
+    return self.presentedViewController == nil && !self.isBeingPresented && !self.isBeingDismissed;
+  }
+  return [super canPerformAction:action withSender:sender];
+}
+
+- (void)validateCommand:(UICommand*)command {
+  [super validateCommand:command];
+  if (command.action == @selector(open:)) {
+    command.title = @"Open Comic…";
+    if ([self canPerformAction:command.action withSender:command]) {
+      command.attributes &= ~UIMenuElementAttributesDisabled;
+    } else {
+      command.attributes |= UIMenuElementAttributesDisabled;
+    }
+  }
+}
+
+- (void)open:(id)sender {
+  [self _openComicFilesCommand:nil];
+}
+#endif
 
 - (void) _openComicFilesCommand:(UIKeyCommand*)command {
   if (!self.presentedViewController) {
+#if TARGET_OS_MACCATALYST
+    [self _presentComicDocumentPickerOpeningDirectly:YES fromController:self];
+#else
     [self purchase:nil];
+#endif
   }
 }
 
@@ -536,6 +667,235 @@ static void __DisplayQueueCallBack(void* info) {
 
 - (void) _cloudReadingChanged:(NSNotification*)notification {
   [self _reloadCurrentCollection];
+}
+
+- (Comic*)_indexedComicForURL:(NSURL*)url {
+  NSString* path = CRResolvedComicPath(url);
+  if (!path) return nil;
+  for (Comic* comic in [[LibraryConnection mainConnection] fetchAllComicsByName]) {
+    NSString* comicPath = [[[LibraryConnection mainConnection] pathForComic:comic]
+      stringByResolvingSymlinksInPath].stringByStandardizingPath;
+    if ([comicPath isEqualToString:path]) return comic;
+  }
+  return nil;
+}
+
++ (NSArray<NSURL*>*)supportedComicURLsFromURLs:(NSArray<NSURL*>*)urls {
+  NSMutableArray<NSURL*>* supported = [NSMutableArray arrayWithCapacity:urls.count];
+  for (NSURL* url in urls) {
+    if ([ComicViewController isSupportedComicFileURL:url]) [supported addObject:url];
+  }
+  return supported;
+}
+
+- (void)enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls {
+  [self _enqueueComicURLsForOpening:urls deletesFilesOnClose:NO];
+}
+
+- (void)_enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls
+             deletesFilesOnClose:(BOOL)deletesFilesOnClose {
+  if (![NSThread isMainThread]) {
+    NSArray* copiedURLs = [urls copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self _enqueueComicURLsForOpening:copiedURLs deletesFilesOnClose:deletesFilesOnClose];
+    });
+    [copiedURLs release];
+    return;
+  }
+
+  if (!_externalComicURLQueue) _externalComicURLQueue = [[NSMutableArray alloc] init];
+  NSArray<NSURL*>* supportedURLs = [[self class] supportedComicURLsFromURLs:urls];
+  NSUInteger previousCount = _externalComicURLQueue.count;
+  BOOL readerAlreadyPresented = [self.presentedViewController isKindOfClass:[ComicViewController class]];
+  [_externalComicURLQueue addObjectsFromArray:supportedURLs];
+  if (deletesFilesOnClose && supportedURLs.count > 0) {
+    if (!_directOpenTemporaryURLs) _directOpenTemporaryURLs = [[NSMutableSet alloc] init];
+    [_directOpenTemporaryURLs addObjectsFromArray:supportedURLs];
+  }
+  if (_externalComicURLQueue.count == previousCount) return;
+  if (readerAlreadyPresented) _dismissPresentedComicForIncomingURL = YES;
+
+  // A URL delivered at launch takes precedence over restoring the last reader.
+  // An already presented library reader keeps its model until dismissal so its
+  // current position can be saved normally.
+  if (!_comicPresentationActive && ![self.presentedViewController isKindOfClass:[ComicViewController class]]) {
+    [_currentComic release];
+    _currentComic = nil;
+  }
+  [self _drainExternalComicURLQueue];
+}
+
+- (void)_drainExternalComicURLQueue {
+  if (_externalComicURLQueue.count == 0) return;
+  if (!_launched || _startupPresentationsPending) return;
+  if (_pendingWebComicURL) {
+    [self _tryOpenPendingWebComic];
+    return;
+  }
+  UIViewController* presented = self.presentedViewController;
+  UIWindow* effectiveWindow = self.viewIfLoaded.window;
+  if (!effectiveWindow && [presented isKindOfClass:[ComicViewController class]]) {
+    effectiveWindow = presented.viewIfLoaded.window;
+  }
+  AppDelegate* delegate = [AppDelegate sharedDelegate];
+  UIWindowScene* windowScene = _window.windowScene;
+  if (!_window || effectiveWindow != _window || !windowScene ||
+      windowScene.activationState != UISceneActivationStateForegroundActive ||
+      self.isBeingPresented || self.isBeingDismissed) return;
+  if ([delegate isAlertVisible]) {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_drainExternalComicURLQueue) object:nil];
+    [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.35];
+    return;
+  }
+
+  if (presented) {
+    if (![presented isKindOfClass:[ComicViewController class]]) {
+      // Programmatic dismissal of a Catalyst form sheet does not always make
+      // the presenting controller appear again. Keep the queued Finder URL
+      // moving without dismissing the user's current sheet automatically.
+      [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_drainExternalComicURLQueue) object:nil];
+      [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.35];
+      return;
+    }
+    if (presented.presentedViewController) {
+      // The reader can own a document picker or tools sheet. Let that child
+      // finish dismissing before replacing the reader with the queued comic.
+      [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_drainExternalComicURLQueue) object:nil];
+      [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.35];
+      return;
+    }
+    if (!_dismissPresentedComicForIncomingURL || _incomingComicDismissalPending ||
+        presented.isBeingDismissed) return;
+    if (presented.isBeingPresented) {
+      [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.1];
+      return;
+    }
+    _incomingComicDismissalPending = YES;
+    [(ComicViewController*)presented saveState];
+    [self dismissViewControllerAnimated:YES completion:^{
+      self->_incomingComicDismissalPending = NO;
+      self->_dismissPresentedComicForIncomingURL = NO;
+      [self _refreshComicAfterDismissal];
+      [self _drainExternalComicURLQueue];
+    }];
+    return;
+  }
+  _dismissPresentedComicForIncomingURL = NO;
+  if ([delegate isSpinnerVisible] || [[LibraryUpdater sharedUpdater] isUpdating]) return;
+
+  NSURL* url = [_externalComicURLQueue firstObject];
+  BOOL deletesFileOnClose = [_directOpenTemporaryURLs containsObject:url];
+  Comic* indexedComic = [self _indexedComicForURL:url];
+  if (indexedComic) {
+    [_externalComicURLQueue removeObjectAtIndex:0];
+    if (deletesFileOnClose) {
+      [_directOpenTemporaryURLs removeObject:url];
+      CRRemoveDirectOpenTemporaryFileAtURL(url);
+    }
+    _externalComicLibraryScanAttempts = 0;
+    [self _presentComic:indexedComic];
+    return;
+  }
+
+  if (CRIsIndexedLibraryComicPath(CRResolvedComicPath(url)) && _externalComicLibraryScanAttempts == 0) {
+    _externalComicLibraryScanAttempts = 1;
+    [delegate updateLibrary];
+    return;
+  }
+
+  ComicViewController* reader = [[ComicViewController alloc] initWithExternalFileURL:url
+                                                                             delegate:self
+                                                                 deletesFileOnDealloc:deletesFileOnClose];
+  NSString* filename = [url.lastPathComponent copy];
+  [_externalComicURLQueue removeObjectAtIndex:0];
+  if (deletesFileOnClose) [_directOpenTemporaryURLs removeObject:url];
+  _externalComicLibraryScanAttempts = 0;
+  if (reader) {
+    reader.modalPresentationStyle = UIModalPresentationFullScreen;
+    reader.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    [self presentViewController:reader animated:YES completion:nil];
+    _externalComicPresentationActive = YES;
+    [reader release];
+  } else {
+    [delegate showAlertWithTitle:NSLocalizedString(@"COMIC_OPEN_FAILED_TITLE", nil)
+                         message:[NSString stringWithFormat:@"%@ could not be opened as a comic.", filename]
+                          button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)
+                        delegate:self
+                        selector:@selector(_externalComicOpenAlertDidDismiss:)
+                        argument:nil];
+  }
+  [filename release];
+}
+
+- (void)_externalComicOpenAlertDidDismiss:(id)argument {
+  [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.35];
+}
+
+- (void) _tryOpenPendingWebComic {
+  if (!_pendingWebComicURL || !self.view.window ||
+      _window.windowScene.activationState != UISceneActivationStateForegroundActive ||
+      self.presentedViewController || self.isBeingPresented || self.isBeingDismissed ||
+      [[AppDelegate sharedDelegate] isAlertVisible] || [[AppDelegate sharedDelegate] isSpinnerVisible] ||
+      [[LibraryUpdater sharedUpdater] isUpdating]) return;
+  Comic* comic = [self _indexedComicForURL:_pendingWebComicURL];
+  if (comic) {
+    if (_pendingWebComicCreatedCopy && _pendingWebComicPageCount > 0) {
+      NSInteger page = MIN(MAX(0, _pendingWebComicPageIndex), _pendingWebComicPageCount - 1);
+      comic.status = (int)(page < _pendingWebComicPageCount - 1 ? page : 0);
+      [[LibraryConnection mainConnection] updateObject:comic];
+      [[CRLibrarySyncCoordinator sharedCoordinator] recordComic:comic
+                                                    currentPage:page
+                                                      pageCount:_pendingWebComicPageCount];
+    }
+    [_pendingWebComicURL release];
+    _pendingWebComicURL = nil;
+    _pendingWebComicPageIndex = 0;
+    _pendingWebComicPageCount = 0;
+    _pendingWebComicCreatedCopy = NO;
+    [self _presentComic:comic];
+    return;
+  }
+  // An import can finish while an older scan is already running. Give the
+  // indexer one fresh pass before reporting that the file is unavailable.
+  if (_webComicScanAttempts++ < 1) {
+    [[AppDelegate sharedDelegate] updateLibrary];
+  } else {
+    [_pendingWebComicURL release];
+    _pendingWebComicURL = nil;
+    _pendingWebComicPageIndex = 0;
+    _pendingWebComicPageCount = 0;
+    _pendingWebComicCreatedCopy = NO;
+    [[AppDelegate sharedDelegate] showAlertWithTitle:@"Comic Unavailable"
+                                           message:@"The comic could not be found in the library. It may have been moved or removed."
+                                            button:@"OK"
+                                          delegate:self
+                                          selector:@selector(_externalComicOpenAlertDidDismiss:)
+                                          argument:nil];
+  }
+}
+
+- (void) _showWebBrowser:(id)sender {
+  if (self.presentedViewController || self.isBeingPresented || self.isBeingDismissed) return;
+  CRWebBrowserViewController* controller = [[CRWebBrowserViewController alloc]
+    initWithLibraryRootURL:[NSURL fileURLWithPath:[LibraryConnection libraryRootPath] isDirectory:YES]];
+  controller.libraryDidChangeHandler = ^{
+    [[AppDelegate sharedDelegate] updateLibrary];
+  };
+  controller.openComicHandler = ^(NSURL* url) {
+    self->_startupPresentationsPending = NO;
+    [self->_pendingWebComicURL release];
+    self->_pendingWebComicURL = [url copy];
+    self->_webComicScanAttempts = 0;
+    self->_pendingWebComicPageIndex = 0;
+    self->_pendingWebComicPageCount = 0;
+    self->_pendingWebComicCreatedCopy = NO;
+    [self dismissViewControllerAnimated:YES completion:^{ [self _tryOpenPendingWebComic]; }];
+  };
+  CRAdaptiveToolNavigationController* navigation = [[CRAdaptiveToolNavigationController alloc] initWithRootViewController:controller];
+  navigation.modalPresentationStyle = UIModalPresentationFullScreen;
+  [self presentViewController:navigation animated:YES completion:nil];
+  [controller release];
+  [navigation release];
 }
 
 - (void) _showPlus:(id)sender {
@@ -778,6 +1138,12 @@ static void __DisplayQueueCallBack(void* info) {
                                                              action:@selector(_showReadingLists:)];
   _readingListsButtonItem.accessibilityIdentifier = @"library.readingLists";
   _readingListsButtonItem.accessibilityLabel = @"Reading Lists";
+  _browserButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"globe"]
+                                                       style:UIBarButtonItemStylePlain
+                                                      target:self
+                                                      action:@selector(_showWebBrowser:)];
+  _browserButtonItem.accessibilityIdentifier = @"library.browser";
+  _browserButtonItem.accessibilityLabel = @"Browse for Comics";
   _compactSortButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arrow.up.arrow.down"]
                                                             style:UIBarButtonItemStylePlain
                                                            target:nil
@@ -1086,8 +1452,8 @@ static void __DisplayQueueCallBack(void* info) {
   struct { NSString* symbol; NSString* title; NSString* body; } steps[] = {
 #if TARGET_OS_MACCATALYST
     { @"folder",
-      @"Import from Finder",
-      @"Choose Add Files in Settings or press ⌘O. Select any .cbz, .cbr or .pdf comic." },
+      @"Open from Finder",
+      @"Double-click a comic, use Open With, or press ⌘O to read it without importing. Choose Add to Library in the reader when you want a copy." },
     { @"icloud",
       @"Free iCloud Sync",
       @"Turn on iCloud Sync to keep comic files and reading progress available across your iPhone, iPad and Mac. No Plus purchase is needed." },
@@ -1482,7 +1848,7 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _presentComic:(Comic*)comic {
-  ComicViewController* viewController = [[ComicViewController alloc] initWithComic:comic];
+  ComicViewController* viewController = [[ComicViewController alloc] initWithComic:comic delegate:self];
   if (viewController) {
     viewController.modalPresentationStyle = UIModalPresentationFullScreen;
     viewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
@@ -1502,7 +1868,15 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _refreshComicAfterDismissal {
-  if (!_comicPresentationActive || self.presentedViewController) {
+  if (self.presentedViewController) {
+    return;
+  }
+  if (!_comicPresentationActive) {
+    if (_externalComicPresentationActive) {
+      _externalComicPresentationActive = NO;
+      [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_showRatingScreen) object:nil];
+      [self performSelector:@selector(_showRatingScreen) withObject:nil afterDelay:kShowRatingDelay];
+    }
     return;
   }
   _comicPresentationActive = NO;
@@ -1524,6 +1898,8 @@ static void __DisplayQueueCallBack(void* info) {
       [self _reloadCurrentCollection];
     }
   }
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_showRatingScreen) object:nil];
+  [self performSelector:@selector(_showRatingScreen) withObject:nil afterDelay:kShowRatingDelay];
 }
 
 
@@ -1540,34 +1916,15 @@ static void __DisplayQueueCallBack(void* info) {
   }
 }
 
-- (void) _rateNow:(id)argument {
-  [[AppDelegate sharedDelegate] logEvent:@"rating.now"];
-  [[NSUserDefaults standardUserDefaults] setInteger:-1 forKey:kDefaultKey_LaunchCount];
-  
-  NSString* appURL = [NSString stringWithFormat:kiOS7AppStoreURLFormat, kAppStoreAppID];
-  [[UIApplication sharedApplication] openURL:[NSURL URLWithString:appURL] options:@{} completionHandler:nil];
-}
-
-- (void) _rateLater:(id)argument {
-  [[AppDelegate sharedDelegate] logEvent:@"rating.later"];
-  [[NSUserDefaults standardUserDefaults] setInteger:0 forKey:kDefaultKey_LaunchCount];
-}
-
 - (void) _showRatingScreen {
-  if (_startupPresentationsPending || self.presentedViewController ||
-      [[AppDelegate sharedDelegate] isAlertVisible] ||
+  if (_startupPresentationsPending || !self.view.window ||
+      self.presentedViewController || self.isBeingPresented || self.isBeingDismissed ||
+      [[AppDelegate sharedDelegate] isAlertVisible] || [[AppDelegate sharedDelegate] isSpinnerVisible] ||
+      [[LibraryUpdater sharedUpdater] isUpdating] || _pendingWebComicURL || _externalComicURLQueue.count > 0 ||
       _window.windowScene.activationState != UISceneActivationStateForegroundActive) {
     return;
   }
-  [[AppDelegate sharedDelegate] logEvent:@"rating.prompt"];
-  [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"RATE_ALERT_TITLE", nil)
-                                           message:NSLocalizedString(@"RATE_ALERT_MESSAGE", nil)
-                                     confirmButton:NSLocalizedString(@"RATE_ALERT_CONFIRM", nil)
-                                      cancelButton:NSLocalizedString(@"RATE_ALERT_CANCEL", nil)
-                                          delegate:self
-                                   confirmSelector:@selector(_rateNow:)
-                                    cancelSelector:@selector(_rateLater:)
-                                          argument:nil];
+  [[CRReviewPrompt sharedPrompt] requestReviewIfEligibleInScene:_window.windowScene];
 }
 
 - (void) _requireUpdate {
@@ -1576,6 +1933,12 @@ static void __DisplayQueueCallBack(void* info) {
 }
 
 - (void) _sceneDidActivate:(NSNotification*)notification {
+  if (notification.object == _window.windowScene && _pendingWebComicURL) {
+    dispatch_async(dispatch_get_main_queue(), ^{ [self _tryOpenPendingWebComic]; });
+  }
+  if (notification.object == _window.windowScene && _externalComicURLQueue.count > 0) {
+    dispatch_async(dispatch_get_main_queue(), ^{ [self _drainExternalComicURLQueue]; });
+  }
   if (notification.object == _window.windowScene && _startupPresentationsPending) {
     // Let scene setup enqueue any import errors before considering the announcement.
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_continueStartupPresentations) object:nil];
@@ -1616,6 +1979,10 @@ static void __DisplayQueueCallBack(void* info) {
   }
 
   _startupPresentationsPending = NO;
+  if (_externalComicURLQueue.count > 0) {
+    [self _drainExternalComicURLQueue];
+    return;
+  }
   if (_currentComic && !_comicPresentationActive) {
     // Keep the saved comic until all startup UI is finished, including settings. An
     // import scan may have removed it or updated its saved reading state meanwhile.
@@ -1649,16 +2016,6 @@ static void __DisplayQueueCallBack(void* info) {
     _launchView = nil;
   }
   
-  NSInteger count = [[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_LaunchCount];
-  if (count >= 0) {
-    [[NSUserDefaults standardUserDefaults] setInteger:(count + 1) forKey:kDefaultKey_LaunchCount];
-    if (_releaseNewsDismissed && !needLibraryUpdate && !_currentComic && (count + 1 >= kLaunchCountBeforeRating) && !self.presentedViewController && [[NetReachability sharedNetReachability] state]) {
-      [self performSelector:@selector(_showRatingScreen) withObject:nil afterDelay:kShowRatingDelay];
-    } else {
-      XLOG_VERBOSE(@"Launch count is now %i", (int)[[NSUserDefaults standardUserDefaults] integerForKey:kDefaultKey_LaunchCount]);
-    }
-  }
-  
   _libraryUpdatePromptPending = needLibraryUpdate;
   _startupPresentationsPending = YES;
   [self _continueStartupPresentations];
@@ -1668,11 +2025,15 @@ static void __DisplayQueueCallBack(void* info) {
   [super viewDidAppear:animated];
 
   [self _refreshComicAfterDismissal];
+  [self _tryOpenPendingWebComic];
   if (!_launched) {
     _launched = YES;
+    _startupPresentationsPending = YES;
     [self performSelector:@selector(_viewDidReallyAppear) withObject:nil afterDelay:0.0];
   } else if (_startupPresentationsPending) {
     [self _continueStartupPresentations];
+  } else {
+    [self _drainExternalComicURLQueue];
   }
   
   [self becomeFirstResponder];
@@ -1726,6 +2087,8 @@ static void __DisplayQueueCallBack(void* info) {
   // The updater clears isUpdating immediately after this delegate returns.
   dispatch_async(dispatch_get_main_queue(), ^{
     [[CRLibrarySyncCoordinator sharedCoordinator] libraryDidUpdate];
+    [self _tryOpenPendingWebComic];
+    [self _drainExternalComicURLQueue];
   });
   if (_currentCollection && ![[LibraryConnection mainConnection] refetchObject:_currentCollection]) {
     [self _setCurrentCollection:nil];
@@ -1956,22 +2319,28 @@ static void __ArrayApplierFunction(const void* value, void* context) {
   [(AppDelegate*)[AppDelegate sharedInstance] setScreenDimmed:_dimmingSwitch.on];
 }
 
-- (IBAction) purchase:(id)sender {
+- (void)_presentComicDocumentPickerOpeningDirectly:(BOOL)opensComicsDirectly
+                                    fromController:(UIViewController*)controller {
+  if (!controller || controller.presentedViewController || controller.isBeingDismissed) return;
   NSMutableArray<UTType*>* types = [NSMutableArray arrayWithObject:UTTypePDF];
   for (NSString* extension in @[@"cbz", @"zip", @"cbr", @"rar"]) {
     UTType* type = [UTType typeWithFilenameExtension:extension];
-    if (type) {
-      [types addObject:type];
-    }
+    if (type && ![types containsObject:type]) [types addObject:type];
   }
-  // Import a local copy; Catalyst open-in-place requests write access to the original.
-  UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:types asCopy:YES];
+  CRComicDocumentPickerViewController* picker = [[CRComicDocumentPickerViewController alloc]
+    initForOpeningContentTypes:types asCopy:YES];
+  picker.opensComicsDirectly = opensComicsDirectly;
   picker.delegate = self;
   picker.allowsMultipleSelection = YES;
+  picker.presentationController.delegate = self;
+  [controller presentViewController:picker animated:YES completion:nil];
+  [picker release];
+}
 
+- (IBAction) purchase:(id)sender {
   void (^presentPicker)(void) = ^{
-    [self presentViewController:picker animated:YES completion:nil];
-    [picker release];
+    // Add Files always imports a local copy, including on Catalyst.
+    [self _presentComicDocumentPickerOpeningDirectly:NO fromController:self];
   };
   [_updateTimer setFireDate:[NSDate distantFuture]];
   if (self.presentedViewController == _menuViewController) {
@@ -1988,9 +2357,91 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 }
 
 - (void) documentPicker:(UIDocumentPickerViewController*)controller didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls {
+  BOOL opensComicsDirectly = [controller isKindOfClass:[CRComicDocumentPickerViewController class]] &&
+    [(CRComicDocumentPickerViewController*)controller opensComicsDirectly];
+  if (opensComicsDirectly) {
+    NSMutableArray<NSURL*>* stagedURLs = [NSMutableArray arrayWithCapacity:urls.count];
+    NSMutableArray<NSString*>* failedFilenames = [NSMutableArray array];
+    for (NSURL* url in urls) {
+      NSError* error = nil;
+      NSURL* stagedURL = CRStageDirectOpenPickerCopy(url, &error);
+      if (stagedURL) {
+        [stagedURLs addObject:stagedURL];
+      } else {
+        XLOG_ERROR(@"Unable to stage direct-open picker copy at \"%@\": %@", url.path, error);
+        [failedFilenames addObject:url.lastPathComponent ?: @"Selected file"];
+        if (CRIsPickerOwnedCopyURL(url)) {
+          [[NSFileManager defaultManager] removeItemAtURL:url error:NULL];
+        }
+      }
+    }
+    // The picker owns its dismissal. Queue immediately; draining waits until
+    // the picker disappears, while the copied files remain in our container.
+    [self _enqueueComicURLsForOpening:stagedURLs deletesFilesOnClose:YES];
+    if (failedFilenames.count > 0) {
+      [self performSelector:@selector(_showDirectOpenFailureAlertForFilenames:)
+                 withObject:failedFilenames
+                 afterDelay:0.1];
+    }
+    return;
+  }
   for (NSURL* url in urls) {
     [[AppDelegate sharedDelegate] importComicAtURL:url];
   }
+}
+
+- (void)_showDirectOpenFailureAlertForFilenames:(NSArray<NSString*>*)filenames {
+  UIViewController* top = self.presentedViewController;
+  while (top.presentedViewController) top = top.presentedViewController;
+  if ([top isKindOfClass:[UIDocumentPickerViewController class]] ||
+      top.isBeingDismissed || top.isBeingPresented) {
+    [self performSelector:@selector(_showDirectOpenFailureAlertForFilenames:)
+               withObject:filenames
+               afterDelay:0.1];
+    return;
+  }
+  NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
+    [filenames componentsJoinedByString:@"\n"],
+    NSLocalizedString(@"COMIC_OPEN_FAILED_MESSAGE", nil)];
+  [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"COMIC_OPEN_FAILED_TITLE", nil)
+                                           message:message
+                                            button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
+}
+
+- (void)comicViewControllerDidRequestOpenComicFiles:(ComicViewController*)controller {
+#if TARGET_OS_MACCATALYST
+  if (self.presentedViewController == controller) {
+    [self _presentComicDocumentPickerOpeningDirectly:YES fromController:controller];
+  }
+#endif
+}
+
+- (void)comicViewController:(ComicViewController*)controller
+    didRequestAddExternalComicAtURL:(NSURL*)url
+                   currentPageIndex:(NSInteger)currentPageIndex
+                          pageCount:(NSInteger)pageCount {
+  [[AppDelegate sharedDelegate] importComicAtURL:url
+                               resultCompletion:^(BOOL imported, NSURL* libraryURL, BOOL createdCopy) {
+    if (!imported || !libraryURL) {
+      [controller externalComicImportDidFail];
+      return;
+    }
+    [self->_pendingWebComicURL release];
+    self->_pendingWebComicURL = [libraryURL copy];
+    self->_webComicScanAttempts = 0;
+    self->_pendingWebComicPageIndex = currentPageIndex;
+    self->_pendingWebComicPageCount = pageCount;
+    self->_pendingWebComicCreatedCopy = createdCopy;
+
+    void (^openLibraryCopy)(void) = ^{
+      [self _tryOpenPendingWebComic];
+    };
+    if (self.presentedViewController == controller) {
+      [self dismissViewControllerAnimated:YES completion:openLibraryCopy];
+    } else {
+      openLibraryCopy();
+    }
+  }];
 }
 
 // UIPopoverPresentationControllerDelegate — fires when tapped outside popover
@@ -2003,6 +2454,8 @@ static void __ArrayApplierFunction(const void* value, void* context) {
 
 - (void) presentationControllerDidDismiss:(UIPresentationController*)presentationController {
   [_updateTimer setFireDate:[NSDate distantFuture]];
+  [self _tryOpenPendingWebComic];
+  [self _drainExternalComicURLQueue];
 }
 
 @end

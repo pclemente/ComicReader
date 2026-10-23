@@ -307,6 +307,12 @@ static int _ErrorFunction(voidpf opaque, voidpf stream) {
 }
 
 - (BOOL) extractFile:(NSString*)inPath toPath:(NSString*)outPath {
+  return [self extractFile:inPath toPath:outPath maximumUncompressedBytes:0];
+}
+
+- (BOOL) extractFile:(NSString*)inPath
+              toPath:(NSString*)outPath
+maximumUncompressedBytes:(unsigned long long)maximumUncompressedBytes {
   BOOL success = NO;
   
   // Set current file to first file in archive
@@ -324,15 +330,15 @@ static int _ErrorFunction(voidpf opaque, voidpf stream) {
     }
     
     // Retrieve current file path and convert path separators if needed
-    unz_file_info fileInfo = {0};
-    result = unzGetCurrentFileInfo(_unzFile, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
+    unz_file_info64 fileInfo = {0};
+    result = unzGetCurrentFileInfo64(_unzFile, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
     if (result != UNZ_OK) {
       unzCloseCurrentFile(_unzFile);
       XLOG_ERROR(@"MiniZip returned error %i", result);
       break;
     }
     char* filename = (char*)malloc(fileInfo.size_filename + 1);
-    unzGetCurrentFileInfo(_unzFile, &fileInfo, filename, fileInfo.size_filename, NULL, 0, NULL, 0);
+    unzGetCurrentFileInfo64(_unzFile, &fileInfo, filename, fileInfo.size_filename, NULL, 0, NULL, 0);
     for (unsigned int i = 0; i < fileInfo.size_filename; ++i) {
       if (filename[i] == '\\') {
         filename[i] = '/';
@@ -344,20 +350,37 @@ static int _ErrorFunction(voidpf opaque, voidpf stream) {
     
     // If file is required one, extract it
     if (![path hasSuffix:@"/"] && [path isEqualToString:inPath]) {
+      if (maximumUncompressedBytes > 0 &&
+          (unsigned long long)fileInfo.uncompressed_size > maximumUncompressedBytes) {
+        XLOG_ERROR(@"Refusing to extract oversized ZIP entry \"%@\" (%llu bytes; limit %llu)",
+                   path, (unsigned long long)fileInfo.uncompressed_size, maximumUncompressedBytes);
+        unzCloseCurrentFile(_unzFile);
+        break;
+      }
       BOOL createdOutputFile = NO;
       FILE* outFile = fopen([outPath fileSystemRepresentation], "w");
       if (outFile) {
         createdOutputFile = YES;
         success = YES;
+        unsigned long long extractedBytes = 0;
         while (1) {
           unsigned char buffer[kZipExtractionBufferSize];
           int read = unzReadCurrentFile(_unzFile, buffer, kZipExtractionBufferSize);
           if (read > 0) {
+            unsigned long long byteCount = (unsigned long long)read;
+            if (maximumUncompressedBytes > 0 &&
+                byteCount > maximumUncompressedBytes - extractedBytes) {
+              XLOG_ERROR(@"ZIP entry \"%@\" exceeded its %llu-byte extraction limit",
+                         path, maximumUncompressedBytes);
+              success = NO;
+              break;
+            }
             if (fwrite(buffer, read, 1, outFile) != 1) {
                XLOG_ERROR(@"Failed writing \"%@\" from ZIP archive", path);
                success = NO;
                break;
             }
+            extractedBytes += byteCount;
           } else if (read < 0) {
             XLOG_ERROR(@"Failed reading \"%@\" from ZIP archive", path);
             success = NO;

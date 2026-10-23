@@ -34,6 +34,9 @@
 - (void) updateLibrary;
 - (BOOL) importComicAtURL:(NSURL*)url;  // Returns whether the import was queued.
 - (BOOL) importComicAtURL:(NSURL*)url completion:(void (^)(BOOL imported))completion;
+- (BOOL)importComicAtURL:(NSURL*)url
+       resultCompletion:(void (^)(BOOL imported, NSURL* libraryURL, BOOL createdCopy))completion;
+- (void)openComicURLs:(NSArray<NSURL*>*)urls;
 - (void) connectWindowScene:(UIWindowScene*)scene;
 @end
 

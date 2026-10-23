@@ -1,0 +1,36 @@
+Open up your comics on iPhone Duo.
+
+ComicReader brings your own comics to iPhone, iPad and Mac. Read for free, keep your library in sync with iCloud, and add powerful library tools with one optional Plus purchase.
+
+READY FOR IPHONE DUO
+Open the screen for more artwork, then keep reading on the outer display. Your page and relative zoom stay with you as the display changes. Pages, covers and controls adapt around the active fold. Duo support is free.
+
+OPEN STRAIGHT FROM FINDER ON MAC
+Right-click a PDF, CBZ/ZIP or classic CBR/RAR file and choose Open With > ComicReader. Read it in its existing folder without importing. Choose Add to Library when you want a copy with saved progress and optional iCloud sync. You can also use File > Open Comic or Command-O, and choose ComicReader as your default opener in Finder.
+
+BROWSE TO YOUR NEXT READ
+Visit your preferred comic websites inside the app. Save website shortcuts, keep normal website sessions between visits, or use a separate private session. Browsing and website-data controls are free. Websites must offer supported downloadable files; sign-in and downloads depend on the site. No comic catalogue or DRM removal is included.
+
+FREE READING AND ICLOUD
+• Read PDF, CBZ/ZIP and classic CBR/RAR comics, zoom into artwork and enjoy imported books offline.
+• Organise files into collections and sort by name, date or reading status.
+• Import with the system file picker, local-network uploader or WebDAV. On iPhone and iPad, Finder/iTunes File Sharing works over USB.
+• Sync library comic files, read/unread status and your current page across iPhone, iPad and Mac. Sync is optional and uses your personal iCloud Drive storage; sufficient storage and an internet connection are required.
+• Recognise text on the current page, copy it and share phrases for free. Embedded PDF text is used when available; image-only pages are recognised on device.
+
+MAKE MORE OF YOUR LIBRARY WITH PLUS
+One optional purchase, no subscription. Restore Purchases is available across iPhone, iPad and Mac using the same Apple Account. Your local price is shown before purchase. Existing Plus owners receive the new tools with their purchase.
+
+• Website Imports: download supported comics into your library with file validation, duplicate detection, collection selection and a download queue. Keep the app open until imports finish.
+• Comic Search & Quotes: build a persistent text index for the current library comic, search its indexed pages, jump to results and save editable quotes with their source page. Indexing can be stopped and resumed.
+• Reading Lists & Smart Queues: arrange your reading order without moving files, or gather Continue Reading, Unread and Read Again across folders.
+• Named Page Bookmarks: save memorable pages and return to them.
+• Image Filters: try Clear Ink, Grayscale and Warm Paper with a free preview. Original rendering is always available; files are never changed.
+
+Reading, Finder opening, ordinary imports, transfers, browsing, current-page text and iCloud sync remain free. No comics are included with Plus. Search covers the current library comic, not the whole library. Recognition quality varies with language, scans and lettering. Search indexes, quotes, lists and bookmarks stay on each device; they are not part of iCloud sync. Saved quotes remain available to read and share if Plus is no longer active.
+
+ComicReader is based on ComicFlow and is open source under GPL v3.
+Source: https://github.com/pclemente/ComicReader
+Original: https://github.com/swisspol/ComicFlow
+
+Bring your own comics. Screenshot sample comics are not included.

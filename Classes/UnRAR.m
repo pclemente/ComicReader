@@ -16,6 +16,8 @@
 #import "raros.hpp"
 #import "dll.hpp"
 
+#include <stdint.h>
+
 // http://www.rarlab.com/rar_add.htm
 // http://goahomepage.free.fr/article/2000_09_17_unrar_dll/UnRARDLL.html
 
@@ -55,6 +57,27 @@ static BOOL _RARFileIsEncrypted(const struct RARHeaderData* headerData) {
     return YES;
   }
   return NO;
+}
+
+typedef struct {
+  unsigned long long maximumBytes;
+  unsigned long long processedBytes;
+  BOOL exceededLimit;
+} CRRARExtractionLimit;
+
+static int CALLBACK _RARExtractionLimitCallback(UINT message, LPARAM userData, LPARAM data, LPARAM dataSize) {
+  if (message != UCM_PROCESSDATA) return 0;
+  (void)data;
+  CRRARExtractionLimit* limit = (CRRARExtractionLimit*)(uintptr_t)userData;
+  if (!limit || dataSize < 0) return -1;
+  unsigned long long byteCount = (unsigned long long)dataSize;
+  if (limit->processedBytes > limit->maximumBytes ||
+      byteCount > limit->maximumBytes - limit->processedBytes) {
+    limit->exceededLimit = YES;
+    return -1;
+  }
+  limit->processedBytes += byteCount;
+  return 0;
 }
 
 @implementation UnRAR
@@ -248,6 +271,76 @@ static BOOL _RARFileIsEncrypted(const struct RARHeaderData* headerData) {
     RARCloseArchive(handle);
   }
   
+  return success;
+}
+
+- (BOOL) extractFile:(NSString*)inPath
+              toPath:(NSString*)outPath
+maximumUncompressedBytes:(unsigned long long)maximumUncompressedBytes {
+  if (maximumUncompressedBytes == 0) return [self extractFile:inPath toPath:outPath];
+
+  BOOL success = NO;
+  BOOL outputExisted = [[NSFileManager defaultManager] fileExistsAtPath:outPath];
+
+  // Open archive
+  HANDLE handle = _OpenArchive(_archivePath, RAR_OM_EXTRACT);
+  if (handle) {
+    // Scan archive
+    while (1) {
+      // Use the extended header so the preflight includes entries larger than 4 GiB.
+      struct RARHeaderDataEx headerData;
+      bzero(&headerData, sizeof(headerData));
+      int result = RARReadHeaderEx(handle, &headerData);
+      if (result != 0) {
+        if (result != ERAR_END_ARCHIVE) {
+          XLOG_ERROR(@"UnRAR returned error %i", result);
+        }
+        break;
+      }
+      if (headerData.Flags & kRARFileHeaderFlagPassword) {
+        XLOG_ERROR(@"Encrypted RAR files are unsupported");
+        break;
+      }
+      NSString* path = _PathFromFileName(headerData.FileName);
+
+      if (headerData.FileCRC && [path isEqualToString:inPath]) {
+        unsigned long long uncompressedSize =
+          ((unsigned long long)headerData.UnpSizeHigh << 32) | headerData.UnpSize;
+        if (uncompressedSize > maximumUncompressedBytes) {
+          XLOG_ERROR(@"Refusing to extract oversized RAR entry \"%@\" (%llu bytes; limit %llu)",
+                     path, uncompressedSize, maximumUncompressedBytes);
+          break;
+        }
+
+        // The callback runs before UnRAR writes each decompressed block, making
+        // the limit authoritative even when archive metadata is malformed.
+        CRRARExtractionLimit limit = {maximumUncompressedBytes, 0, NO};
+        RARSetCallback(handle, _RARExtractionLimitCallback, (LPARAM)(uintptr_t)&limit);
+        result = RARProcessFile(handle, RAR_EXTRACT, NULL, (char*)[outPath fileSystemRepresentation]);
+        if (result == 0 && !limit.exceededLimit) {
+          success = YES;
+        } else if (limit.exceededLimit) {
+          XLOG_ERROR(@"RAR entry \"%@\" exceeded its %llu-byte extraction limit",
+                     path, maximumUncompressedBytes);
+        } else {
+          XLOG_ERROR(@"UnRAR returned error %i", result);
+        }
+        break;
+      } else {
+        result = RARProcessFile(handle, RAR_SKIP, NULL, NULL);
+        if (result != 0) {
+          XLOG_ERROR(@"UnRAR returned error %i", result);
+          break;
+        }
+      }
+    }
+
+    RARCloseArchive(handle);
+  }
+
+  if (!success && !outputExisted) {
+    [[NSFileManager defaultManager] removeItemAtPath:outPath error:NULL];
+  }
   return success;
 }
 

@@ -43,4 +43,4 @@ typedef enum {
 #define kDefaultKey_LaunchCount @"launchCount"
 #define kDefaultKey_PlusIntroductionShown @"plusIntroductionShown"
 
-#define kDefaultKey_ReleaseNewsDismissed @"releaseNews1_5Shown"
+#define kDefaultKey_ReleaseNewsDismissed @"releaseNews1_6Shown"

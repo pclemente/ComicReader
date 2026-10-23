@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 #import "AppDelegate.h"
 #import "CRAdaptiveViewport.h"
 #import "CRLibrarySyncCoordinator.h"
@@ -18,9 +19,93 @@
 - (instancetype)initWithComicPath:(NSString*)comicPath currentPageIndex:(NSInteger)currentPageIndex;
 @end
 
+@interface CRWebBrowserViewController : UIViewController
+- (instancetype)initWithLibraryRootURL:(NSURL*)libraryRootURL;
+@end
+
 @interface LibraryViewController (AdaptiveViewportTesting)
 @property(nonatomic, retain) CRAdaptiveViewportView* adaptiveViewportView;
 @end
+
+@interface LibraryViewController (DirectOpenTesting)
+- (Comic*)_indexedComicForURL:(NSURL*)url;
+- (void)_enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls
+                deletesFilesOnClose:(BOOL)deletesFilesOnClose;
+- (void)documentPicker:(UIDocumentPickerViewController*)controller
+    didPickDocumentsAtURLs:(NSArray<NSURL*>*)urls;
+- (void)presentationControllerDidDismiss:(UIPresentationController*)presentationController;
+@end
+
+@interface LibraryViewController (ReviewPromptTesting)
+- (void)_showRatingScreen;
+@end
+
+@interface CRReviewRequestRecorder : NSObject
+@property(nonatomic) NSUInteger requestCount;
+@property(nonatomic, weak) UIWindowScene* requestedScene;
+- (BOOL)requestReviewIfEligibleInScene:(UIWindowScene*)scene;
+@end
+
+@implementation CRReviewRequestRecorder
+- (BOOL)requestReviewIfEligibleInScene:(UIWindowScene*)scene {
+  self.requestCount++;
+  self.requestedScene = scene;
+  return YES;
+}
+@end
+
+@interface CRDirectOpenRecordingLibraryViewController : LibraryViewController
+@property(nonatomic, copy) NSArray<NSURL*>* enqueuedURLs;
+@property(nonatomic) BOOL enqueuedURLsDeleteOnClose;
+@end
+
+@implementation CRDirectOpenRecordingLibraryViewController
+- (void)_enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls
+                deletesFilesOnClose:(BOOL)deletesFilesOnClose {
+  self.enqueuedURLs = urls;
+  self.enqueuedURLsDeleteOnClose = deletesFilesOnClose;
+}
+@end
+
+@interface CRPresentationRecordingViewController : UIViewController
+@property(nonatomic, strong) UIViewController* recordedPresentedViewController;
+@end
+
+@implementation CRPresentationRecordingViewController
+- (void)presentViewController:(UIViewController*)viewControllerToPresent
+                     animated:(BOOL)animated
+                   completion:(void (^)(void))completion {
+  self.recordedPresentedViewController = viewControllerToPresent;
+  if (completion) completion();
+}
+@end
+
+#if TARGET_OS_MACCATALYST
+@interface CRQueueDrainTestComicViewController : ComicViewController
+@property(nonatomic) BOOL saveStateCalled;
+@end
+
+@implementation CRQueueDrainTestComicViewController
+- (void)loadView { self.view = [[UIView alloc] init]; }
+- (void)viewDidLoad {}
+- (void)saveState { self.saveStateCalled = YES; }
+@end
+
+@interface CRQueueDrainRecordingLibraryViewController : LibraryViewController
+@property(nonatomic, strong) ComicViewController* presentedReader;
+@property(nonatomic) BOOL queueDismissalRequested;
+@end
+
+@implementation CRQueueDrainRecordingLibraryViewController
+- (UIViewController*)presentedViewController { return self.presentedReader; }
+- (void)viewDidLoad {}
+- (void)dismissViewControllerAnimated:(BOOL)animated completion:(void (^)(void))completion {
+  // This unit verifies the replacement request. Native validation covers the
+  // actual dismissal and next-reader presentation without a synthetic library.
+  self.queueDismissalRequested = YES;
+}
+@end
+#endif
 
 @interface CRFixedAdaptiveViewportView : CRAdaptiveViewportView
 @property(nonatomic) CGRect fixedViewportBounds;
@@ -85,6 +170,45 @@
 @end
 
 @implementation ComicReaderTests
+- (void)testUndismissedNewsDoesNotSuppressEligibleReviewRequest {
+  AppDelegate* app = [AppDelegate sharedDelegate];
+  LibraryViewController* library = (LibraryViewController*)app.viewController;
+  XCTAssertTrue([library isKindOfClass:LibraryViewController.class]);
+  XCTAssertNotNil(library.view.window);
+  XCTAssertEqual(app.window.windowScene.activationState, UISceneActivationStateForegroundActive);
+  XCTAssertNil(library.presentedViewController);
+  XCTAssertFalse(app.isAlertVisible);
+  XCTAssertFalse(app.isSpinnerVisible);
+  XCTAssertFalse([LibraryUpdater sharedUpdater].isUpdating);
+
+  Class promptClass = NSClassFromString(@"CRReviewPrompt");
+  Method getter = class_getClassMethod(promptClass, NSSelectorFromString(@"sharedPrompt"));
+  XCTAssertNotEqual(getter, NULL);
+  if (!getter) return;
+  CRReviewRequestRecorder* recorder = [CRReviewRequestRecorder new];
+  IMP replacement = imp_implementationWithBlock(^id(id receiver) { return recorder; });
+  IMP original = method_setImplementation(getter, replacement);
+  id previousNews = [library valueForKey:@"releaseNewsDismissed"];
+  id previousStartup = [library valueForKey:@"startupPresentationsPending"];
+  @try {
+    [library setValue:@NO forKey:@"releaseNewsDismissed"];
+    [library setValue:@NO forKey:@"startupPresentationsPending"];
+    [library _showRatingScreen];
+    XCTAssertEqual(recorder.requestCount, 1u,
+                   @"A persistent nonmodal news banner must not prevent an eligible StoreKit request");
+    XCTAssertEqual(recorder.requestedScene, app.window.windowScene);
+
+    [library setValue:@YES forKey:@"startupPresentationsPending"];
+    [library _showRatingScreen];
+    XCTAssertEqual(recorder.requestCount, 1u, @"Active startup work must still defer the request");
+  } @finally {
+    method_setImplementation(getter, original);
+    imp_removeBlock(replacement);
+    [library setValue:previousNews forKey:@"releaseNewsDismissed"];
+    [library setValue:previousStartup forKey:@"startupPresentationsPending"];
+  }
+}
+
 - (UIView*)viewWithAccessibilityIdentifier:(NSString*)identifier underView:(UIView*)view {
   if ([view.accessibilityIdentifier isEqualToString:identifier]) {
     return view;
@@ -202,7 +326,7 @@
   UIGraphicsPDFRenderer* renderer = [[UIGraphicsPDFRenderer alloc] initWithBounds:CGRectMake(0, 0, 300, 450)];
   NSData* data = [renderer PDFDataWithActions:^(UIGraphicsPDFRendererContext* context) {
     [context beginPage];
-    [@"Import regression fixture" drawAtPoint:CGPointMake(20, 20) withAttributes:nil];
+    [name drawAtPoint:CGPointMake(20, 20) withAttributes:nil];
   }];
   NSString* path = [directory stringByAppendingPathComponent:name];
   XCTAssertTrue([data writeToFile:path atomically:YES]);
@@ -214,6 +338,17 @@
   __block BOOL result = NO;
   [[AppDelegate sharedDelegate] importComicAtURL:url completion:^(BOOL imported) {
     result = imported;
+    [finished fulfill];
+  }];
+  [self waitForExpectations:@[finished] timeout:15];
+  return result;
+}
+- (NSArray*)importResultAndWait:(NSURL*)url {
+  XCTestExpectation* finished = [self expectationWithDescription:@"File import completed"];
+  __block NSArray* result = nil;
+  [[AppDelegate sharedDelegate] importComicAtURL:url
+                               resultCompletion:^(BOOL imported, NSURL* libraryURL, BOOL createdCopy) {
+    result = @[@(imported), libraryURL ?: NSNull.null, @(createdCopy)];
     [finished fulfill];
   }];
   [self waitForExpectations:@[finished] timeout:15];
@@ -305,7 +440,9 @@
       XCTAssertEqualObjects(visibleActions, expectedActions);
       XCTAssertEqualObjects(controller.navigationBar.topItem.rightBarButtonItems.firstObject.accessibilityIdentifier,
                             @"library.sort");
-      XCTAssertEqual(controller.navigationBar.topItem.rightBarButtonItems.count, (NSUInteger)1);
+      XCTAssertEqual(controller.navigationBar.topItem.rightBarButtonItems.count, (NSUInteger)2);
+      XCTAssertEqualObjects(controller.navigationBar.topItem.rightBarButtonItems.lastObject.accessibilityIdentifier,
+                            @"library.browser");
       [self assertLibraryController:controller
                        fitsViewport:(CGRect){CGPointZero, viewportSize}];
     }
@@ -320,6 +457,48 @@
     [view insertSubview:originalTracker atIndex:0];
     [view setNeedsLayout];
     [view layoutIfNeeded];
+  }
+}
+- (void)testBrowserHomeAddressRemainsInteractiveInsideHeaderAcrossDuoWidths {
+  NSURL* libraryRootURL = [NSURL fileURLWithPath:[LibraryConnection libraryRootPath]
+                                    isDirectory:YES];
+  CRWebBrowserViewController* browser =
+    [[CRWebBrowserViewController alloc] initWithLibraryRootURL:libraryRootURL];
+  UINavigationController* navigation =
+    [[UINavigationController alloc] initWithRootViewController:browser];
+  UITraitCollection* accessibilityTraits =
+    [UITraitCollection traitCollectionWithPreferredContentSizeCategory:
+      UIContentSizeCategoryAccessibilityExtraExtraLarge];
+  [navigation setOverrideTraitCollection:accessibilityTraits forChildViewController:browser];
+
+  NSArray<NSNumber*>* widths = @[@320.0, @390.0, @318.333, @653.0, @669.0];
+  for (NSNumber* widthValue in widths) {
+    CGFloat width = widthValue.doubleValue;
+    navigation.view.frame = CGRectMake(0, 0, width, 1000);
+    [navigation.view setNeedsLayout];
+    [navigation.view layoutIfNeeded];
+    [browser.view setNeedsLayout];
+    [browser.view layoutIfNeeded];
+
+    UITableView* table = (UITableView*)[self viewWithAccessibilityIdentifier:@"library.browser.home"
+                                                                   underView:browser.view];
+    UITextField* address = (UITextField*)[self viewWithAccessibilityIdentifier:@"library.browser.homeAddress"
+                                                                    underView:browser.view];
+    XCTAssertTrue([table isKindOfClass:UITableView.class], @"Missing browser home table at %.3f points", width);
+    XCTAssertTrue([address isKindOfClass:UITextField.class], @"Missing home address field at %.3f points", width);
+    UIView* header = table.tableHeaderView;
+    XCTAssertNotNil(header, @"Missing browser home header at %.3f points", width);
+    if (!header || !address) continue;
+
+    [header setNeedsLayout];
+    [header layoutIfNeeded];
+    CGRect addressFrame = [address convertRect:address.bounds toView:header];
+    XCTAssertGreaterThan(CGRectGetWidth(addressFrame), 0.0, @"Address width at %.3f points", width);
+    XCTAssertGreaterThan(CGRectGetHeight(addressFrame), 0.0, @"Address height at %.3f points", width);
+    XCTAssertTrue(address.userInteractionEnabled, @"Address disabled at %.3f points", width);
+    XCTAssertTrue(CGRectContainsRect(CGRectInset(header.bounds, -0.5, -0.5), addressFrame),
+                  @"Address %@ escapes header %@ at %.3f points",
+                  NSStringFromCGRect(addressFrame), NSStringFromCGRect(header.bounds), width);
   }
 }
 - (void)testAdaptiveToolNavigationKeepsSafeAreaInOnePaneWithoutAccumulatingInsets {
@@ -758,22 +937,344 @@
   }
   [container removeFromSuperview];
 }
-- (void)testImportPreservesOriginalAndBothSameNamedComics {
+- (void)testImportPreservesOriginalAndReusesExactDuplicateWithoutChangingProgress {
   NSString* name = [NSString stringWithFormat:@"Regression-%@.pdf", NSUUID.UUID.UUIDString];
   NSURL* source = [self createPDFNamed:name inDirectory:NSTemporaryDirectory()];
   NSString* first = [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:name];
   NSString* second = [[first stringByDeletingPathExtension] stringByAppendingString:@" (2).pdf"];
   [self.createdPaths addObjectsFromArray:@[first, second]];
-  XCTAssertTrue([self importAndWait:source]);
-  XCTAssertTrue([self importAndWait:source]);
+  NSArray* firstResult = [self importResultAndWait:source];
+  XCTAssertEqualObjects(firstResult[0], @YES);
+  XCTAssertEqualObjects(firstResult[1], [NSURL fileURLWithPath:first]);
+  XCTAssertEqualObjects(firstResult[2], @YES);
+  [self waitForLibrary];
+
+  Comic* comic = [(LibraryViewController*)[AppDelegate sharedDelegate].viewController
+    _indexedComicForURL:[NSURL fileURLWithPath:first]];
+  XCTAssertNotNil(comic);
+  comic.status = 4;
+  XCTAssertTrue([[LibraryConnection mainConnection] updateObject:comic]);
+  [[CRLibrarySyncCoordinator sharedCoordinator] recordComic:comic currentPage:4 pageCount:10];
+
+  NSArray* duplicateResult = [self importResultAndWait:source];
+  XCTAssertEqualObjects(duplicateResult[0], @YES);
+  XCTAssertEqualObjects(duplicateResult[1], [NSURL fileURLWithPath:first]);
+  XCTAssertEqualObjects(duplicateResult[2], @NO);
   XCTAssertEqualObjects([NSData dataWithContentsOfFile:first], [NSData dataWithContentsOfURL:source]);
-  XCTAssertEqualObjects([NSData dataWithContentsOfFile:second], [NSData dataWithContentsOfURL:source]);
-  NSPredicate* indexed = [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary* bindings) {
-    NSSet* names = [NSSet setWithArray:[[LibraryConnection mainConnection].fetchAllComicsByName valueForKey:@"name"]];
-    return [names containsObject:name] && [names containsObject:second.lastPathComponent];
-  }];
-  XCTestExpectation* expectation = [[XCTNSPredicateExpectation alloc] initWithPredicate:indexed object:nil];
-  [self waitForExpectations:@[expectation] timeout:15];
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:second]);
+  [self waitForLibrary];
+  XCTAssertTrue([[LibraryConnection mainConnection] refetchObject:comic]);
+  XCTAssertEqual([CRLibrarySyncCoordinator.sharedCoordinator initialPageForComic:comic pageCount:10], 4);
+}
+
+- (void)testImportDoesNotDeduplicateSameSizedDifferentComics {
+  NSString* token = NSUUID.UUID.UUIDString;
+  NSString* firstName = [NSString stringWithFormat:@"Same-A-%@.pdf", token];
+  NSString* secondName = [NSString stringWithFormat:@"Same-B-%@.pdf", token];
+  NSURL* firstSource = [self createPDFNamed:firstName inDirectory:NSTemporaryDirectory()];
+  NSURL* secondSource = [self createPDFNamed:secondName inDirectory:NSTemporaryDirectory()];
+  NSMutableData* firstData = [NSMutableData dataWithContentsOfURL:firstSource];
+  NSMutableData* secondData = [NSMutableData dataWithContentsOfURL:secondSource];
+  NSUInteger commonSize = MAX(firstData.length, secondData.length);
+  [firstData increaseLengthBy:commonSize - firstData.length];
+  [secondData increaseLengthBy:commonSize - secondData.length];
+  XCTAssertTrue([firstData writeToURL:firstSource atomically:YES]);
+  XCTAssertTrue([secondData writeToURL:secondSource atomically:YES]);
+  XCTAssertEqual(firstData.length, secondData.length);
+  XCTAssertNotEqualObjects(firstData, secondData);
+
+  NSURL* firstDestination = [NSURL fileURLWithPath:
+    [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:firstName]];
+  NSURL* secondDestination = [NSURL fileURLWithPath:
+    [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:secondName]];
+  [self.createdPaths addObjectsFromArray:@[firstDestination.path, secondDestination.path]];
+
+  NSArray* firstResult = [self importResultAndWait:firstSource];
+  NSArray* secondResult = [self importResultAndWait:secondSource];
+
+  XCTAssertEqualObjects(firstResult, (@[@YES, firstDestination, @YES]));
+  XCTAssertEqualObjects(secondResult, (@[@YES, secondDestination, @YES]));
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:firstDestination.path]);
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:secondDestination.path]);
+}
+
+- (void)testExternalPDFReaderOpensInPlaceWithoutCopyingOrModifyingSource {
+  NSString* name = [NSString stringWithFormat:@"External-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* source = [self createPDFNamed:name inDirectory:NSTemporaryDirectory()];
+  NSString* destination = [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:name];
+  [self.createdPaths addObject:destination];
+  NSData* originalData = [NSData dataWithContentsOfURL:source];
+  NSDate* originalModificationDate = [[[NSFileManager defaultManager]
+    attributesOfItemAtPath:source.path error:NULL] objectForKey:NSFileModificationDate];
+
+  ComicViewController* reader = [[ComicViewController alloc] initWithExternalFileURL:source delegate:nil];
+  XCTAssertNotNil(reader);
+  XCTAssertTrue(reader.isExternalComic);
+  XCTAssertEqualObjects(reader.externalFileURL, source);
+  [reader loadViewIfNeeded];
+  UIBarButtonItem* addButton = [reader valueForKey:@"addToLibraryButtonItem"];
+  XCTAssertEqualObjects(addButton.accessibilityIdentifier, @"reader.external.addToLibrary");
+  [reader saveState];
+  reader = nil;
+
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:destination]);
+  XCTAssertEqualObjects([NSData dataWithContentsOfURL:source], originalData);
+  XCTAssertEqualObjects([[[NSFileManager defaultManager] attributesOfItemAtPath:source.path error:NULL]
+                         objectForKey:NSFileModificationDate], originalModificationDate);
+}
+
+- (void)testInvalidExternalComicIsRejected {
+  NSString* path = [NSTemporaryDirectory() stringByAppendingPathComponent:
+    [NSString stringWithFormat:@"Invalid-%@.pdf", NSUUID.UUID.UUIDString]];
+  XCTAssertTrue([[@"not a PDF" dataUsingEncoding:NSUTF8StringEncoding] writeToFile:path atomically:YES]);
+  [self.createdPaths addObject:path];
+  ComicViewController* reader = [[ComicViewController alloc]
+    initWithExternalFileURL:[NSURL fileURLWithPath:path] delegate:nil];
+  XCTAssertNil(reader);
+}
+
+- (void)testExternalOpenQueueFiltersUnsupportedURLsWithoutReordering {
+  NSArray<NSURL*>* urls = @[
+    [NSURL fileURLWithPath:@"/tmp/Third.cbz"],
+    [NSURL fileURLWithPath:@"/tmp/Ignore.txt"],
+    [NSURL fileURLWithPath:@"/tmp/First.pdf"],
+    [NSURL URLWithString:@"https://example.invalid/Remote.cbr"],
+    [NSURL fileURLWithPath:@"/tmp/.Hidden.zip"],
+    [NSURL fileURLWithPath:@"/tmp/Second.cbr"]
+  ];
+  NSArray<NSURL*>* expected = @[urls[0], urls[2], urls[5]];
+  XCTAssertEqualObjects([LibraryViewController supportedComicURLsFromURLs:urls], expected);
+}
+
+- (void)testDirectOpenPickerIntentIsControllerScopedAndTemporaryCopyLivesForReaderOnly {
+  CRDirectOpenRecordingLibraryViewController* controller =
+    [[CRDirectOpenRecordingLibraryViewController alloc] init];
+  CRPresentationRecordingViewController* directPresenter =
+    [[CRPresentationRecordingViewController alloc] init];
+  CRPresentationRecordingViewController* importPresenter =
+    [[CRPresentationRecordingViewController alloc] init];
+  [controller _presentComicDocumentPickerOpeningDirectly:YES fromController:directPresenter];
+  [controller _presentComicDocumentPickerOpeningDirectly:NO fromController:importPresenter];
+
+  UIDocumentPickerViewController* directPicker =
+    (UIDocumentPickerViewController*)directPresenter.recordedPresentedViewController;
+  UIDocumentPickerViewController* importPicker =
+    (UIDocumentPickerViewController*)importPresenter.recordedPresentedViewController;
+  XCTAssertEqualObjects(NSStringFromClass(directPicker.class), @"CRComicDocumentPickerViewController");
+  XCTAssertEqualObjects(NSStringFromClass(importPicker.class), @"CRComicDocumentPickerViewController");
+  XCTAssertEqualObjects([directPicker valueForKey:@"opensComicsDirectly"], @YES);
+  XCTAssertEqualObjects([importPicker valueForKey:@"opensComicsDirectly"], @NO);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  XCTAssertEqual(directPicker.documentPickerMode, UIDocumentPickerModeImport);
+  XCTAssertEqual(importPicker.documentPickerMode, UIDocumentPickerModeImport);
+#pragma clang diagnostic pop
+
+  // Dismissing another picker must not erase the intent carried by this picker.
+  UIPresentationController* unrelatedDismissal = [[UIPresentationController alloc]
+    initWithPresentedViewController:importPicker presentingViewController:controller];
+  [controller presentationControllerDidDismiss:unrelatedDismissal];
+  XCTAssertEqualObjects([directPicker valueForKey:@"opensComicsDirectly"], @YES);
+
+  NSString* name = [NSString stringWithFormat:@"Direct-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* pickerCopy = [self createPDFNamed:name inDirectory:NSTemporaryDirectory()];
+  NSString* libraryPath = [[LibraryConnection libraryRootPath] stringByAppendingPathComponent:name];
+  [self.createdPaths addObject:libraryPath];
+  NSData* expectedData = [NSData dataWithContentsOfURL:pickerCopy];
+
+  [controller documentPicker:directPicker didPickDocumentsAtURLs:@[pickerCopy]];
+
+  XCTAssertTrue(controller.enqueuedURLsDeleteOnClose);
+  XCTAssertEqual(controller.enqueuedURLs.count, 1u);
+  NSURL* stagedURL = controller.enqueuedURLs.firstObject;
+  NSString* stagedDirectory = stagedURL.path.stringByDeletingLastPathComponent;
+  [self.createdPaths addObject:stagedDirectory];
+  XCTAssertEqualObjects(stagedURL.lastPathComponent, name);
+  XCTAssertEqualObjects(stagedDirectory.stringByDeletingLastPathComponent.stringByStandardizingPath,
+                        CRDirectOpenTemporaryRootPath().stringByStandardizingPath);
+  XCTAssertFalse([stagedURL.path.stringByStandardizingPath
+    hasPrefix:[[LibraryConnection libraryRootPath].stringByStandardizingPath
+      stringByAppendingString:@"/"]]);
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:stagedURL.path]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:pickerCopy.path],
+                 @"A picker-owned container copy should be moved into transient storage");
+  XCTAssertEqualObjects([NSData dataWithContentsOfURL:stagedURL], expectedData);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:libraryPath]);
+  XCTAssertNil([controller _indexedComicForURL:stagedURL]);
+  XCTAssertFalse([[[LibraryConnection mainConnection].fetchAllComicsByName valueForKey:@"name"]
+    containsObject:name]);
+
+  @autoreleasepool {
+    ComicViewController* reader = [[ComicViewController alloc]
+      initWithExternalFileURL:stagedURL delegate:nil deletesFileOnDealloc:YES];
+    XCTAssertNotNil(reader);
+    XCTAssertEqualObjects(reader.externalFileURL, stagedURL);
+    XCTAssertTrue(reader.isExternalComic);
+  }
+
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:stagedURL.path]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:stagedDirectory]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:libraryPath]);
+}
+
+- (void)testDirectOpenPickerPreservesUnexpectedSourceWhileStagingPrivateCopy {
+  CRDirectOpenRecordingLibraryViewController* controller =
+    [[CRDirectOpenRecordingLibraryViewController alloc] init];
+  CRPresentationRecordingViewController* presenter =
+    [[CRPresentationRecordingViewController alloc] init];
+  [controller _presentComicDocumentPickerOpeningDirectly:YES fromController:presenter];
+  UIDocumentPickerViewController* picker =
+    (UIDocumentPickerViewController*)presenter.recordedPresentedViewController;
+
+  NSString* sourceDirectory = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory,
+                                                                     NSUserDomainMask,
+                                                                     YES) firstObject]
+    stringByAppendingPathComponent:[NSString stringWithFormat:@"DirectOpenSource-%@",
+                                                               NSUUID.UUID.UUIDString]];
+  [self.createdPaths addObject:sourceDirectory];
+  NSString* name = [NSString stringWithFormat:@"Preserved-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* possibleOriginal = [self createPDFNamed:name inDirectory:sourceDirectory];
+  NSData* expectedData = [NSData dataWithContentsOfURL:possibleOriginal];
+
+  [controller documentPicker:picker didPickDocumentsAtURLs:@[possibleOriginal]];
+
+  XCTAssertTrue(controller.enqueuedURLsDeleteOnClose);
+  XCTAssertEqual(controller.enqueuedURLs.count, 1u);
+  NSURL* stagedURL = controller.enqueuedURLs.firstObject;
+  [self.createdPaths addObject:stagedURL.path.stringByDeletingLastPathComponent];
+  XCTAssertNotEqualObjects(stagedURL, possibleOriginal);
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:possibleOriginal.path],
+                @"An unexpected source URL might be the original and must be preserved");
+  XCTAssertEqualObjects([NSData dataWithContentsOfURL:possibleOriginal], expectedData);
+  XCTAssertEqualObjects([NSData dataWithContentsOfURL:stagedURL], expectedData);
+
+  CRRemoveDirectOpenTemporaryFileAtURL(stagedURL);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:stagedURL.path]);
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:possibleOriginal.path]);
+}
+
+- (void)testInvalidDirectOpenPickerCopyIsRemovedWhenReaderRejectsIt {
+  CRDirectOpenRecordingLibraryViewController* controller =
+    [[CRDirectOpenRecordingLibraryViewController alloc] init];
+  CRPresentationRecordingViewController* presenter =
+    [[CRPresentationRecordingViewController alloc] init];
+  [controller _presentComicDocumentPickerOpeningDirectly:YES fromController:presenter];
+  UIDocumentPickerViewController* picker =
+    (UIDocumentPickerViewController*)presenter.recordedPresentedViewController;
+
+  NSString* name = [NSString stringWithFormat:@"Invalid-Direct-%@.pdf", NSUUID.UUID.UUIDString];
+  NSString* sourcePath = [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+  XCTAssertTrue([[@"not a PDF" dataUsingEncoding:NSUTF8StringEncoding]
+    writeToFile:sourcePath atomically:YES]);
+  [self.createdPaths addObject:sourcePath];
+
+  [controller documentPicker:picker
+       didPickDocumentsAtURLs:@[[NSURL fileURLWithPath:sourcePath]]];
+
+  XCTAssertTrue(controller.enqueuedURLsDeleteOnClose);
+  XCTAssertEqual(controller.enqueuedURLs.count, 1u);
+  NSURL* stagedURL = controller.enqueuedURLs.firstObject;
+  NSString* stagedDirectory = stagedURL.path.stringByDeletingLastPathComponent;
+  [self.createdPaths addObject:stagedDirectory];
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:stagedURL.path]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:sourcePath]);
+
+  @autoreleasepool {
+    ComicViewController* reader = [[ComicViewController alloc]
+      initWithExternalFileURL:stagedURL delegate:nil deletesFileOnDealloc:YES];
+    XCTAssertNil(reader);
+  }
+
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:stagedURL.path]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:stagedDirectory]);
+}
+
+#if TARGET_OS_MACCATALYST
+- (void)testExternalOpenQueueReplacesFullScreenReaderWhileLibraryViewIsDetached {
+  AppDelegate* app = [AppDelegate sharedDelegate];
+  UIWindow* window = app.window;
+  XCTAssertNotNil(window.windowScene);
+  XCTAssertEqual(window.windowScene.activationState, UISceneActivationStateForegroundActive);
+  XCTAssertFalse(app.isAlertVisible);
+  if (!window.windowScene ||
+      window.windowScene.activationState != UISceneActivationStateForegroundActive) return;
+
+  CRQueueDrainRecordingLibraryViewController* library =
+    [[CRQueueDrainRecordingLibraryViewController alloc] init];
+  library.view = [[UIView alloc] init];
+  [library setValue:window forKey:@"window"];
+  [library setValue:@YES forKey:@"launched"];
+  [library setValue:@NO forKey:@"startupPresentationsPending"];
+  CRQueueDrainTestComicViewController* reader = [[CRQueueDrainTestComicViewController alloc] init];
+  library.presentedReader = reader;
+  // Reproduce the UIKit state: the full-screen reader belongs to the active
+  // window while its presenting library view has no window.
+  [window addSubview:reader.view];
+  @try {
+    XCTAssertNil(library.view.window);
+    XCTAssertEqual(reader.view.window, window);
+    [library enqueueComicURLsForOpening:@[
+      [NSURL fileURLWithPath:@"/tmp/Queued-While-Reader-Full-Screen.pdf"]
+    ]];
+    XCTAssertTrue(library.queueDismissalRequested,
+                  @"An active owning scene must request replacement even when the library view is detached");
+    XCTAssertTrue(reader.saveStateCalled);
+  } @finally {
+    [NSObject cancelPreviousPerformRequestsWithTarget:library];
+    [reader.view removeFromSuperview];
+    library.presentedReader = nil;
+    [library setValue:nil forKey:@"window"];
+  }
+}
+
+- (void)testCatalystStandardOpenCommandIsAvailableAndTitledForLibraryAndReader {
+  SEL openAction = NSSelectorFromString(@"open:");
+  CRDirectOpenRecordingLibraryViewController* library =
+    [[CRDirectOpenRecordingLibraryViewController alloc] init];
+  UICommand* libraryCommand = [UICommand commandWithTitle:@"Open…"
+                                                    image:nil
+                                                   action:openAction
+                                             propertyList:nil];
+
+  XCTAssertTrue([library canPerformAction:openAction withSender:libraryCommand]);
+  [library validateCommand:libraryCommand];
+  XCTAssertEqualObjects(libraryCommand.title, @"Open Comic…");
+  XCTAssertFalse((libraryCommand.attributes & UIMenuElementAttributesDisabled) != 0);
+  XCTAssertEqual([library.keyCommands indexOfObjectPassingTest:^BOOL(UIKeyCommand* command,
+                                                                      NSUInteger index,
+                                                                      BOOL* stop) {
+    return [command.input isEqualToString:@"o"] &&
+      command.modifierFlags == UIKeyModifierCommand;
+  }], NSNotFound);
+
+  NSString* name = [NSString stringWithFormat:@"Menu-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* source = [self createPDFNamed:name inDirectory:NSTemporaryDirectory()];
+  ComicViewController* reader = [[ComicViewController alloc]
+    initWithExternalFileURL:source delegate:(id<CRExternalComicReaderDelegate>)library];
+  UICommand* readerCommand = [UICommand commandWithTitle:@"Open…"
+                                                   image:nil
+                                                  action:openAction
+                                            propertyList:nil];
+
+  XCTAssertNotNil(reader);
+  XCTAssertTrue([reader canPerformAction:openAction withSender:readerCommand]);
+  [reader validateCommand:readerCommand];
+  XCTAssertEqualObjects(readerCommand.title, @"Open Comic…");
+  XCTAssertFalse((readerCommand.attributes & UIMenuElementAttributesDisabled) != 0);
+  XCTAssertEqual([reader.keyCommands indexOfObjectPassingTest:^BOOL(UIKeyCommand* command,
+                                                                     NSUInteger index,
+                                                                     BOOL* stop) {
+    return [command.input isEqualToString:@"o"] &&
+      command.modifierFlags == UIKeyModifierCommand;
+  }], NSNotFound);
+}
+#endif
+
+- (void)testDocumentTypesAdvertiseGenericZipAndRARArchives {
+  NSArray* documentTypes = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDocumentTypes"];
+  NSArray* identifiers = [documentTypes valueForKeyPath:@"@unionOfArrays.LSItemContentTypes"];
+  XCTAssertTrue([identifiers containsObject:@"public.zip-archive"]);
+  XCTAssertTrue([identifiers containsObject:@"com.rarlab.rar-archive"]);
 }
 - (void)testFileReferenceURLImportPreservesOriginalNameAndContents {
   NSString* name = [NSString stringWithFormat:@"File-Reference-%@.pdf", NSUUID.UUID.UUIDString];

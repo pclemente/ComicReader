@@ -15,6 +15,7 @@
 
 #import <pthread.h>
 
+#import "ComicViewController.h"
 #import "GridView.h"
 #import "Library.h"
 
@@ -62,6 +63,7 @@
   NSTimer* _updateTimer;
   UIView* _emptyStateView;
   BOOL _comicPresentationActive;
+  BOOL _externalComicPresentationActive;
   BOOL _startupPresentationsPending;
   BOOL _libraryUpdatePromptPending;
   BOOL _releaseNewsDismissed;
@@ -72,6 +74,17 @@
   UIBarButtonItem* _plusButtonItem;
   UIBarButtonItem* _cloudButtonItem;
   UIBarButtonItem* _readingListsButtonItem;
+  UIBarButtonItem* _browserButtonItem;
+  NSURL* _pendingWebComicURL;
+  NSUInteger _webComicScanAttempts;
+  NSInteger _pendingWebComicPageIndex;
+  NSInteger _pendingWebComicPageCount;
+  BOOL _pendingWebComicCreatedCopy;
+  NSMutableArray<NSURL*>* _externalComicURLQueue;
+  NSUInteger _externalComicLibraryScanAttempts;
+  BOOL _incomingComicDismissalPending;
+  BOOL _dismissPresentedComicForIncomingURL;
+  NSMutableSet<NSURL*>* _directOpenTemporaryURLs;
   UIToolbar* _compactToolbar;
   CRAdaptiveViewportView* _adaptiveViewportView;
   BOOL _usingCompactLayout;
@@ -96,9 +109,11 @@
 - (id) initWithWindow:(UIWindow*)window;
 - (void) updatePurchase;
 - (void) saveState;
++ (NSArray<NSURL*>*)supportedComicURLsFromURLs:(NSArray<NSURL*>*)urls;
+- (void)enqueueComicURLsForOpening:(NSArray<NSURL*>*)urls;
 @end
 
-@interface LibraryViewController (IBActions)
+@interface LibraryViewController (IBActions) <CRExternalComicReaderDelegate>
 - (IBAction) resort:(id)sender;
 - (IBAction) update:(id)sender;
 - (IBAction) forceUpdate:(id)sender;
@@ -109,6 +124,8 @@
 - (IBAction) toggleDimming:(id)sender;
 - (IBAction) purchase:(id)sender;
 - (IBAction) restore:(id)sender;
+- (void)_presentComicDocumentPickerOpeningDirectly:(BOOL)opensComicsDirectly
+                                    fromController:(UIViewController*)controller;
 @end
 
 @interface LibraryViewController (GridViewDelegate) <GridViewDelegate>

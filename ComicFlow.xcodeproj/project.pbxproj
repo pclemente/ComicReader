@@ -7,6 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D02610230000000000000001 /* CRMacWebBrowserUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02610230000000000000003 /* CRMacWebBrowserUITests.swift */; };
+		D02610230000000000000002 /* ComicReader.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */; };
+		3B0D35C50E34D5615ACCF3AB /* CRReviewPromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */; };
+		E3D56880404534223523D173 /* CRReviewPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */; };
+		CB3DE61BB9692D5919DBF9C0 /* CRWebBrowserUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */; };
+		60EA26A92A95879A9AA36098 /* CRBrowserSiteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */; };
+		3074986D18BB12AD36502C22 /* CRWebImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */; };
+		42BEE70957039152FC61E602 /* CRBrowserSiteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2F1C349FAF11672D7DEB0D /* CRBrowserSiteStore.swift */; };
+		68961323CE61F2AA8B52EE5B /* CRWebBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9D235EDE870B3847694DF /* CRWebBrowserViewController.swift */; };
+		69B7781EFCF48BFBDC66CFC9 /* CRWebDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22430102127D9F404A6AF0E6 /* CRWebDownloadManager.swift */; };
+		1B812F5E67776D68137F4945 /* CRWebImportModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB711196D0C148E39F3E7A2 /* CRWebImportModel.swift */; };
 		D02715000000000000000003 /* CRAdaptiveViewport.m in Sources */ = {isa = PBXBuildFile; fileRef = D02715000000000000000002 /* CRAdaptiveViewport.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		07DBFC17D7C3CDAB72EAC294 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E5A886E2BB61406AE2B140E /* Foundation.framework */; };
 		1B236502154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1B2364F9154FABBA00A13B0D /* DocumentView-Shadow-Left@2x.png */; };
@@ -183,6 +194,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		D02610230000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1D6058900D05DD3D006BFB54;
+			remoteInfo = ComicFlow;
+		};
 		5CBCF81FCF8315ED17CB6CDD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -200,6 +218,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D02610230000000000000003 /* CRMacWebBrowserUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMacWebBrowserUITests.swift; sourceTree = "<group>"; };
+		D02610230000000000000004 /* ComicReaderMacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ComicReaderMacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D02610230000000000000005 /* ComicFlow-MacUITestHost.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ComicFlow-MacUITestHost.entitlements"; sourceTree = "<group>"; };
+		8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRReviewPromptTests.swift; sourceTree = SOURCE_ROOT; };
+		2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRReviewPrompt.swift; sourceTree = SOURCE_ROOT; };
+		D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests/CRWebBrowserUITests.m; sourceTree = SOURCE_ROOT; };
+		43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRBrowserSiteStoreTests.swift; sourceTree = SOURCE_ROOT; };
+		FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRWebImportTests.swift; sourceTree = SOURCE_ROOT; };
+		8F2F1C349FAF11672D7DEB0D /* CRBrowserSiteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRBrowserSiteStore.swift; sourceTree = SOURCE_ROOT; };
+		23F9D235EDE870B3847694DF /* CRWebBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRWebBrowserViewController.swift; sourceTree = SOURCE_ROOT; };
+		22430102127D9F404A6AF0E6 /* CRWebDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRWebDownloadManager.swift; sourceTree = SOURCE_ROOT; };
+		5FB711196D0C148E39F3E7A2 /* CRWebImportModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRWebImportModel.swift; sourceTree = SOURCE_ROOT; };
 		D02715000000000000000001 /* CRAdaptiveViewport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Classes/CRAdaptiveViewport.h; sourceTree = SOURCE_ROOT; };
 		D02715000000000000000002 /* CRAdaptiveViewport.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Classes/CRAdaptiveViewport.m; sourceTree = SOURCE_ROOT; };
 		0E5A886E2BB61406AE2B140E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -533,6 +563,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		D02610230000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1D60588F0D05DD3D006BFB54 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -608,6 +645,7 @@
 				1D6058910D05DD3D006BFB54 /* ComicFlow.app */,
 				5C2169DE5E7609F93063FD6F /* ComicReaderTests.xctest */,
 				C4DD04AAB057593E365B9C83 /* ComicReaderUITests.xctest */,
+				D02610230000000000000004 /* ComicReaderMacUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -642,8 +680,18 @@
 				BA26BC707C7B18639B14092E /* CRPlusViewController.swift */,
 				AAFA6E9E1B826EB6C2B534D3 /* CRCloudSyncManager.swift */,
 				90A9B4A129C757D5AF393AD8 /* CRCloudSyncModel.swift */,
+				5FB711196D0C148E39F3E7A2 /* CRWebImportModel.swift */,
+				22430102127D9F404A6AF0E6 /* CRWebDownloadManager.swift */,
+				23F9D235EDE870B3847694DF /* CRWebBrowserViewController.swift */,
+				8F2F1C349FAF11672D7DEB0D /* CRBrowserSiteStore.swift */,
+				FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */,
+				43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */,
+				D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */,
+				2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */,
+				8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */,
 				CB638C43668C7D347527A8F0 /* CRPlusStore.swift */,
 				35E3119A274BF2A3009D02EE /* ComicFlow.entitlements */,
+				D02610230000000000000005 /* ComicFlow-MacUITestHost.entitlements */,
 				E209D2111221154300B1077B /* Defaults.h */,
 				E229344C121E285200484F9F /* Info.plist */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
@@ -715,6 +763,7 @@
 				D9D188482710834B074158AC /* ComicReaderTests.m */,
 				9D88E59B321768943C3F95D4 /* ComicReaderUITests.m */,
 				A238D91C82CD263BE639B483 /* ReaderRegressionTests.m */,
+				D02610230000000000000003 /* CRMacWebBrowserUITests.swift */,
 			);
 			name = Tests;
 			path = Tests;
@@ -1108,6 +1157,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		D02610230000000000000008 /* ComicReaderMacUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0261023000000000000000E /* Build configuration list for PBXNativeTarget "ComicReaderMacUITests" */;
+			buildPhases = (
+				D0261023000000000000000B /* Sources */,
+				D02610230000000000000007 /* Frameworks */,
+				D0261023000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D02610230000000000000009 /* PBXTargetDependency */,
+			);
+			name = ComicReaderMacUITests;
+			productName = ComicReaderMacUITests;
+			productReference = D02610230000000000000004 /* ComicReaderMacUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		1D6058900D05DD3D006BFB54 /* ComicFlow */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "ComicFlow" */;
@@ -1176,6 +1243,10 @@
 							com.apple.InAppPurchase = {enabled = 1;};
 						};
 					};
+					D02610230000000000000008 = {
+						CreatedOnToolsVersion = 27.1;
+						TestTargetID = 1D6058900D05DD3D006BFB54;
+					};
 				};
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ComicFlow" */;
@@ -1198,11 +1269,20 @@
 				1D6058900D05DD3D006BFB54 /* ComicFlow */,
 				61945109548D78C1E147AD2F /* ComicReaderTests */,
 				4985A16593B47D41BFF4EC04 /* ComicReaderUITests */,
+				D02610230000000000000008 /* ComicReaderMacUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		D0261023000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D02610230000000000000002 /* ComicReader.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1D60588D0D05DD3D006BFB54 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1255,10 +1335,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		D0261023000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D02610230000000000000001 /* CRMacWebBrowserUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		17A34A090AF249C0D96CFA91 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB3DE61BB9692D5919DBF9C0 /* CRWebBrowserUITests.m in Sources */,
 				4DB49182193176D8EB91234C /* ComicReaderUITests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1267,6 +1356,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1B812F5E67776D68137F4945 /* CRWebImportModel.swift in Sources */,
+				69B7781EFCF48BFBDC66CFC9 /* CRWebDownloadManager.swift in Sources */,
+				68961323CE61F2AA8B52EE5B /* CRWebBrowserViewController.swift in Sources */,
+				42BEE70957039152FC61E602 /* CRBrowserSiteStore.swift in Sources */,
+				E3D56880404534223523D173 /* CRReviewPrompt.swift in Sources */,
 				22C61AD13860B7AFF8954757 /* CRPlusStore.swift in Sources */,
 				4DD82037605E47A104B5E211 /* CRCloudSyncModel.swift in Sources */,
 				5C7C2841B8AB018A9C98BD60 /* CRCloudSyncManager.swift in Sources */,
@@ -1395,6 +1489,9 @@
 				DE5F64F84E26BF0D0B4E00AF /* CRComicTextEngineTests.swift in Sources */,
 				95165F35231A8611169E2A09 /* CRSavedQuotesTests.swift in Sources */,
 				04026F047B584913FBF9CCFE /* CRReaderImageFiltersTests.swift in Sources */,
+				3074986D18BB12AD36502C22 /* CRWebImportTests.swift in Sources */,
+				60EA26A92A95879A9AA36098 /* CRBrowserSiteStoreTests.swift in Sources */,
+				3B0D35C50E34D5615ACCF3AB /* CRReviewPromptTests.swift in Sources */,
 				32B90DC1BFA2406ED322B173 /* CRPlusStoreTests.swift in Sources */,
 				58F7305C2D57A36619A87110 /* ComicReaderTests.m in Sources */,
 				20FAF9572426FFB95FB35410 /* ReaderRegressionTests.m in Sources */,
@@ -1404,6 +1501,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		D02610230000000000000009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ComicFlow;
+			target = 1D6058900D05DD3D006BFB54 /* ComicFlow */;
+			targetProxy = D02610230000000000000006 /* PBXContainerItemProxy */;
+		};
 		8F19925A76A61E3ADE896499 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = ComicFlow;
@@ -1453,7 +1556,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1466,9 +1569,11 @@
 				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.5;
+				MARKETING_VERSION = 1.6;
 				OTHER_LDFLAGS = "-Wl,-search_paths_first";
-				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
+				CR_APP_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
+				CR_MAC_ENTITLEMENTS = "ComicFlow-Mac.entitlements";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CR_APP_BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = ComicFlow;
 				PRODUCT_MODULE_NAME = ComicFlow;
 				SWIFT_VERSION = 5.0;
@@ -1478,11 +1583,44 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ComicFlow-Mac.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "$(CR_MAC_ENTITLEMENTS)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
+		};
+		D0261023000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderMacUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = ComicFlow;
+			};
+			name = Debug;
+		};
+		D0261023000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderMacUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = ComicFlow;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
 		};
 		1D6058950D05DD3E006BFB54 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1491,7 +1629,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = ComicFlow.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = CEQU933V6W;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1504,7 +1642,7 @@
 				HEADER_SEARCH_PATHS = "$(SDKROOT)/usr/include/libxml2";
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.5;
+				MARKETING_VERSION = 1.6;
 				OTHER_LDFLAGS = "-Wl,-search_paths_first";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicFlow;
 				PRODUCT_NAME = ComicFlow;
@@ -1753,6 +1891,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		D0261023000000000000000E /* Build configuration list for PBXNativeTarget "ComicReaderMacUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0261023000000000000000C /* Debug */,
+				D0261023000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "ComicFlow" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

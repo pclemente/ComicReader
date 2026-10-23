@@ -25,4 +25,7 @@
 - (NSArray*) retrieveFileList;
 - (BOOL) extractToPath:(NSString*)outPath;
 - (BOOL) extractFile:(NSString*)inPath toPath:(NSString*)outPath;  // Destination path must include file name;
+- (BOOL) extractFile:(NSString*)inPath
+              toPath:(NSString*)outPath
+maximumUncompressedBytes:(unsigned long long)maximumUncompressedBytes;  // 0 preserves the unlimited legacy behavior
 @end

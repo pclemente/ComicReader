@@ -37,6 +37,16 @@ typedef NS_ERROR_ENUM(CRComicPageSourceErrorDomain, CRComicPageSourceErrorCode) 
                                 error:(NSError* _Nullable * _Nullable)error
   NS_SWIFT_NAME(image(atPageIndex:maxDimension:));
 
+/**
+ Renders one page while limiting an archive entry's extracted size. The limit
+ does not affect PDF rendering. Pass 0 to preserve the unlimited reader path.
+ */
+- (nullable UIImage*)imageAtPageIndex:(NSInteger)pageIndex
+                         maxDimension:(CGFloat)maxDimension
+             maximumUncompressedBytes:(unsigned long long)maximumUncompressedBytes
+                                error:(NSError* _Nullable * _Nullable)error
+  NS_SWIFT_NAME(image(atPageIndex:maxDimension:maximumUncompressedBytes:));
+
 /** Returns nil without an error when the page has no embedded text. */
 - (nullable NSString*)embeddedTextAtPageIndex:(NSInteger)pageIndex
                                         error:(NSError* _Nullable * _Nullable)error

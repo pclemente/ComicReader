@@ -16,17 +16,31 @@ status and current page is free for everyone across iPhone, iPad and Mac. Sync s
 consent and uses your personal iCloud storage. Text from the current page can
 also be recognised, selected, copied and shared for free.
 
-**ComicReader Plus** remains a one-time purchase for app-specific features:
-current-comic Search & Quotes, custom Reading Lists with automatic Smart Queues, named Page Bookmarks and
-renderer-only Image Filters. Search builds a persistent local page index for the
+On Mac, open a supported comic from Finder to read it immediately. Choose
+**Add to Library** when you want a library copy with saved reading progress and
+optional iCloud sync. Direct reading and importing are both free. See
+[opening comics on Mac](docs/MacDocuments.md).
+
+**ComicReader Plus** remains one purchase for iPhone, iPad and Mac, with a
+€9.99 base price in Spain and the local price shown by the App Store. It adds
+app-specific features:
+web downloads with validated imports and duplicate detection, current-comic Search & Quotes,
+custom Reading Lists with automatic Smart Queues, named Page Bookmarks and
+renderer-only Image Filters. Browsing, saved website sessions, Files imports and local
+transfers remain free. Plus manages supported website downloads into your chosen
+library collection. See [web browsing and downloads](docs/WebBrowser.md).
+Search builds a persistent local page index for the
 comic being read; saved quotes can be edited, shared and opened at their source
 page. Search indexes, quotes, lists and bookmarks stay on this device. Search does
 not cover the whole library, and text recognition may be incomplete. Image
 Filters include Clear Ink, Grayscale and Warm Paper, never modify comic files,
 and always allow returning to Original rendering.
 Smart Queues group Continue Reading, Unread and Read Again from the current library state; they are not separate stored lists. Plus includes a free visual preview of its image filters.
-Restore Purchases is included; there is no subscription or bundled comic
-content. See [Plus setup and release validation](docs/PlusUpgrade.md) and the
+Restore Purchases is included; existing Plus owners receive the website import
+tools with their current purchase. There is no subscription or bundled comic
+content. Open **Get Plus** from the library to see the tools and current price;
+the button is called **Plus** when the upgrade is already unlocked.
+See [Plus setup and release validation](docs/PlusUpgrade.md) and the
 [monetization decision](docs/MonetizationReview.md).
 
 iPhone Duo support
@@ -46,8 +60,9 @@ Device Hub checks also confirmed reopened zoom focus and responsive text tools
 through partial laptop, partial book and open postures. A separate successful
 StoreKitTest journey captured five genuine full-inner-display screenshots. The
 compositor validated five 2853×2007 opaque RGB outputs, and each passed individual
-high-resolution visual review. The iPhone/iPad and Mac 1.5 (13) submissions are
-both **Waiting for Review** and configured to release automatically after approval.
+high-resolution visual review. The iPhone/iPad and Mac 1.5 (13) submissions
+were both **Waiting for Review** after submission and configured to release automatically after approval.
+On 23 October, App Store Connect showed the iOS release as **Ready for Distribution**.
 See [adaptive reading and Duo validation](docs/AdaptiveReader.md) for details.
 
 Building and testing
@@ -56,6 +71,10 @@ Building and testing
 Open `ComicFlow.xcodeproj` in Xcode 27.1 and select the shared `ComicFlow` scheme. ComicReader supports iPhone and iPad on iOS/iPadOS 15 or later, plus Mac Catalyst on macOS 12 or later. Run Product → Test on an iPad simulator for the regression suite.
 
 See [the regression and compatibility review](docs/RegressionReview.md) for restored behavior, build commands, and validation details.
+
+Third-party usage analytics are not integrated. Existing usage and crash metrics
+are available through Apple's App Store Connect analytics for users who opt in
+to Apple's sharing setting. See the [production crash review](docs/CrashReview2026-10-23.md).
 
 License
 =======

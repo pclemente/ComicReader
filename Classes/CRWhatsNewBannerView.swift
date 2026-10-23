@@ -38,7 +38,7 @@ public final class CRWhatsNewBannerView: UIView {
         addSubview(titleRow)
 
         let message = UILabel()
-        message.text = "New in 1.5: open Duo for a larger comic view. Keep your page and zoom as the screen changes, with pages and controls clear of the fold. Duo support and iCloud sync across iPhone, iPad and Mac are free. Plus is still one purchase, no subscription."
+        message.text = "Keep your page and zoom as Duo opens and closes. New in 1.6: free web browsing and direct reading from Finder on Mac. Plus adds website imports with file and duplicate checks, alongside comic text search and reading lists. One purchase, no subscription. Duo support and iCloud sync stay free."
         message.font = .preferredFont(forTextStyle: .subheadline)
         message.adjustsFontForContentSizeCategory = true
         message.textColor = .secondaryLabel

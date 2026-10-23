@@ -139,6 +139,16 @@ static NSDictionary<NSFileAttributeKey, id>* CRComicPageSourceSnapshot(NSString*
 - (UIImage*)imageAtPageIndex:(NSInteger)pageIndex
                 maxDimension:(CGFloat)maxDimension
                        error:(NSError**)error {
+  return [self imageAtPageIndex:pageIndex
+                   maxDimension:maxDimension
+       maximumUncompressedBytes:0
+                          error:error];
+}
+
+- (UIImage*)imageAtPageIndex:(NSInteger)pageIndex
+                maxDimension:(CGFloat)maxDimension
+    maximumUncompressedBytes:(unsigned long long)maximumUncompressedBytes
+                       error:(NSError**)error {
   if (![self validatePageIndex:pageIndex error:error]) return nil;
   if (![self validateCurrentWithError:error]) return nil;
   if (!isfinite(maxDimension) || maxDimension <= 0.0) {
@@ -171,7 +181,12 @@ static NSDictionary<NSFileAttributeKey, id>* CRComicPageSourceSnapshot(NSString*
       NSString* temporaryName = [NSUUID.UUID.UUIDString stringByAppendingPathExtension:entry.pathExtension];
       NSString* temporaryPath = [NSTemporaryDirectory() stringByAppendingPathComponent:temporaryName];
       @try {
-        if (![self.archive extractFile:entry toPath:temporaryPath]) {
+        BOOL extracted = maximumUncompressedBytes > 0
+          ? [self.archive extractFile:entry
+                               toPath:temporaryPath
+             maximumUncompressedBytes:maximumUncompressedBytes]
+          : [self.archive extractFile:entry toPath:temporaryPath];
+        if (!extracted) {
           if (error) {
             *error = CRComicPageSourceError(CRComicPageSourceErrorExtractionFailed,
                                             @"A comic page could not be extracted.", nil);

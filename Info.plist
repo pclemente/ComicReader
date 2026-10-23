@@ -28,6 +28,7 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>net.pol-online.comic-book-rar-archive</string>
+				<string>com.rarlab.rar-archive</string>
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
@@ -40,6 +41,7 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>net.pol-online.comic-book-zip-archive</string>
+				<string>public.zip-archive</string>
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
@@ -72,7 +74,12 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2010-2016 Pol-Online. All Rights Reserved.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Transfer comics between ComicReader and other devices on your Wi-Fi network using the web uploader or WebDAV.</string>
+	<string>Transfer comics over Wi-Fi using the web uploader or WebDAV, or browse a comic server on your local network.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_http._tcp</string>

@@ -37,6 +37,16 @@ int main(void) {
       ![[NSData dataWithContentsOfFile:plainOutput] isEqualToData:expected]) {
     return _Fail(@"Ordinary RAR single-file extraction failed");
   }
+  NSString* boundedOutput = [root stringByAppendingPathComponent:@"bounded-output"];
+  if (![plain extractFile:@"container" toPath:boundedOutput maximumUncompressedBytes:expected.length] ||
+      ![[NSData dataWithContentsOfFile:boundedOutput] isEqualToData:expected]) {
+    return _Fail(@"RAR extraction at the exact byte limit failed");
+  }
+  NSString* oversizedOutput = [root stringByAppendingPathComponent:@"oversized-output"];
+  if ([plain extractFile:@"container" toPath:oversizedOutput maximumUncompressedBytes:expected.length - 1] ||
+      [files fileExistsAtPath:oversizedOutput]) {
+    return _Fail(@"Oversized RAR extraction created output");
+  }
   NSString* plainBulkOutput = [root stringByAppendingPathComponent:@"plain-bulk"];
   if (![files createDirectoryAtPath:plainBulkOutput withIntermediateDirectories:NO attributes:nil error:NULL] ||
       ![plain extractToPath:plainBulkOutput] ||
@@ -82,6 +92,7 @@ int main(void) {
 
   [files removeItemAtPath:root error:NULL];
   printf("Ordinary RAR list and extraction: PASS\n");
+  printf("Bounded RAR extraction and oversized rejection: PASS\n");
   printf("Encrypted RAR header rejection: PASS\n");
   printf("Encrypted RAR entry rejection without output: PASS\n");
   [pool drain];

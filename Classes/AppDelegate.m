@@ -26,6 +26,59 @@
 #define kUpdateDelay 1.0
 #define kScreenDimmingOpacity 0.5
 
+static BOOL CRIsSupportedComicURL(NSURL* url) {
+  if (!url.isFileURL || [url.lastPathComponent hasPrefix:@"."]) return NO;
+  return [@[@"pdf", @"cbz", @"zip", @"cbr", @"rar"] containsObject:url.pathExtension.lowercaseString];
+}
+
+static BOOL CRIsIndexedLibraryPath(NSString* path, NSString* libraryRoot) {
+  NSString* prefix = [libraryRoot stringByAppendingString:@"/"];
+  if (![path hasPrefix:prefix]) return NO;
+  NSArray<NSString*>* components = [[path substringFromIndex:prefix.length] pathComponents];
+  if (components.count < 1 || components.count > 2 ||
+      [components.firstObject isEqualToString:@"Inbox"]) return NO;
+  for (NSString* component in components) {
+    if ([component hasPrefix:@"."]) return NO;
+  }
+  return YES;
+}
+
+static NSString* CRFindDuplicateComicPath(NSFileManager* manager, NSString* source, NSString* libraryRoot) {
+  NSNumber* sourceSize = [[manager attributesOfItemAtPath:source error:NULL] objectForKey:NSFileSize];
+  if (!sourceSize) return nil;
+  NSURL* rootURL = [NSURL fileURLWithPath:libraryRoot isDirectory:YES];
+  NSDirectoryEnumerator<NSURL*>* enumerator = [manager enumeratorAtURL:rootURL
+                                            includingPropertiesForKeys:@[NSURLIsRegularFileKey, NSURLFileSizeKey]
+                                                               options:NSDirectoryEnumerationSkipsHiddenFiles
+                                                          errorHandler:^BOOL(NSURL* __unused url, NSError* __unused error) { return YES; }];
+  for (NSURL* candidateURL in enumerator) {
+    NSString* candidate = candidateURL.path.stringByResolvingSymlinksInPath;
+    if (!CRIsSupportedComicURL(candidateURL)) continue;
+    if (!CRIsIndexedLibraryPath(candidate, libraryRoot) || [candidate isEqualToString:source]) continue;
+    NSNumber* regular = nil;
+    NSNumber* candidateSize = nil;
+    if (![candidateURL getResourceValue:&regular forKey:NSURLIsRegularFileKey error:NULL] || !regular.boolValue ||
+        ![candidateURL getResourceValue:&candidateSize forKey:NSURLFileSizeKey error:NULL] ||
+        ![candidateSize isEqualToNumber:sourceSize]) continue;
+    if ([manager contentsEqualAtPath:source andPath:candidate]) return candidate;
+  }
+  return nil;
+}
+
+static NSArray<NSURL*>* CRSortedURLsFromOpenContexts(NSSet<UIOpenURLContext*>* contexts) {
+  NSArray<UIOpenURLContext*>* sorted = [contexts.allObjects sortedArrayUsingComparator:
+    ^NSComparisonResult(UIOpenURLContext* first, UIOpenURLContext* second) {
+      NSString* firstKey = first.URL.path ?: first.URL.absoluteString;
+      NSString* secondKey = second.URL.path ?: second.URL.absoluteString;
+      NSComparisonResult result = [firstKey compare:secondKey options:NSLiteralSearch];
+      if (result != NSOrderedSame) return result;
+      return [first.URL.absoluteString compare:second.URL.absoluteString options:NSLiteralSearch];
+    }];
+  NSMutableArray<NSURL*>* urls = [NSMutableArray arrayWithCapacity:sorted.count];
+  for (UIOpenURLContext* context in sorted) [urls addObject:context.URL];
+  return urls;
+}
+
 @implementation AppDelegate
 
 + (void) initialize {
@@ -164,11 +217,16 @@
 }
 
 - (BOOL) importComicAtURL:(NSURL*)url completion:(void (^)(BOOL))completion {
-  if (!url.isFileURL || [url.lastPathComponent hasPrefix:@"."] ||
-      ![@[@"pdf", @"cbz", @"zip", @"cbr", @"rar"] containsObject:url.pathExtension.lowercaseString]) {
-    if (completion) {
-      completion(NO);
-    }
+  return [self importComicAtURL:url resultCompletion:^(BOOL imported, NSURL* __unused libraryURL,
+                                                       BOOL __unused createdCopy) {
+    if (completion) completion(imported);
+  }];
+}
+
+- (BOOL)importComicAtURL:(NSURL*)url
+       resultCompletion:(void (^)(BOOL imported, NSURL* libraryURL, BOOL createdCopy))completion {
+  if (!CRIsSupportedComicURL(url)) {
+    if (completion) completion(NO, nil, NO);
     return NO;
   }
   if (!_importQueue) {
@@ -180,6 +238,8 @@
     __block NSError* copyError = nil;
     NSError* coordinationError = nil;
     __block BOOL imported = NO;
+    __block BOOL createdCopy = NO;
+    __block NSString* resultPath = nil;
     NSFileCoordinator* coordinator = [[[NSFileCoordinator alloc] initWithFilePresenter:nil] autorelease];
     [coordinator coordinateReadingItemAtURL:url options:0 error:&coordinationError byAccessor:^(NSURL* readableURL) {
       NSNumber* regularFile = nil;
@@ -189,31 +249,36 @@
       }
       NSString* root = [[LibraryConnection libraryRootPath] stringByResolvingSymlinksInPath];
       NSString* source = [readableURL.path stringByResolvingSymlinksInPath];
-      // The indexer supports root comics and one visible collection folder.
-      if ([source hasPrefix:[root stringByAppendingString:@"/"]]) {
-        NSArray* components = [[source substringFromIndex:root.length + 1] pathComponents];
-        BOOL indexedLocation = components.count <= 2 && ![components.firstObject isEqualToString:@"Inbox"];
-        for (NSString* component in components) {
-          indexedLocation &= ![component hasPrefix:@"."];
-        }
-        if (indexedLocation) {
-          imported = YES;
-          return;
-        }
+      if (CRIsIndexedLibraryPath(source, root)) {
+        imported = YES;
+        resultPath = [source copy];
+        return;
       }
       NSFileManager* manager = [NSFileManager defaultManager];
-      NSString* filename = url.lastPathComponent;
+      NSString* duplicate = CRFindDuplicateComicPath(manager, source, root);
+      if (duplicate) {
+        imported = YES;
+        resultPath = [duplicate copy];
+        return;
+      }
+
+      NSString* filename = readableURL.lastPathComponent;
       NSString* destination = [root stringByAppendingPathComponent:filename];
       NSUInteger suffix = 2;
       while ([manager fileExistsAtPath:destination]) {
-        filename = [NSString stringWithFormat:@"%@ (%lu).%@", url.lastPathComponent.stringByDeletingPathExtension, (unsigned long)suffix++, url.pathExtension];
+        filename = [NSString stringWithFormat:@"%@ (%lu).%@",
+                    readableURL.lastPathComponent.stringByDeletingPathExtension,
+                    (unsigned long)suffix++, readableURL.pathExtension];
         destination = [root stringByAppendingPathComponent:filename];
       }
       // Copy via a hidden staging file so the updater cannot index a partially copied archive.
       NSString* staging = [NSTemporaryDirectory() stringByAppendingPathComponent:[@".comicreader-import-" stringByAppendingString:NSUUID.UUID.UUIDString]];
       imported = [manager copyItemAtPath:source toPath:staging error:&copyError] &&
                  [manager moveItemAtPath:staging toPath:destination error:&copyError];
-      if (!imported) {
+      if (imported) {
+        createdCopy = YES;
+        resultPath = [destination copy];
+      } else {
         [copyError retain];
         [manager removeItemAtPath:staging error:NULL];
       }
@@ -222,6 +287,7 @@
       [url stopAccessingSecurityScopedResource];
     }
     NSError* error = coordinationError ?: copyError;
+    NSURL* libraryURL = resultPath ? [[NSURL fileURLWithPath:resultPath] retain] : nil;
     dispatch_async(dispatch_get_main_queue(), ^{
       if (imported) {
         [self updateLibrary];
@@ -232,14 +298,25 @@
                         message:error.localizedDescription ?: NSLocalizedString(@"IMPORT_FAILED_MESSAGE", nil)
                          button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
       }
-      if (completion) {
-        completion(imported);
-      }
+      if (completion) completion(imported, libraryURL, createdCopy);
     });
+    [libraryURL release];
+    [resultPath release];
     [copyError release];
     [pool drain];
   });
   return YES;
+}
+
+- (void)openComicURLs:(NSArray<NSURL*>*)urls {
+  if (urls.count == 0) return;
+#if TARGET_OS_MACCATALYST
+  [(LibraryViewController*)self.viewController enqueueComicURLsForOpening:urls];
+#else
+  for (NSURL* url in urls) {
+    [self importComicAtURL:url];
+  }
+#endif
 }
 
 - (void) saveState {
@@ -342,15 +419,11 @@
   [delegate connectWindowScene:(UIWindowScene*)scene];
   self.window = delegate.window;
   self.skipInitialForegroundScan = YES;
-  for (UIOpenURLContext* context in connectionOptions.URLContexts) {
-    [delegate importComicAtURL:context.URL];
-  }
+  [delegate openComicURLs:CRSortedURLsFromOpenContexts(connectionOptions.URLContexts)];
 }
 
 - (void) scene:(UIScene*)scene openURLContexts:(NSSet<UIOpenURLContext*>*)URLContexts {
-  for (UIOpenURLContext* context in URLContexts) {
-    [[AppDelegate sharedDelegate] importComicAtURL:context.URL];
-  }
+  [[AppDelegate sharedDelegate] openComicURLs:CRSortedURLsFromOpenContexts(URLContexts)];
 }
 
 - (void) sceneWillEnterForeground:(UIScene*)scene {

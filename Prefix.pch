@@ -14,6 +14,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef __OBJC__
+#import <WebKit/WebKit.h>
   #import <Foundation/Foundation.h>
   #import <UIKit/UIKit.h>
 #endif

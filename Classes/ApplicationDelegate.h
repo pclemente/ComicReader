@@ -15,7 +15,7 @@
 
 @class XLDatabaseLogger;
 
-@interface ApplicationDelegate : NSObject <UIApplicationDelegate> {
+@interface ApplicationDelegate : UIResponder <UIApplicationDelegate> {
 @private
   UIWindow* _window;
   UIViewController* _viewController;

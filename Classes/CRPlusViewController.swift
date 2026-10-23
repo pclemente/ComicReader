@@ -64,7 +64,7 @@ public final class CRPlusViewController: UITableViewController {
         label.textAlignment = .center
         label.textColor = .secondaryLabel
         label.numberOfLines = 0
-        label.text = "Find that line. Save that page. Make your next read your own."
+        label.text = "Bring comics into your library, find a line across a comic, and organize what you read next. One purchase for iPhone, iPad and Mac."
         return label
     }()
 
@@ -204,7 +204,7 @@ public final class CRPlusViewController: UITableViewController {
                                    numberOfRowsInSection section: Int) -> Int {
         switch self.section(at: section) {
         case .features:
-            return 4
+            return 5
         case .plus:
             return PlusRow.allCases.count
         case .freeSync:
@@ -236,7 +236,7 @@ public final class CRPlusViewController: UITableViewController {
                                    titleForFooterInSection section: Int) -> String? {
         switch self.section(at: section) {
         case .features:
-            return "Search indexes, quotes, lists and bookmarks stay on this device. Current-page text, copying and sharing are free. Your original comic files stay untouched."
+            return "Browsing, website sessions and private browsing are free, as are current-page text, copying and sharing. Search indexes, quotes, lists and bookmarks stay on this device. Websites must provide supported downloadable files; no comics are included."
         case .plus:
             if let error = store.error {
                 return error.localizedDescription
@@ -244,7 +244,7 @@ public final class CRPlusViewController: UITableViewController {
             return purchaseStatusText
 
         case .freeSync:
-            return "Use the same Apple Account to restore Plus on iPhone, iPad and Mac. iCloud sync needs no purchase and uses your personal iCloud storage."
+            return "Restore the same Plus purchase on iPhone, iPad and Mac with your Apple Account. iCloud sync is optional, free and uses your personal iCloud storage."
 
         case .iCloud:
             return "Sync is optional and stays off until you turn it on. When enabled, ComicReader uploads every comic file in this library and your reading progress to your personal iCloud Drive storage. An internet connection and iCloud Drive are required for first-time setup."
@@ -264,21 +264,21 @@ public final class CRPlusViewController: UITableViewController {
         case .features:
             let cell = subtitleCell(reuseIdentifier: "Feature")
             var content = cell.defaultContentConfiguration()
-            content.text = ["Find a line. Keep a quote.", "Choose your next read", "Remember a favorite page", "Make the artwork your own"][indexPath.row]
-            content.secondaryText = ["Search every indexed page of the comic you’re reading. Jump to matches and save editable quotes. Recognition happens on this device.", "Build reading lists across folders. Smart queues gather in-progress, unread and read comics automatically.", "Give a page a name and jump back to it with a bookmark.", "Preview Clear Ink, Grayscale and Warm Paper. Filters change the display, never the original file."][indexPath.row]
-            content.image = UIImage(systemName: ["text.magnifyingglass", "list.bullet.rectangle", "bookmark", "camera.filters"][indexPath.row])
+            content.text = ["From website to your collection", "Search your comic. Keep a quote.", "Choose your next read", "Return to a favorite page", "Find your reading look"][indexPath.row]
+            content.secondaryText = ["Import supported PDF, CBZ and classic CBR downloads into a collection, with file checks and duplicate detection. Follow progress and open finished comics from the queue.", "Build a text index for the comic you’re reading, jump to a matching page and save editable quotes. Recognition happens on this device.", "Build reading lists across folders. Smart queues gather in-progress, unread and read comics automatically.", "Name a page with a bookmark and jump straight back to it.", "Try Clear Ink, Grayscale and Warm Paper in the free preview. Plus applies your chosen filter while you read; original files stay untouched."][indexPath.row]
+            content.image = UIImage(systemName: ["arrow.down.doc", "text.magnifyingglass", "list.bullet.rectangle", "bookmark", "camera.filters"][indexPath.row])
             content.textProperties.numberOfLines = 0
             content.secondaryTextProperties.numberOfLines = 0
             cell.contentConfiguration = content
-            cell.selectionStyle = indexPath.row == 3 ? .default : .none
-            cell.accessoryType = indexPath.row == 3 ? .disclosureIndicator : .none
-            cell.accessibilityIdentifier = ["plus.comicTextFeature", "plus.readingListsFeature", "plus.bookmarksFeature", "plus.imageFiltersFeature"][indexPath.row]
+            cell.selectionStyle = indexPath.row == 4 ? .default : .none
+            cell.accessoryType = indexPath.row == 4 ? .disclosureIndicator : .none
+            cell.accessibilityIdentifier = ["plus.webImportFeature", "plus.comicTextFeature", "plus.readingListsFeature", "plus.bookmarksFeature", "plus.imageFiltersFeature"][indexPath.row]
             return cell
         case .freeSync:
             let cell = subtitleCell(reuseIdentifier: "FreeSync")
             var content = cell.defaultContentConfiguration()
             content.text = "Your library, across iPhone, iPad and Mac"
-            content.secondaryText = "Free iCloud sync for comics and reading progress. Reading and importing stay free too."
+            content.secondaryText = "Free iCloud sync for library comics, read status and current page. Reading, Files imports, opening files from Finder on Mac and local transfers stay free too."
             content.image = UIImage(systemName: "icloud")
             content.textProperties.numberOfLines = 0
             content.secondaryTextProperties.numberOfLines = 0
@@ -321,7 +321,7 @@ public final class CRPlusViewController: UITableViewController {
 
         switch section {
         case .features:
-            if indexPath.row == 3 {
+            if indexPath.row == 4 {
                 navigationController?.pushViewController(CRPlusFilterPreviewController(), animated: true)
             }
         case .freeSync:
@@ -351,7 +351,7 @@ public final class CRPlusViewController: UITableViewController {
         content.image = UIImage(systemName: store.isUnlocked ? "checkmark.seal.fill" : "sparkles")
         content.imageProperties.tintColor = store.isUnlocked ? .systemGreen : view.tintColor
         content.text = store.isUnlocked ? "ComicReader Plus" : purchaseTitle
-        content.secondaryText = store.isUnlocked ? "Unlocked with your Apple Account · Thank you" : "All Plus tools · iPhone, iPad and Mac"
+        content.secondaryText = store.isUnlocked ? "Unlocked · The new website import tools are included" : "All Plus tools · iPhone, iPad and Mac"
         content.textProperties.font = .preferredFont(forTextStyle: .headline)
         content.textProperties.color = store.isUnlocked ? .label : view.tintColor
         content.textProperties.numberOfLines = 0

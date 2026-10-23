@@ -31,7 +31,7 @@
 
 - (NSArray<NSString*>*)standardLaunchArguments {
   return @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0",
-           @"-plusIntroductionShown", @"YES", @"-releaseNews1_5Shown", @"YES"];
+           @"-plusIntroductionShown", @"YES", @"-releaseNews1_6Shown", @"YES"];
 }
 
 - (NSURL*)createPDFUIFixtureNamed:(NSString*)name {
@@ -546,7 +546,7 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_6Shown", @"YES"];
   [app launch];
   XCUIElement* plus = app.buttons[@"library.plus"];
   XCTAssertTrue([plus waitForExistenceWithTimeout:15]);
@@ -584,7 +584,7 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_6Shown", @"YES"];
   [app launch];
   XCTAssertTrue([app.buttons[@"library.settings"] waitForExistenceWithTimeout:15]);
   [app.buttons[@"By Name"] tap];
@@ -614,7 +614,7 @@
 - (void)testSettingsAndFilesPickerWithServerOff {
   self.continueAfterFailure = NO;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"YES"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_6Shown", @"YES"];
   [app launch];
   XCUIElement* settings = app.buttons[@"library.settings"];
   XCTAssertTrue([settings waitForExistenceWithTimeout:15]);
@@ -647,7 +647,7 @@
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
   NSArray* normalArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-plusIntroductionShown", @"YES"];
-  app.launchArguments = [normalArguments arrayByAddingObjectsFromArray:@[@"-releaseNews1_5Shown", @"NO"]];
+  app.launchArguments = [normalArguments arrayByAddingObjectsFromArray:@[@"-releaseNews1_6Shown", @"NO"]];
   [app launch];
   [self dismissLegacyRatingPromptIfPresentInApp:app];
   XCUIElement* close = app.buttons[@"news.dismiss"];
@@ -675,7 +675,7 @@
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   XCUIApplication* app = [[XCUIApplication alloc] init];
-  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_5Shown", @"NO"];
+  app.launchArguments = @[@"-serverType", @"0", @"-launchCount", @"-1", @"-currentComic", @"0", @"-releaseNews1_6Shown", @"NO"];
   [app launch];
   [self dismissLegacyRatingPromptIfPresentInApp:app];
   XCTAssertTrue([app.buttons[@"news.icloud"] waitForExistenceWithTimeout:15]);
