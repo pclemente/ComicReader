@@ -136,6 +136,11 @@ longer blocks an otherwise eligible native review request indefinitely. The
 external-file queue now accepts the presented reader’s owning window while
 UIKit has detached the library view, allowing Command-O to replace the reader.
 
+The Release configuration treats warnings as errors. Its first archive caught
+a private method declared on the main Objective-C class but implemented in a
+category. The implementation was moved to the main class without changing its
+behavior; final archives use the corrected source.
+
 ## Practical limits and release status
 
 The queue survives normal browser dismissal during the current app session.

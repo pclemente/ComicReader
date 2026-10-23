@@ -831,6 +831,24 @@ static void __DisplayQueueCallBack(void* info) {
   [self performSelector:@selector(_drainExternalComicURLQueue) withObject:nil afterDelay:0.35];
 }
 
+- (void)_showDirectOpenFailureAlertForFilenames:(NSArray<NSString*>*)filenames {
+  UIViewController* top = self.presentedViewController;
+  while (top.presentedViewController) top = top.presentedViewController;
+  if ([top isKindOfClass:[UIDocumentPickerViewController class]] ||
+      top.isBeingDismissed || top.isBeingPresented) {
+    [self performSelector:@selector(_showDirectOpenFailureAlertForFilenames:)
+               withObject:filenames
+               afterDelay:0.1];
+    return;
+  }
+  NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
+    [filenames componentsJoinedByString:@"\n"],
+    NSLocalizedString(@"COMIC_OPEN_FAILED_MESSAGE", nil)];
+  [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"COMIC_OPEN_FAILED_TITLE", nil)
+                                           message:message
+                                            button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
+}
+
 - (void) _tryOpenPendingWebComic {
   if (!_pendingWebComicURL || !self.view.window ||
       _window.windowScene.activationState != UISceneActivationStateForegroundActive ||
@@ -2390,23 +2408,6 @@ static void __ArrayApplierFunction(const void* value, void* context) {
   }
 }
 
-- (void)_showDirectOpenFailureAlertForFilenames:(NSArray<NSString*>*)filenames {
-  UIViewController* top = self.presentedViewController;
-  while (top.presentedViewController) top = top.presentedViewController;
-  if ([top isKindOfClass:[UIDocumentPickerViewController class]] ||
-      top.isBeingDismissed || top.isBeingPresented) {
-    [self performSelector:@selector(_showDirectOpenFailureAlertForFilenames:)
-               withObject:filenames
-               afterDelay:0.1];
-    return;
-  }
-  NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
-    [filenames componentsJoinedByString:@"\n"],
-    NSLocalizedString(@"COMIC_OPEN_FAILED_MESSAGE", nil)];
-  [[AppDelegate sharedDelegate] showAlertWithTitle:NSLocalizedString(@"COMIC_OPEN_FAILED_TITLE", nil)
-                                           message:message
-                                            button:NSLocalizedString(@"INBOX_ALERT_BUTTON", nil)];
-}
 
 - (void)comicViewControllerDidRequestOpenComicFiles:(ComicViewController*)controller {
 #if TARGET_OS_MACCATALYST
