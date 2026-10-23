@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Test - ComicFlow",
+    "result": "Passed",
+    "passedTests": 120,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 120,
+    "startTime": 1792750745.947,
+    "finishTime": 1792750810.765,
+    "resultBundle": "ComicReader-1.6-ios-final.xcresult"
+  },
+  {
+    "title": "Test - ComicReader-Mac",
+    "result": "Passed",
+    "passedTests": 120,
+    "failedTests": 0,
+    "skippedTests": 1,
+    "totalTestCount": 121,
+    "startTime": 1792750678.572,
+    "finishTime": 1792750701.85,
+    "resultBundle": "ComicReader-1.6-mac-documents-final.xcresult"
+  },
+  {
+    "title": "Test - ComicFlow",
+    "result": "Passed",
+    "passedTests": 3,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 3,
+    "startTime": 1792753420.418,
+    "finishTime": 1792753621.896,
+    "resultBundle": "ComicReader-1.6-ios-ui-final.xcresult"
+  },
+  {
+    "title": "Test - ComicFlow",
+    "result": "Passed",
+    "passedTests": 21,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 21,
+    "startTime": 1792738924.252,
+    "finishTime": 1792739257.366,
+    "resultBundle": "ComicReader-web-ui3.xcresult"
+  },
+  {
+    "title": "Test - ComicFlow",
+    "result": "Passed",
+    "passedTests": 2,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 2,
+    "startTime": 1792742250.444,
+    "finishTime": 1792742398.683,
+    "resultBundle": "ComicReader-web-ipad3.xcresult"
+  },
+  {
+    "title": "Test - ComicReader-Mac",
+    "result": "Passed",
+    "passedTests": 1,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "totalTestCount": 1,
+    "startTime": 1792756271.585,
+    "finishTime": 1792756280.347,
+    "resultBundle": "ComicReader-queue-regression-final.xcresult"
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "version": "1.6",
+  "build": "14",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "teamID": "CEQU933V6W",
+  "appStoreAppID": "1597314495",
+  "sourceCommit": "05f756c661d5d2b63109ca3f8ece61b1bc0fda3a",
+  "sourceTree": "93cec2215657aaa55028f48dcc0eb14bacf84aa4",
+  "status": "Both iOS and macOS 1.6 (14) submitted and verified Waiting for Review",
+  "releaseMode": "Automatic after approval",
+  "statusVerifiedAt": "2026-10-23T12:11:27.071898+00:00",
+  "limitations": [
+    "No physical iPhone Duo or live two-device iCloud propagation tested for this candidate.",
+    "Complete paid Mac browser journey remains unverified due to StoreKitTest service configuration failures; actual iPhone and iPad purchase/import flows passed."
+  ],
+  "platforms": {
+    "iOS": {
+      "status": "Waiting for Review",
+      "buildID": "791be2a8-8575-4068-9dfc-8fa1651f2ef5",
+      "submissionID": "1361c8b0-8e74-48af-a57c-07adcb8fdc31",
+      "submittedAtMinute": "2026-10-23T14:07:00+02:00",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/1361c8b0-8e74-48af-a57c-07adcb8fdc31",
+      "statusVerifiedAt": "2026-10-23T12:11:27.071898+00:00",
+      "sha256": "8e7992d8e756245ba39f8e76f82ecfcf44d64cb82a3b71f5a41033d3a9577337",
+      "architectures": [
+        "arm64"
+      ],
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "matchingDSYMs": true,
+      "containsTestBundles": false,
+      "containsScreenshotFixtures": false,
+      "containsStoreKitTestArtifacts": false,
+      "containsUITestArtifacts": false
+    },
+    "macOS": {
+      "status": "Waiting for Review",
+      "buildID": "fbe26f81-f97a-4996-8800-8d2adc75683e",
+      "submissionID": "5a70d242-54f4-48f4-a6f2-3472cbd2fe66",
+      "submittedAtMinute": "2026-10-23T14:09:00+02:00",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/5a70d242-54f4-48f4-a6f2-3472cbd2fe66",
+      "statusVerifiedAt": "2026-10-23T12:11:27.071898+00:00",
+      "sha256": "26cb40c74c9765de1193e0924fd461e93ed87e15a95ea240e6555e3dc6e6b6d1",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "productionCloudEntitlements": true,
+      "debuggingEntitlement": false,
+      "codeSignatureValid": true,
+      "matchingDSYMs": true,
+      "containsTestBundles": false,
+      "containsScreenshotFixtures": false,
+      "containsStoreKitTestArtifacts": false,
+      "containsUITestArtifacts": false,
+      "sandbox": true,
+      "userSelectedFiles": "read-only",
+      "installerSignatureValid": true
+    }
+  },
+  "packageHashScope": "SHA-256 values identify the locally exported, validated packages. Uploads used the same committed source archives with Xcode distribution signing.",
+  "sourceNote": "The release archives were built from sourceCommit. A later documentation commit records submission evidence. The unrelated tracked Xcode UI state was left unstaged."
+}

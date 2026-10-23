@@ -1,7 +1,8 @@
 # ComicReader 1.6 (14) validation
 
-Candidate work on 23 October 2026, based on `bda2395`. This is a local
-implementation and validation record, not an App Store submission record.
+Validation on 23 October 2026. The submitted 1.6 (14) archives were built from
+`05f756c661d5d2b63109ca3f8ece61b1bc0fda3a`; submission details are in
+`submission.json`.
 The tracked Xcode user-interface-state change is unrelated to the candidate.
 
 ## Scope
@@ -160,10 +161,16 @@ clipboard-preserving paste and verifies the exact URL before navigating.
 StoreKitTest also reported configuration errors. These are incomplete checks,
 not passing Mac purchase evidence; see `docs/MacBrowserValidation.md`.
 
-This candidate has not been committed, pushed, uploaded or submitted. Both
-1.6 drafts have their metadata and review sample saved; unrestricted web access
-is declared and current App Store agreements are active. Both previous 1.5
-versions are already distributed, so no pending release needs withdrawal.
-The paid Mac browser journey remains unverified because of the recorded test
-service problems. Final native reader-replacement validation passed; packaging and submission
-remain pending.
+Both platforms were committed, pushed, archived, exported and uploaded. The
+exported packages passed strict signature verification, production iCloud
+entitlement checks, matching dSYM UUID checks and scans excluding test bundles,
+StoreKitTest artifacts and screenshot fixtures. Mac includes arm64 and x86_64,
+uses the sandbox and read-only selected-file access, and has no temporary
+exception entitlements.
+
+App Store Connect accepted both 1.6 (14) submissions on 23 October 2026:
+iOS at 14:07 and macOS at 14:09 Europe/Madrid. Both were verified **Waiting for
+Review** with automatic release after approval. Metadata, existing screenshot
+galleries, public-domain review sample and unrestricted-web-access declaration
+were included. The earlier 1.5 versions were already distributed, so no pending
+release needed withdrawal. This status does not mean Apple has approved 1.6.
