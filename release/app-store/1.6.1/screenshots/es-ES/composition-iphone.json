@@ -1,0 +1,277 @@
+[
+  {
+    "order": 1,
+    "platform": "iphone",
+    "filename": "01-library.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "category": "TU BIBLIOTECA",
+    "title": "Un lugar para cada cómic.",
+    "subtitle": "Tus PDF, CBZ y CBR, juntos.",
+    "footnote": "Tus archivos. Tu colección. · Interfaz en inglés.",
+    "mac_title": "Un lugar para\ncada cómic.",
+    "source": {
+      "path": "release/app-store/1.4.1/captures/iphone/01-library.png",
+      "sha256": "f63599eae529ec182124a64eccbfaed2ed3c2c0bdada53ca78b1faa94b04ada7",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        1206,
+        2622
+      ],
+      "exif_orientation": 1,
+      "normalized_size": [
+        1206,
+        2622
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/iphone/01-library.png",
+      "sha256": "5253a3365cc1ccaf834f897a94806f5bb84caa124120b4721af17666b3759da6",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        1206,
+        2622
+      ]
+    },
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "order": 2,
+    "platform": "iphone",
+    "filename": "02-reader.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "category": "LA EXPERIENCIA DE LECTURA",
+    "title": "Sumérgete en la historia.",
+    "subtitle": "Cada viñeta, cada detalle, justo donde lo dejaste.",
+    "footnote": "Interfaz en inglés.",
+    "mac_title": "Sumérgete en\nla historia.",
+    "source": {
+      "path": "release/app-store/1.4.1/captures/iphone/02-reader.png",
+      "sha256": "e8f8a54979f75b7496ca49971a126a5dcb0388605bda493eb2f4e092462b5e4e",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        1206,
+        2622
+      ],
+      "exif_orientation": 1,
+      "normalized_size": [
+        1206,
+        2622
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/iphone/02-reader.png",
+      "sha256": "46e8ed130d176cb1a2b0f3e4427aa492c2b9a94e8c2d8c601a17bd745123a442",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        1206,
+        2622
+      ]
+    },
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "order": 3,
+    "platform": "iphone",
+    "filename": "03-search.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "category": "COMICREADER PLUS",
+    "title": "Encuentra esa frase.",
+    "subtitle": "Busca en el cómic que lees y guarda tus citas favoritas.",
+    "footnote": "ComicReader Plus · Una compra. Sin suscripción.",
+    "mac_title": "Encuentra\nesa frase.",
+    "source": {
+      "path": "release/app-store/1.4.1/captures/iphone/03-search.png",
+      "sha256": "6e25517ef27cda7b4b55d180a2c7abb68342c140061c84fa870ac9e5ae46a721",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        1206,
+        2622
+      ],
+      "exif_orientation": 1,
+      "normalized_size": [
+        1206,
+        2622
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/iphone/03-search.png",
+      "sha256": "1fab45ba73ba6d8ffd505fdf2d20b937a2cdc165ce66ac28778ee9019135730e",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        1206,
+        2622
+      ]
+    },
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "order": 4,
+    "platform": "iphone",
+    "filename": "04-lists.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "category": "COMICREADER PLUS",
+    "title": "Tu próxima lectura, en orden.",
+    "subtitle": "Crea listas. Las colas inteligentes te ayudan a seguir.",
+    "footnote": "ComicReader Plus · Una compra. Sin suscripción.",
+    "mac_title": "Tu próxima\nlectura,\nen orden.",
+    "source": {
+      "path": "release/app-store/1.4.1/captures/iphone/04-lists.png",
+      "sha256": "e3b5370e0da59388cae540b722dad7c2dc4591267b1ba2caccc6b84017bf8adf",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        1206,
+        2622
+      ],
+      "exif_orientation": 1,
+      "normalized_size": [
+        1206,
+        2622
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/iphone/04-lists.png",
+      "sha256": "3a81ae3d6213e31125500c91f9b8d562749ac4f069b595272696de4d41647a68",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        1206,
+        2622
+      ]
+    },
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  },
+  {
+    "order": 5,
+    "platform": "iphone",
+    "filename": "05-icloud.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "category": "ICLOUD GRATIS Y OPCIONAL",
+    "title": "Tus historias van contigo.",
+    "subtitle": "Sincroniza cómics, progreso y página actual con iCloud.",
+    "footnote": "Gratis y opcional · Usa tu almacenamiento de iCloud.",
+    "mac_title": "Tus historias\nvan contigo.",
+    "source": {
+      "path": "release/app-store/1.4.1/captures/iphone/05-icloud.png",
+      "sha256": "c018870fe964f03ff8ddb187c4e2825f0a58f59cc057a09613e096fa8f2a9665",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        1206,
+        2622
+      ],
+      "exif_orientation": 1,
+      "normalized_size": [
+        1206,
+        2622
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/iphone/05-icloud.png",
+      "sha256": "cde11a09fdeb6a7628440dd19605bd35050e8a58881a1fe1a6b936369d43cbe7",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        1206,
+        2622
+      ]
+    },
+    "source_size": [
+      1206,
+      2622
+    ],
+    "rendered_size": [
+      994,
+      2162
+    ],
+    "capture_bounds": [
+      106,
+      347,
+      1100,
+      2509
+    ],
+    "cropped": false,
+    "layout": "portrait"
+  }
+]

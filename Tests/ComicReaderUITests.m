@@ -812,7 +812,7 @@
   }
 }
 
-- (void)testReaderRetainsCurrentPageAcrossViewportChanges {
+- (void)testImportedLibraryAndCurrentPagePersistAcrossRelaunchAndViewportChanges {
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   NSString* filename = [NSString stringWithFormat:@"Resize-%@.pdf", NSUUID.UUID.UUIDString];
@@ -870,6 +870,30 @@
       XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"reader.text.done"] timeout:10]);
       [app.buttons[@"reader.text.done"] tap];
     }
+
+    // Terminating while the reader is open exercises the same persistence
+    // boundary as a user closing and reopening the app. The imported file must
+    // remain indexed, and reopening it must restore the exact page rather than
+    // merely its coarse read/reading status.
+    [app terminate];
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:30]);
+    cover = [app descendantsMatchingType:XCUIElementTypeAny][[@"library.comic." stringByAppendingString:filename]];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:45],
+                  @"The imported comic must remain in the library after relaunch");
+    [cover tap];
+    canvas = app.otherElements[@"reader.canvas"];
+    XCTAssertTrue([canvas waitForExistenceWithTimeout:15]);
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
+      [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
+    [app.buttons[@"reader.text.open"] tap];
+    XCUIElement* relaunchedText = app.textViews[@"reader.text.content"];
+    NSPredicate* restoredPageTwo = [NSPredicate predicateWithFormat:@"exists == YES AND value CONTAINS[c] %@", @"page 2"];
+    XCTestExpectation* restoredPage = [[XCTNSPredicateExpectation alloc] initWithPredicate:restoredPageTwo
+                                                                                    object:relaunchedText];
+    XCTAssertEqual([XCTWaiter waitForExpectations:@[restoredPage] timeout:45], XCTWaiterResultCompleted,
+                   @"Relaunching must restore the exact saved page");
   } @finally {
     [app terminate];
     XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;

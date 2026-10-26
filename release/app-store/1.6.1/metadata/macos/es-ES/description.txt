@@ -1,0 +1,36 @@
+Abre tus propios cómics en Mac.
+
+IMPORTANTE: la interfaz de ComicReader está en inglés.
+
+ComicReader abre archivos PDF, CBZ/ZIP y CBR/RAR clásicos. Abre un cómic directamente desde Finder o crea una biblioteca para guardar el progreso, organizarla y sincronizarla opcionalmente con iCloud. La lectura, las importaciones normales, la navegación, el reconocimiento de texto de la página actual y la sincronización con iCloud son gratuitos.
+
+ABRE ARCHIVOS DESDE FINDER
+Haz clic con el botón derecho en un archivo compatible y elige Open With > ComicReader, usa File > Open Comic o pulsa Comando-O. Lee el archivo en su carpeta sin importarlo. La lectura directa no guarda el progreso después de cerrar el archivo; elige Add to Library cuando quieras una copia en la biblioteca con progreso y sincronización opcional mediante iCloud.
+
+CREA TU BIBLIOTECA
+• Importa archivos PDF, CBZ/ZIP y CBR/RAR clásicos con herramientas conocidas del sistema, el cargador de red local o WebDAV.
+• Organiza los cómics en colecciones y ordénalos por nombre, fecha o estado de lectura.
+• Lee los cómics importados sin conexión, amplía las viñetas y conserva el estado de lectura y la página actual.
+• Reconoce el texto de la página actual en el Mac o utiliza el texto integrado en un PDF cuando esté disponible. Puedes seleccionar, copiar y compartir el resultado. La calidad varía según el idioma, el escaneado y la rotulación.
+
+SINCRONIZACIÓN OPCIONAL CON ICLOUD
+Tú decides si quieres sincronizar los archivos de la biblioteca, el estado de lectura y la página actual entre Mac, iPhone y iPad. La sincronización permanece desactivada hasta que la habilitas y utiliza tu almacenamiento personal de iCloud Drive. Requiere espacio suficiente y conexión a internet.
+
+NAVEGA A TU MANERA
+Visita sitios web desde ComicReader, guarda accesos directos, conserva una sesión web normal entre visitas o utiliza una sesión privada separada. La navegación y los controles de datos web son gratuitos. Los sitios deben ofrecer archivos compatibles; el acceso, la disponibilidad y las descargas dependen de cada sitio. ComicReader no incluye catálogo, cómics ni eliminación de DRM.
+
+COMICREADER PLUS — UNA ÚNICA COMPRA OPCIONAL
+Plus añade herramientas para bibliotecas más grandes:
+• Website Imports descarga archivos compatibles en la colección que elijas, con validación, detección de duplicados y una cola visible. Mantén ComicReader abierto hasta que termine la importación.
+• Comic Search & Quotes crea un índice de texto persistente del cómic actual de la biblioteca, busca en las páginas indexadas y guarda citas editables vinculadas a su página de origen.
+• Reading Lists & Smart Queues organiza el orden de lectura sin mover archivos y reúne Continue Reading, Unread y Read Again.
+• Named Page Bookmarks permite volver a páginas señaladas.
+• Image Filters ofrece Clear Ink, Grayscale y Warm Paper sin modificar el archivo original.
+
+ComicReader Plus es una compra no consumible y no una suscripción. App Store muestra tu precio local antes de comprar. Restore Purchases está disponible en Mac, iPhone y iPad con la misma Cuenta de Apple. Quienes ya tienen Plus conservan el acceso a las herramientas actuales.
+
+La búsqueda abarca el cómic actual de la biblioteca, no toda la biblioteca. Los índices, las citas, las listas y los marcadores permanecen en cada dispositivo y no se incluyen en iCloud. Las citas guardadas siguen disponibles para leerlas y compartirlas si Plus deja de estar activo.
+
+En iPhone Duo, ComicReader conserva la página actual y el zoom relativo cuando cambia la pantalla, y adapta las páginas y los controles al pliegue activo. La compatibilidad con Duo es gratuita.
+
+ComicReader se basa en ComicFlow y es software de código abierto con licencia GPL v3. Tú aportas tus propios cómics; los cómics de muestra de las capturas no están incluidos.

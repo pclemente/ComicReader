@@ -1,0 +1,24 @@
+COMICREADER 1.6.1 (15)
+
+This maintenance release refreshes English/Spanish store metadata, screenshots and privacy/support links. App UI remains English; the Spanish listing states this. Reader and Plus features are unchanged from 1.6.
+
+Duo support uses the iOS 27.1 SDK and public UIKit reserved-region APIs. Opening/closing preserves the comic, page and relative zoom. Pages and controls use a continuous pane around an active fold. Duo support and opt-in iCloud sync of library files/status/current page are free across iPhone, iPad and Mac. The existing dismissible banner describes the 1.6 features.
+
+MAC DIRECT OPENING
+Finder Open With reads PDF, CBZ/ZIP and classic CBR/RAR in place, retaining security-scoped access until the reader closes. File > Open Comic / Command-O uses a temporary reading copy supplied by the system picker. Neither path adds the comic to the library or uploads it; the original stays unchanged. Temporary reading copies are removed when closed. Add to Library makes a copy, waits for indexing and opens normal library reading. Direct-session progress is not persisted. Files already in the indexed library use normal saved progress. Multiple files queue in the single reader window. Settings > Add Files still imports. The app registers as a Viewer and does not change system defaults.
+
+BROWSER AND PLUS
+The globe / Command-Shift-B opens a user-directed WebKit browser. Browsing, saved sites, normal website sessions, private browsing and clearing website data are free. Users provide websites and files; no catalogue, bundled comics, extractor or DRM removal is included. Website sign-in and downloads depend on the site. Normal cookies remain in WebKit; private data is nonpersistent. Private transfers are cancelled on closing the session; imported files are retained. Keep the app open until transfers finish.
+
+The existing com.pabloclementeperez.ComicFlow.plus non-consumable is still one purchase (€9.99 Spain base price), with StoreKit's localized price and Restore Purchases. Existing owners retain the custom workflow: supported file downloads, first-page validation, content-based duplicate checks, safe naming, collection selection and queue actions. Plus also includes persistent current-comic search/quotes, reading lists/smart queues, named bookmarks and display filters. No subscription. Browser access, credentials, iCloud, Finder opening, ordinary imports, current-page recognition, copying and system sharing are free. Plus records remain local, outside iCloud sync.
+
+TEST PATH
+No app login is needed. The attached public-domain review sample is a ZIP containing a CBZ; extract only the outer ZIP.
+1. Mac: use Finder Open With or Command-O on the CBZ/PDF. Read several pages, then Add to Library. Verify the original remains. Reopen a library comic to see saved progress.
+2. Open the globe and a website offering a direct PDF/CBZ/classic CBR download. Without Plus, View Plus opens the one-time purchase/restore screen. Purchase in the sandbox, return and retry. For a PDF rendered inline, use More > Import Current Comic.
+3. Choose Library Root or a collection. Wait for validation/import in Downloads, then Open Comic. Download again to verify duplicate detection.
+4. Use More > New Private Session and verify session separation; closing private mode discards its website data. Browsing works without Plus.
+5. Duo: read a middle page; open/close, rotate and partially fold, including after zoom/pan. Free iCloud Sync is separate from Plus and asks for consent.
+6. Comic text and search > This Page is free. Plus can index/search an imported library comic and save quotes. Restore Purchases is available in Plus.
+
+Native StoreKit review requests follow meaningful foreground reading over multiple days; there is no sentiment/purchase gating. No third-party analytics SDK or remote usage events were added.

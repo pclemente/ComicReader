@@ -1405,7 +1405,7 @@
     XCTAssertEqual([[comics filteredArrayUsingPredicate:matching] count], 1u);
   }
 }
-- (void)testExistingCollectionComicIsNotCopiedToRoot {
+- (void)testExistingCollectionComicAndProgressSurviveRepeatedLibraryScans {
   NSString* root = [LibraryConnection libraryRootPath];
   NSString* directory = [root stringByAppendingPathComponent:[NSString stringWithFormat:@"Collection-%@", NSUUID.UUID.UUIDString]];
   [self.createdPaths addObject:directory];
@@ -1414,6 +1414,27 @@
   NSString* destination = [root stringByAppendingPathComponent:name];
   [self.createdPaths addObject:destination];
   XCTAssertTrue([self importAndWait:source]);
+  XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:source.path]);
+  XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:destination]);
+
+  [self waitForLibrary];
+  Comic* comic = [(LibraryViewController*)[AppDelegate sharedDelegate].viewController
+    _indexedComicForURL:source];
+  XCTAssertNotNil(comic);
+  if (!comic) return;
+  [[CRLibrarySyncCoordinator sharedCoordinator] recordComic:comic currentPage:2 pageCount:3];
+
+  // App launch performs this same non-forced library scan. Repeating it with
+  // an unchanged collection folder must not treat the collection or comic as
+  // stale, move the file to the root, or discard exact-page state.
+  [[AppDelegate sharedDelegate] updateLibrary];
+  [self waitForLibrary];
+  Comic* rescanned = [(LibraryViewController*)[AppDelegate sharedDelegate].viewController
+    _indexedComicForURL:source];
+  XCTAssertNotNil(rescanned);
+  XCTAssertEqualObjects(rescanned.name, name);
+  XCTAssertNotEqual(rescanned.collection, 0);
+  XCTAssertEqual([[CRLibrarySyncCoordinator sharedCoordinator] initialPageForComic:rescanned pageCount:3], 2);
   XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:source.path]);
   XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:destination]);
 }

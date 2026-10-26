@@ -1,0 +1,282 @@
+[
+  {
+    "order": 1,
+    "platform": "duo",
+    "filename": "01-library.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "IPHONE DUO · TU BIBLIOTECA",
+    "title": "Un lugar para cada cómic.",
+    "subtitle": "Las portadas se adaptan al pliegue activo sin perder tu sitio.",
+    "footnote": "Interfaz en inglés.",
+    "source": {
+      "path": "release/app-store/1.5/captures/duo/01-library.png",
+      "sha256": "41ddda5bb7e1e370e88272dc6bdbca2952e5dade1a1fce51e030b1f31a7aada4",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        2006,
+        2852
+      ],
+      "exif_orientation": 6,
+      "normalized_size": [
+        2852,
+        2006
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/duo/01-library.png",
+      "sha256": "91c69ae164d9665b3c59705c82850f2965604cca691d547340239008d45aff9c",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        2853,
+        2007
+      ]
+    },
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "order": 2,
+    "platform": "duo",
+    "filename": "02-reader.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "IPHONE DUO · EL LECTOR",
+    "title": "Sumérgete en la historia.",
+    "subtitle": "El cómic, la página y el zoom se conservan al cambiar la pantalla.",
+    "footnote": "Interfaz en inglés.",
+    "source": {
+      "path": "release/app-store/1.5/captures/duo/02-reader.png",
+      "sha256": "d2f30fa3e80391d7b9a2feb99c70bce3823fc130eb2b051085998f723965bad7",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        2006,
+        2852
+      ],
+      "exif_orientation": 6,
+      "normalized_size": [
+        2852,
+        2006
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/duo/02-reader.png",
+      "sha256": "8bc64b977b060c2228d46aa8461e442aeed39e404bb9cc5e9b8dd4ee389aa63e",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        2853,
+        2007
+      ]
+    },
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "order": 3,
+    "platform": "duo",
+    "filename": "03-search.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "PLUS · BÚSQUEDA Y CITAS",
+    "title": "Encuentra esa frase.",
+    "subtitle": "Busca en el cómic que lees y guarda citas editables.",
+    "footnote": "ComicReader Plus · Una compra. Sin suscripción.",
+    "source": {
+      "path": "release/app-store/1.5/captures/duo/03-search.png",
+      "sha256": "3fc0a8a12fcf8d4fcdbd070e7bdd7f36697998a94246524932d126991b0fc6f8",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        2006,
+        2852
+      ],
+      "exif_orientation": 6,
+      "normalized_size": [
+        2852,
+        2006
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/duo/03-search.png",
+      "sha256": "55de308efefb86d6d181b8416b7ebcc135e59d04df8bb3838a6d3bf093e60e7c",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        2853,
+        2007
+      ]
+    },
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "order": 4,
+    "platform": "duo",
+    "filename": "04-lists.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "PLUS · LISTAS DE LECTURA",
+    "title": "Tu próxima lectura, en orden.",
+    "subtitle": "Crea listas y deja que las colas inteligentes reúnan lo siguiente.",
+    "footnote": "ComicReader Plus · Una compra. Sin suscripción.",
+    "source": {
+      "path": "release/app-store/1.5/captures/duo/04-lists.png",
+      "sha256": "b24f1bc11422b99169cadbdc1f9d70ed91a955da0bca6adea8334fe667305dd7",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        2006,
+        2852
+      ],
+      "exif_orientation": 6,
+      "normalized_size": [
+        2852,
+        2006
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/duo/04-lists.png",
+      "sha256": "12ff44f9b214f5db4f7b3c0814b30adccda8e2a7c23bc2abe118225239a37399",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        2853,
+        2007
+      ]
+    },
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  },
+  {
+    "order": 5,
+    "platform": "duo",
+    "filename": "05-icloud.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "category": "ICLOUD GRATIS Y OPCIONAL",
+    "title": "Tus historias van contigo.",
+    "subtitle": "Sincroniza cómics, progreso y página actual entre tus dispositivos.",
+    "footnote": "Gratis para todos · Opcional con tu almacenamiento de iCloud.",
+    "source": {
+      "path": "release/app-store/1.5/captures/duo/05-icloud.png",
+      "sha256": "2e33876fe9a7c6a309d7746c38d5a7831dd865e6628d85f1677d4cf5c24c2048",
+      "format": "PNG",
+      "mode": "RGB",
+      "stored_size": [
+        2006,
+        2852
+      ],
+      "exif_orientation": 6,
+      "normalized_size": [
+        2852,
+        2006
+      ]
+    },
+    "output": {
+      "path": "release/app-store/1.6.1/screenshots/es-ES/duo/05-icloud.png",
+      "sha256": "7c17fbb4700ae95d937ee34ffa63a42c6a96f08636d01c1d00d128c2956d7686",
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        2853,
+        2007
+      ]
+    },
+    "source_size": [
+      2852,
+      2006
+    ],
+    "rendered_size": [
+      2153,
+      1514
+    ],
+    "capture_bounds": [
+      620,
+      246,
+      2773,
+      1760
+    ],
+    "scale": 0.7549088359046283,
+    "cropped": false,
+    "aspect_preserved": true,
+    "layout": "duo-side-caption"
+  }
+]

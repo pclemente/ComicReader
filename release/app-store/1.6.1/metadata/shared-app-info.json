@@ -1,0 +1,33 @@
+{
+  "preparedOn": "2026-10-26",
+  "status": "Prepared and being entered into App Store Connect; submission status is tracked separately.",
+  "appStoreAppID": "1597314495",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "primaryCategory": "Books",
+  "localizations": {
+    "en-GB": {
+      "name": "ComicReader: Comic Book Reader",
+      "privacyPolicyURL": "https://pclemente.github.io/ComicReader/privacy/",
+      "supportURL": "https://pabloclementeperez.wordpress.com/support/"
+    },
+    "en-US": {
+      "name": "ComicReader: Comic Book Reader",
+      "privacyPolicyURL": "https://pclemente.github.io/ComicReader/privacy/",
+      "supportURL": "https://pabloclementeperez.wordpress.com/support/"
+    },
+    "es-ES": {
+      "name": "ComicReader: Lector de cómics",
+      "privacyPolicyURL": "https://pclemente.github.io/ComicReader/es/privacy/",
+      "supportURL": "https://pabloclementeperez.wordpress.com/support/"
+    }
+  },
+  "platformMetadata": {
+    "iOS": "ios/{locale}",
+    "macOS": "macos/{locale}"
+  },
+  "notes": [
+    "The Spanish listing states that the app interface is in English.",
+    "ComicReader Plus remains one non-consumable purchase with a Spain base price of EUR 9.99; StoreKit displays the local price.",
+    "This package contains metadata and support-link maintenance only and makes no new feature claim."
+  ]
+}

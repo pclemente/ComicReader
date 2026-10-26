@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "locale": "es-ES",
+  "passed": true,
+  "screenshot_count": 20,
+  "platform_count": 4,
+  "platforms": [
+    {
+      "platform": "iphone",
+      "passed": true,
+      "checks": {
+        "five_records": true,
+        "baseline_order": true,
+        "five_gallery_pngs": true,
+        "distinct_sources": true,
+        "distinct_outputs": true,
+        "expected_dimensions": true,
+        "png_rgb": true,
+        "uncropped": true,
+        "aspect_preserved": true,
+        "capture_bounds_inside_canvas": true,
+        "manifest_filename_correspondence": true,
+        "source_hashes_current": true,
+        "output_hashes_current": true,
+        "english_ui_disclosed": true,
+        "purchase_copy_on_search_and_lists": true,
+        "icloud_free_and_optional": true,
+        "duo_orientation_preserved": true
+      },
+      "maximum_aspect_ratio_error": 0.00019475144846392567
+    },
+    {
+      "platform": "ipad",
+      "passed": true,
+      "checks": {
+        "five_records": true,
+        "baseline_order": true,
+        "five_gallery_pngs": true,
+        "distinct_sources": true,
+        "distinct_outputs": true,
+        "expected_dimensions": true,
+        "png_rgb": true,
+        "uncropped": true,
+        "aspect_preserved": true,
+        "capture_bounds_inside_canvas": true,
+        "manifest_filename_correspondence": true,
+        "source_hashes_current": true,
+        "output_hashes_current": true,
+        "english_ui_disclosed": true,
+        "purchase_copy_on_search_and_lists": true,
+        "icloud_free_and_optional": true,
+        "duo_orientation_preserved": true
+      },
+      "maximum_aspect_ratio_error": 0.00023696682464457997
+    },
+    {
+      "platform": "macos",
+      "passed": true,
+      "checks": {
+        "five_records": true,
+        "baseline_order": true,
+        "five_gallery_pngs": true,
+        "distinct_sources": true,
+        "distinct_outputs": true,
+        "expected_dimensions": true,
+        "png_rgb": true,
+        "uncropped": true,
+        "aspect_preserved": true,
+        "capture_bounds_inside_canvas": true,
+        "manifest_filename_correspondence": true,
+        "source_hashes_current": true,
+        "output_hashes_current": true,
+        "english_ui_disclosed": true,
+        "purchase_copy_on_search_and_lists": true,
+        "icloud_free_and_optional": true,
+        "duo_orientation_preserved": true
+      },
+      "maximum_aspect_ratio_error": 0.00025974025974040416
+    },
+    {
+      "platform": "duo",
+      "passed": true,
+      "checks": {
+        "five_records": true,
+        "baseline_order": true,
+        "five_gallery_pngs": true,
+        "distinct_sources": true,
+        "distinct_outputs": true,
+        "expected_dimensions": true,
+        "png_rgb": true,
+        "uncropped": true,
+        "aspect_preserved": true,
+        "capture_bounds_inside_canvas": true,
+        "manifest_filename_correspondence": true,
+        "source_hashes_current": true,
+        "output_hashes_current": true,
+        "english_ui_disclosed": true,
+        "purchase_copy_on_search_and_lists": true,
+        "icloud_free_and_optional": true,
+        "duo_orientation_preserved": true
+      },
+      "maximum_aspect_ratio_error": 0.00032597056913807876
+    }
+  ]
+}

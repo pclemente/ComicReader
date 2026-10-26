@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 1,
+  "planType": "app-store-product-page-optimization",
+  "status": "planned-not-created-or-scheduled",
+  "preparedDate": "2026-10-26",
+  "app": {
+    "name": "ComicReader",
+    "appStoreAppID": "1597314495",
+    "releaseVersionGate": "1.6.1"
+  },
+  "hypothesis": "Leading with the reading experience and free, optional iCloud sync will improve product-page conversion versus the library-first control while retaining library, search, and reading-list proof later in the gallery.",
+  "testDesign": {
+    "changeType": "screenshot-order-only",
+    "treatmentCount": 1,
+    "control": {
+      "name": "Library-first control",
+      "trafficAllocationPercent": 50,
+      "order": [
+        "library",
+        "reader",
+        "search",
+        "lists",
+        "icloud"
+      ]
+    },
+    "treatments": [
+      {
+        "id": "reader-icloud-first",
+        "name": "Reader + iCloud first",
+        "trafficAllocationPercent": 50,
+        "order": [
+          "reader",
+          "icloud",
+          "library",
+          "search",
+          "lists"
+        ]
+      }
+    ],
+    "assetMutation": "None. The treatment reorders the exact inherited screenshots recorded below."
+  },
+  "timing": {
+    "startDate": null,
+    "endDate": null,
+    "maximumRunDays": 90,
+    "startOnlyWhen": [
+      "ComicReader 1.6.1 is live on the App Store.",
+      "At least 7 complete days of unchanged 1.6.1 metadata and library-first screenshots have elapsed after the live timestamp.",
+      "No release, metadata, icon, app-preview, screenshot-content, pricing, or availability change is running or planned concurrently."
+    ],
+    "stopWhen": [
+      "App Store Connect reports a conclusive result that satisfies the decision rule.",
+      "The experiment reaches 90 days.",
+      "A material release, metadata, pricing, availability, or product-page change becomes necessary; stop and record the experiment as interrupted before making that change."
+    ]
+  },
+  "isolationRules": [
+    "Do not launch during the 1.6.1 release rollout or its first 7 complete live days.",
+    "Freeze all tested product-page metadata and creative assets for the experiment duration.",
+    "Do not run another Product Page Optimization test or Custom Product Page campaign against the same decision at the same time.",
+    "Do not substitute, recompress, crop, retouch, or relocalize any recorded screenshot.",
+    "If App Store Connect does not expose a recorded device gallery for this test, leave that gallery unchanged and record the exclusion rather than substituting another size."
+  ],
+  "measurement": {
+    "primaryMetric": "App Store Connect Product Page Optimization conversion-rate improvement for the treatment versus the original product page.",
+    "decisionRule": {
+      "adoptTreatment": "Only when App Store Connect reports the treatment as conclusively better than the control after the launch gates and isolation rules were satisfied.",
+      "retainControl": "Retain the control when App Store Connect reports the treatment as conclusively worse.",
+      "inconclusive": "If evidence is insufficient at 90 days, or the test is interrupted, record the result as inconclusive and make no winner claim."
+    },
+    "lowVolumeWarning": "ComicReader traffic may be too low for a conclusive result within 90 days. Lack of significance is not evidence that the two orders perform equally."
+  },
+  "execution": {
+    "mode": "manual-App-Store-Connect-only",
+    "createdInAppStoreConnect": false,
+    "scheduled": false,
+    "browserChangesPerformed": false,
+    "nextAction": "After all launch gates pass, manually create exactly one treatment using the recorded 50/50 allocation and order."
+  },
+  "assetProvenance": {
+    "hashAlgorithm": "SHA-256",
+    "orderKeys": {
+      "library": "01-library.png",
+      "reader": "02-reader.png",
+      "search": "03-search.png",
+      "lists": "04-lists.png",
+      "icloud": "05-icloud.png"
+    },
+    "localizations": {
+      "english": {
+        "sourceLocale": "en-GB",
+        "appStoreLocalizations": [
+          "en-GB",
+          "en-US"
+        ],
+        "inheritance": "en-US uses the unchanged en-GB English screenshot assets for this plan.",
+        "sourceManifests": [
+          {
+            "path": "release/app-store/1.4.1/screenshots/en-GB/composition-iphone.json",
+            "sha256": "7dec2892e4773971e4a65b69084c52240670b1795b49cc20fc041089ec5a57df"
+          },
+          {
+            "path": "release/app-store/1.4.1/screenshots/en-GB/composition-ipad.json",
+            "sha256": "480a58ed7a9475f98fd7d739be9c1d5880f7678c052cc9dc69bac8edb78aa2bc"
+          },
+          {
+            "path": "release/app-store/1.4.1/screenshots/en-GB/composition-macos.json",
+            "sha256": "8e5a954916190e7ce124e04d1dffadb28f2c53ff0622087a74bd9a3718faac85"
+          },
+          {
+            "path": "release/app-store/1.5/screenshots/en-GB/duo/composition-duo.json",
+            "sha256": "8218fca8e9fb6aeb14e864a6cf726f9941ca9252c888324ef79d3392e49d1cf7"
+          }
+        ],
+        "galleries": {
+          "iphone": {
+            "dimensions": [
+              1206,
+              2622
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/iphone/01-library.png",
+                "experimentAssetSha256": "3353fa9da2d90b454e38e54b15a35ceb945650f3e211a066015b39de9cf5205d",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/01-library.png",
+                "genuineCaptureSha256": "f63599eae529ec182124a64eccbfaed2ed3c2c0bdada53ca78b1faa94b04ada7"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/iphone/02-reader.png",
+                "experimentAssetSha256": "ead684ded8eb86c6a4110df6b7d55e16cc8ecf208c87e30305c7bbfe2b4b10d1",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/02-reader.png",
+                "genuineCaptureSha256": "e8f8a54979f75b7496ca49971a126a5dcb0388605bda493eb2f4e092462b5e4e"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/iphone/03-search.png",
+                "experimentAssetSha256": "822dbd81bacbc2636906f15f0f2daa1d6324aac924d95becac9e1ea029838de1",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/03-search.png",
+                "genuineCaptureSha256": "6e25517ef27cda7b4b55d180a2c7abb68342c140061c84fa870ac9e5ae46a721"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/iphone/04-lists.png",
+                "experimentAssetSha256": "9d2145dd6577365aba82f98cd33031c728e8e12ca853dfc6969b0c2be87d87de",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/04-lists.png",
+                "genuineCaptureSha256": "e3b5370e0da59388cae540b722dad7c2dc4591267b1ba2caccc6b84017bf8adf"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/iphone/05-icloud.png",
+                "experimentAssetSha256": "5e64f15f48cab59e6eb78c8a07f23d0a09ab52d6b070bf9167a9361ebeb99e89",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/05-icloud.png",
+                "genuineCaptureSha256": "c018870fe964f03ff8ddb187c4e2825f0a58f59cc057a09613e096fa8f2a9665"
+              }
+            ]
+          },
+          "ipad": {
+            "dimensions": [
+              2064,
+              2752
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/ipad/01-library.png",
+                "experimentAssetSha256": "9e6819846bab6f57b3359a4c42cdf7b72170f1ca42c791ebdf95c801668255ea",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/01-library.png",
+                "genuineCaptureSha256": "d3ddde4b800e76b5cd00d2668fb6193a8f8a8bb32b48efb568dfc428412d6931"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/ipad/02-reader.png",
+                "experimentAssetSha256": "2e5769e52d78c53ce9aa228179d815ab9c36605ab80962d8ae5bb6023bd707ad",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/02-reader.png",
+                "genuineCaptureSha256": "c68d715b561ebd4fa8a0ff39e31d960553a71399fc5fc2b2d6c8259f0ce893e8"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/ipad/03-search.png",
+                "experimentAssetSha256": "3662de64cb404bc5a73381f822f79e71b8837643c8cba0765387337a6b45fdf1",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/03-search.png",
+                "genuineCaptureSha256": "cf7f5916edef42de0c5b0491bcbec1b2933839af5859e06922f1aa81c59f6584"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/ipad/04-lists.png",
+                "experimentAssetSha256": "ed9e13d19a29ce11f45ea445437f82cff1716ee1037cf79a9e0f74e1055b5753",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/04-lists.png",
+                "genuineCaptureSha256": "694798abb53a181adba00d758c9045e0df8640c3616dff4f26ed3f847c1a0eae"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/ipad/05-icloud.png",
+                "experimentAssetSha256": "69449a184fa20195738e64f9dd20968d3d52a855e7025bfcdd8b9ea0c1544df1",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/05-icloud.png",
+                "genuineCaptureSha256": "b18d62fde4df97e600377c87a54a1994d23618cfe10082232e23f803b2c90d1d"
+              }
+            ]
+          },
+          "macos": {
+            "dimensions": [
+              2880,
+              1800
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/macos/01-library.png",
+                "experimentAssetSha256": "946cd2278856b36e0ab81f2792559160061adc7319af94b97ddea1a64189c4db",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/01-library.png",
+                "genuineCaptureSha256": "0e958652b589a122f2f4d908fa81300e915d72767643cd76ab357050800ff0a9"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/macos/02-reader.png",
+                "experimentAssetSha256": "2eba3d9d648968089a80085c3e00caa57417bdc12dcf63c211433718d7f2a18c",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/02-reader.png",
+                "genuineCaptureSha256": "cd32b3802f28ee3acd517ccf52c128e17ea4a73a2d708ab02bd1505b902c2bcf"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/macos/03-search.png",
+                "experimentAssetSha256": "efa874c68c1125257651b71ac287ad916fb3be535fe73930f1b19dde433826d9",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/03-search.png",
+                "genuineCaptureSha256": "3542dc59b7f2e695ba88ba69564079b902990816bbab2965ed3671bd9fc04726"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/macos/04-lists.png",
+                "experimentAssetSha256": "127e96328bd6f1fe6bdf9fb6684c0ef46c9984d1c7dce058e608d65030b4a77c",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/04-lists.png",
+                "genuineCaptureSha256": "5f6897c4b2371bef8c376d1eca5f3d08d139eeb317c528c0022151ab6280e40d"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.4.1/screenshots/en-GB/macos/05-icloud.png",
+                "experimentAssetSha256": "011ce079a7c4c4420679261041a6a3c6f83be4731fed373dc85d0c3ca701fe1e",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/05-icloud.png",
+                "genuineCaptureSha256": "c666c855687d9a891ae1f6ba1bcf8b974adc56810062a0f366edacdfc63546c8"
+              }
+            ]
+          },
+          "duo": {
+            "dimensions": [
+              2853,
+              2007
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.5/screenshots/en-GB/duo/01-library.png",
+                "experimentAssetSha256": "a535b9506e32c0b180ebf3ad59233106aeda11b5f2b2d6c262e23d316449e772",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/01-library.png",
+                "genuineCaptureSha256": "41ddda5bb7e1e370e88272dc6bdbca2952e5dade1a1fce51e030b1f31a7aada4"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.5/screenshots/en-GB/duo/02-reader.png",
+                "experimentAssetSha256": "286cde9b10373602d159d532c87d3cae5026472fe11971ade7ae092c246545f0",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/02-reader.png",
+                "genuineCaptureSha256": "d2f30fa3e80391d7b9a2feb99c70bce3823fc130eb2b051085998f723965bad7"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.5/screenshots/en-GB/duo/03-search.png",
+                "experimentAssetSha256": "2061f04e6f061985fd7a4df5248d4e905092853559dcf2c8ba6dbf807ba0fe86",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/03-search.png",
+                "genuineCaptureSha256": "3fc0a8a12fcf8d4fcdbd070e7bdd7f36697998a94246524932d126991b0fc6f8"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.5/screenshots/en-GB/duo/04-lists.png",
+                "experimentAssetSha256": "835ea4329c5005c9cfd68b11fdd6e657696ab48f65d17492519e6440ed6cae55",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/04-lists.png",
+                "genuineCaptureSha256": "b24f1bc11422b99169cadbdc1f9d70ed91a955da0bca6adea8334fe667305dd7"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.5/screenshots/en-GB/duo/05-icloud.png",
+                "experimentAssetSha256": "decbbd6a4f29ae6396e9e22e82a94f7931fa9aedec8f8d2ffdb5dac7ea87a9b0",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/05-icloud.png",
+                "genuineCaptureSha256": "2e33876fe9a7c6a309d7746c38d5a7831dd865e6628d85f1677d4cf5c24c2048"
+              }
+            ]
+          }
+        }
+      },
+      "spanish": {
+        "sourceLocale": "es-ES",
+        "appStoreLocalizations": [
+          "es-ES"
+        ],
+        "inheritance": "The treatment uses the unchanged 1.6.1 es-ES screenshot assets.",
+        "sourceManifests": [
+          {
+            "path": "release/app-store/1.6.1/screenshots/es-ES/asset-manifest.json",
+            "sha256": "8f926e21ea646d17af1774b383fc88409836ebec60c7affc65b2f321c81f4ef4"
+          },
+          {
+            "path": "release/app-store/1.6.1/screenshots/es-ES/composition-iphone.json",
+            "sha256": "23953309b09d6c31b862f317c7150a386ad34a34bc7a588f287658d7714ab567"
+          },
+          {
+            "path": "release/app-store/1.6.1/screenshots/es-ES/composition-ipad.json",
+            "sha256": "31b3eac8d32af516c701cd22026d43c128acf476a11ce5a00cf0a2e053810980"
+          },
+          {
+            "path": "release/app-store/1.6.1/screenshots/es-ES/composition-macos.json",
+            "sha256": "3440bb3dd1a0ab7c841d805bc988dccf07823c120119cc55e8ce1e1952b4fd9d"
+          },
+          {
+            "path": "release/app-store/1.6.1/screenshots/es-ES/duo/composition-duo.json",
+            "sha256": "7cc9cf4163dd424a311cca502fb6bed5930ed0c4cc5364467f952a0b76f8a9a0"
+          }
+        ],
+        "galleries": {
+          "iphone": {
+            "dimensions": [
+              1206,
+              2622
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/iphone/01-library.png",
+                "experimentAssetSha256": "5253a3365cc1ccaf834f897a94806f5bb84caa124120b4721af17666b3759da6",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/01-library.png",
+                "genuineCaptureSha256": "f63599eae529ec182124a64eccbfaed2ed3c2c0bdada53ca78b1faa94b04ada7"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/iphone/02-reader.png",
+                "experimentAssetSha256": "46e8ed130d176cb1a2b0f3e4427aa492c2b9a94e8c2d8c601a17bd745123a442",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/02-reader.png",
+                "genuineCaptureSha256": "e8f8a54979f75b7496ca49971a126a5dcb0388605bda493eb2f4e092462b5e4e"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/iphone/03-search.png",
+                "experimentAssetSha256": "1fab45ba73ba6d8ffd505fdf2d20b937a2cdc165ce66ac28778ee9019135730e",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/03-search.png",
+                "genuineCaptureSha256": "6e25517ef27cda7b4b55d180a2c7abb68342c140061c84fa870ac9e5ae46a721"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/iphone/04-lists.png",
+                "experimentAssetSha256": "3a81ae3d6213e31125500c91f9b8d562749ac4f069b595272696de4d41647a68",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/04-lists.png",
+                "genuineCaptureSha256": "e3b5370e0da59388cae540b722dad7c2dc4591267b1ba2caccc6b84017bf8adf"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/iphone/05-icloud.png",
+                "experimentAssetSha256": "cde11a09fdeb6a7628440dd19605bd35050e8a58881a1fe1a6b936369d43cbe7",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/iphone/05-icloud.png",
+                "genuineCaptureSha256": "c018870fe964f03ff8ddb187c4e2825f0a58f59cc057a09613e096fa8f2a9665"
+              }
+            ]
+          },
+          "ipad": {
+            "dimensions": [
+              2064,
+              2752
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/ipad/01-library.png",
+                "experimentAssetSha256": "b60bfa80f5007ea0946ba22e431fb1539b3e9a1d50390bc209f9499005005f86",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/01-library.png",
+                "genuineCaptureSha256": "d3ddde4b800e76b5cd00d2668fb6193a8f8a8bb32b48efb568dfc428412d6931"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/ipad/02-reader.png",
+                "experimentAssetSha256": "e65de6f8459a6930d260890eea4db8f0f8ef1a6ac2ef8a2b8876b22763b3c4c8",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/02-reader.png",
+                "genuineCaptureSha256": "c68d715b561ebd4fa8a0ff39e31d960553a71399fc5fc2b2d6c8259f0ce893e8"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/ipad/03-search.png",
+                "experimentAssetSha256": "fcd5254e579a5d2ac8b0e743b0581f413a4afedaf182e420ae6683b56a7d27ac",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/03-search.png",
+                "genuineCaptureSha256": "cf7f5916edef42de0c5b0491bcbec1b2933839af5859e06922f1aa81c59f6584"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/ipad/04-lists.png",
+                "experimentAssetSha256": "6b73113cc25e6f050ac48fa81456468449b6508a5c5457af1ecae488d68ef9dd",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/04-lists.png",
+                "genuineCaptureSha256": "694798abb53a181adba00d758c9045e0df8640c3616dff4f26ed3f847c1a0eae"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/ipad/05-icloud.png",
+                "experimentAssetSha256": "3cc1acee67b5da7fa629bff41eea1f471247bc7992a0ee56cc97aec435885bda",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/ipad/05-icloud.png",
+                "genuineCaptureSha256": "b18d62fde4df97e600377c87a54a1994d23618cfe10082232e23f803b2c90d1d"
+              }
+            ]
+          },
+          "macos": {
+            "dimensions": [
+              2880,
+              1800
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/macos/01-library.png",
+                "experimentAssetSha256": "1b371ff161d578520738a020cbc82e0078e66f348bab88a696cee5b8274980f6",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/01-library.png",
+                "genuineCaptureSha256": "0e958652b589a122f2f4d908fa81300e915d72767643cd76ab357050800ff0a9"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/macos/02-reader.png",
+                "experimentAssetSha256": "80221dc118155c559112f213b25fa10264652e35551663cbb46e5b2a2b98bf94",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/02-reader.png",
+                "genuineCaptureSha256": "cd32b3802f28ee3acd517ccf52c128e17ea4a73a2d708ab02bd1505b902c2bcf"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/macos/03-search.png",
+                "experimentAssetSha256": "fa289558d54f4eaf4ffbcb31cceadcb889bacab9be5a4267d56f359e9991fef7",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/03-search.png",
+                "genuineCaptureSha256": "3542dc59b7f2e695ba88ba69564079b902990816bbab2965ed3671bd9fc04726"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/macos/04-lists.png",
+                "experimentAssetSha256": "afe092330db9b01753114738dcb8cf1bf1c3317a3e35b93b77091323f3c6a2ca",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/04-lists.png",
+                "genuineCaptureSha256": "5f6897c4b2371bef8c376d1eca5f3d08d139eeb317c528c0022151ab6280e40d"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/macos/05-icloud.png",
+                "experimentAssetSha256": "efddaf0f1c344a304ee560f4eaecdcf8a91c8c649cb06f00ab586372f1e2452e",
+                "genuineCapturePath": "release/app-store/1.4.1/captures/macos/05-icloud.png",
+                "genuineCaptureSha256": "c666c855687d9a891ae1f6ba1bcf8b974adc56810062a0f366edacdfc63546c8"
+              }
+            ]
+          },
+          "duo": {
+            "dimensions": [
+              2853,
+              2007
+            ],
+            "assets": [
+              {
+                "key": "library",
+                "filename": "01-library.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/duo/01-library.png",
+                "experimentAssetSha256": "91c69ae164d9665b3c59705c82850f2965604cca691d547340239008d45aff9c",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/01-library.png",
+                "genuineCaptureSha256": "41ddda5bb7e1e370e88272dc6bdbca2952e5dade1a1fce51e030b1f31a7aada4"
+              },
+              {
+                "key": "reader",
+                "filename": "02-reader.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/duo/02-reader.png",
+                "experimentAssetSha256": "8bc64b977b060c2228d46aa8461e442aeed39e404bb9cc5e9b8dd4ee389aa63e",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/02-reader.png",
+                "genuineCaptureSha256": "d2f30fa3e80391d7b9a2feb99c70bce3823fc130eb2b051085998f723965bad7"
+              },
+              {
+                "key": "search",
+                "filename": "03-search.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/duo/03-search.png",
+                "experimentAssetSha256": "55de308efefb86d6d181b8416b7ebcc135e59d04df8bb3838a6d3bf093e60e7c",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/03-search.png",
+                "genuineCaptureSha256": "3fc0a8a12fcf8d4fcdbd070e7bdd7f36697998a94246524932d126991b0fc6f8"
+              },
+              {
+                "key": "lists",
+                "filename": "04-lists.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/duo/04-lists.png",
+                "experimentAssetSha256": "12ff44f9b214f5db4f7b3c0814b30adccda8e2a7c23bc2abe118225239a37399",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/04-lists.png",
+                "genuineCaptureSha256": "b24f1bc11422b99169cadbdc1f9d70ed91a955da0bca6adea8334fe667305dd7"
+              },
+              {
+                "key": "icloud",
+                "filename": "05-icloud.png",
+                "experimentAssetPath": "release/app-store/1.6.1/screenshots/es-ES/duo/05-icloud.png",
+                "experimentAssetSha256": "7c17fbb4700ae95d937ee34ffa63a42c6a96f08636d01c1d00d128c2956d7686",
+                "genuineCapturePath": "release/app-store/1.5/captures/duo/05-icloud.png",
+                "genuineCaptureSha256": "2e33876fe9a7c6a309d7746c38d5a7831dd865e6628d85f1677d4cf5c24c2048"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
