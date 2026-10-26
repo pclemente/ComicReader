@@ -1,0 +1,78 @@
+{
+  "version": "1.6.1",
+  "build": "15",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "appStoreAppID": "1597314495",
+  "sourceCommit": "b86c3fa8bcc26138e1f8a6dc99f8f9f943d3497c",
+  "verifiedAt": "2026-10-26T08:25:39.528093+00:00",
+  "platforms": {
+    "iOS": {
+      "status": "Waiting for Review",
+      "reviewSubmissionID": "c81571db-7247-41cc-b0fc-21827d10a7d9",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/c81571db-7247-41cc-b0fc-21827d10a7d9"
+    },
+    "macOS": {
+      "status": "Waiting for Review",
+      "reviewSubmissionID": "7080d009-641a-4ab8-82c7-394fc2ec97b3",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/7080d009-641a-4ab8-82c7-394fc2ec97b3"
+    }
+  },
+  "localizations": [
+    "en-GB",
+    "en-US",
+    "es-ES"
+  ],
+  "spanishScreenshots": {
+    "iphone": 5,
+    "ipad": 5,
+    "duo": 5,
+    "macos": 5
+  },
+  "releaseMode": "Automatic after approval",
+  "ratingReset": false,
+  "verification": {
+    "focusedUnitTestsPassed": 5,
+    "focusedUITestsPassed": 2,
+    "productionCodeChanged": false,
+    "signedPackagesValidated": [
+      "iOS",
+      "macOS"
+    ],
+    "productionCloudEntitlements": true
+  },
+  "privacyPages": [
+    "https://pclemente.github.io/ComicReader/privacy/",
+    "https://pclemente.github.io/ComicReader/es/privacy/"
+  ],
+  "reviewResponses": {
+    "submitted": 5,
+    "status": "Pending Apple moderation"
+  },
+  "screenshotTest": {
+    "id": "ef53e61b-5adb-43cd-aaff-c1ad0439c0f7",
+    "treatmentID": "73b8a821-d5a2-4d0e-91fb-4b5e11cc1f2c",
+    "status": "Draft; not started",
+    "treatments": 1,
+    "trafficPercent": 50,
+    "configuredLocale": "en-GB",
+    "galleries": [
+      "iphone",
+      "ipad",
+      "duo"
+    ],
+    "order": [
+      "reader",
+      "icloud",
+      "library",
+      "search",
+      "lists"
+    ],
+    "remaining": "Add en-US/es-ES after release makes them selectable; start only after seven stable complete baseline days."
+  },
+  "limitations": [
+    "Focused simulator regression verification only; no new physical Duo or live multi-device iCloud test.",
+    "App interface remains English; Spanish is an App Store localization.",
+    "Mac upload used a byte-identical archive copy with CodeResources permissions corrected from 0600 to 0644."
+  ],
+  "evidence": "evidence/waiting-for-review-both.png"
+}

@@ -531,5 +531,26 @@
         }
       }
     }
+  },
+  "appStoreConnectDraft": {
+    "id": "ef53e61b-5adb-43cd-aaff-c1ad0439c0f7",
+    "treatmentID": "73b8a821-d5a2-4d0e-91fb-4b5e11cc1f2c",
+    "status": "Draft; not started",
+    "treatments": 1,
+    "trafficPercent": 50,
+    "configuredLocale": "en-GB",
+    "galleries": [
+      "iphone",
+      "ipad",
+      "duo"
+    ],
+    "order": [
+      "reader",
+      "icloud",
+      "library",
+      "search",
+      "lists"
+    ],
+    "remaining": "Add en-US/es-ES after release makes them selectable; start only after seven stable complete baseline days."
   }
 }

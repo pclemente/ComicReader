@@ -1,6 +1,6 @@
 {
   "preparedOn": "2026-10-26",
-  "status": "Prepared and being entered into App Store Connect; submission status is tracked separately.",
+  "status": "Submitted for iOS and macOS 1.6.1 (15); Waiting for Review verified. See submission.json.",
   "appStoreAppID": "1597314495",
   "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
   "primaryCategory": "Books",
