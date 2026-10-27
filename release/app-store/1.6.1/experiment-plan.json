@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "planType": "app-store-product-page-optimization",
-  "status": "planned-not-created-or-scheduled",
+  "status": "created-draft-not-started",
   "preparedDate": "2026-10-26",
   "app": {
     "name": "ComicReader",
@@ -72,10 +72,10 @@
   },
   "execution": {
     "mode": "manual-App-Store-Connect-only",
-    "createdInAppStoreConnect": false,
+    "createdInAppStoreConnect": true,
     "scheduled": false,
-    "browserChangesPerformed": false,
-    "nextAction": "After all launch gates pass, manually create exactly one treatment using the recorded 50/50 allocation and order."
+    "browserChangesPerformed": true,
+    "nextAction": "Use the existing draft. After all launch gates pass, capture the baseline, refresh Apple’s duration estimate and start only this test."
   },
   "assetProvenance": {
     "hashAlgorithm": "SHA-256",
@@ -551,6 +551,17 @@
       "search",
       "lists"
     ],
-    "remaining": "Add en-US/es-ES after release makes them selectable; start only after seven stable complete baseline days."
+    "remaining": "Await seven complete stable baseline days without a competing release, creative, pricing or advertising change. Capture the baseline and refresh Apple’s duration estimate before starting. Test remains Draft.",
+    "configuredLocales": [
+      "en-GB",
+      "en-US",
+      "es-ES"
+    ],
+    "lastVerifiedDate": "2026-10-27",
+    "localeAssets": {
+      "en-GB": "Approved English assets in reader/iCloud/library/search/lists order.",
+      "en-US": "Using Existing Assets: inherits the English treatment order on iPhone, iPhone Duo and iPad.",
+      "es-ES": "Approved Spanish assets reordered to reader/iCloud/library/search/lists on iPhone, iPhone Duo and iPad; verified after reload."
+    }
   }
 }
