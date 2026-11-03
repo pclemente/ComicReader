@@ -1,0 +1,48 @@
+{
+  "version": "1.6.2",
+  "build": "16",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "appStoreAppID": "1597314495",
+  "sourceCommit": "78e385641bdb003f3079dc29b49f223dc0861133",
+  "validationHarnessCommit": "3260471",
+  "verifiedAt": "2026-11-03T14:09:00.401088+00:00",
+  "platforms": {
+    "iOS": {
+      "status": "Waiting for Review",
+      "reviewSubmissionID": "4092e04d-39f5-46e4-bb65-376b2661a8da",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/4092e04d-39f5-46e4-bb65-376b2661a8da"
+    },
+    "macOS": {
+      "status": "Waiting for Review",
+      "reviewSubmissionID": "4bf66d97-6c82-45e1-95c9-809fe1ab682e",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/4bf66d97-6c82-45e1-95c9-809fe1ab682e"
+    }
+  },
+  "localizations": [
+    "en-GB",
+    "en-US",
+    "es-ES"
+  ],
+  "releaseMode": "Automatic after approval",
+  "screenshots": "Current approved screenshots retained",
+  "purchaseModel": "Existing one-time non-consumable Plus; free optional iCloud",
+  "ratingReset": false,
+  "releaseAssessment": {
+    "decision": "Proceed with submission using completed verification and documented simulator UI limitations",
+    "basis": [
+      "129 Mac unit/regression tests passed; one StoreKit integration skip",
+      "iOS StoreKit purchase, restore and refund lifecycle passed",
+      "Contextual filter purchase and auto-resume passed end to end",
+      "Duo compact empty-library layout passed",
+      "Unit coverage passed for one-shot continuation, picker construction/imports, web replay policy, reading lists, bookmarks and filters",
+      "Independent source review found no actionable app defect or critical verification gap"
+    ],
+    "residualRisk": "Reading-list/text/bookmark-specific UI resumption, WKDownload replay/manual retry and system Files cancellation were not completed end to end. Failed attempts were test runner, system provider or selector infrastructure; they are not recorded as passes.",
+    "productionSourceChangedAfterArchive": false
+  },
+  "screenshotExperiment": {
+    "id": "ef53e61b-5adb-43cd-aaff-c1ad0439c0f7",
+    "status": "Existing draft postponed until both platforms are live and seven complete unchanged UTC reporting days are available"
+  },
+  "evidence": "/Users/pablocpe/Documents/ComicReader Releases/1.6.2-build16/waiting-for-review-both.png"
+}

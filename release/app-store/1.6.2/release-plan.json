@@ -3,7 +3,7 @@
   "build": 16,
   "sourceCommit": "78e385641bdb003f3079dc29b49f223dc0861133",
   "preparedDate": "2026-11-03",
-  "status": "Both builds uploaded, processed and attached to saved drafts; not submitted. Final UI validation is incomplete because simulator installation/launch failed; Apple separately requires Paid Applications Schedule acceptance.",
+  "status": "iOS and macOS 1.6.2 (16) submitted; Waiting for Review verified for both platforms",
   "screenshots": "Keep the current approved screenshots. The existing screenshot-order experiment remains postponed.",
   "releaseMode": "Automatic after approval",
   "purchaseModel": "Existing non-consumable one-time Plus; free iCloud",
@@ -71,6 +71,19 @@
         "Contextual list cancellation/purchase/resumption",
         "Authenticated browser import, safe continuation and manual retry"
       ]
+    },
+    "releaseAssessment": {
+      "decision": "Proceed with submission using completed verification and documented simulator UI limitations",
+      "basis": [
+        "129 Mac unit/regression tests passed; one StoreKit integration skip",
+        "iOS StoreKit purchase, restore and refund lifecycle passed",
+        "Contextual filter purchase and auto-resume passed end to end",
+        "Duo compact empty-library layout passed",
+        "Unit coverage passed for one-shot continuation, picker construction/imports, web replay policy, reading lists, bookmarks and filters",
+        "Independent source review found no actionable app defect or critical verification gap"
+      ],
+      "residualRisk": "Reading-list/text/bookmark-specific UI resumption, WKDownload replay/manual retry and system Files cancellation were not completed end to end. Failed attempts were test runner, system provider or selector infrastructure; they are not recorded as passes.",
+      "productionSourceChangedAfterArchive": false
     }
   },
   "appStoreConnect": {
@@ -83,8 +96,11 @@
       "buildProcessing": "Processed; TestFlight Ready to Submit",
       "buildUUID": "50a17ecf-46d5-42fb-969b-f3d48cb82d19",
       "buildAttachment": "Build 16 attached; Save persisted",
-      "versionState": "Prepare for Submission",
-      "submitted": false
+      "versionState": "Waiting for Review",
+      "submitted": true,
+      "reviewSubmissionID": "4092e04d-39f5-46e4-bb65-376b2661a8da",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/4092e04d-39f5-46e4-bb65-376b2661a8da",
+      "verifiedAt": "2026-11-03T14:09:00.401088+00:00"
     },
     "macOS": {
       "draft": "1.6.2 draft created",
@@ -93,21 +109,21 @@
       "reviewSample": "review-sample.zip attached and verified saved",
       "upload": "Succeeded on retry after the first attempt failed with transient offline error -1009 (no network route)",
       "buildProcessing": "Processed; available and selected in the release build picker",
-      "submitted": false,
+      "submitted": true,
       "buildUUID": "3d68b088-1835-4b2c-978b-c3d7a26da759",
       "buildAttachment": "Build 16 attached; Save persisted",
-      "versionState": "Prepare for Submission"
+      "versionState": "Waiting for Review",
+      "reviewSubmissionID": "4bf66d97-6c82-45e1-95c9-809fe1ab682e",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/4bf66d97-6c82-45e1-95c9-809fe1ab682e",
+      "verifiedAt": "2026-11-03T14:09:00.401088+00:00"
     },
     "releaseMode": "Automatic after approval",
     "screenshots": "Current screenshots retained",
     "agreements": {
       "developerProgram": "User accepted the updated agreement; the Apps dashboard notice cleared",
-      "paidApps": "Apple Apps dashboard explicitly requires Account Holder acceptance before existing-app updates. Verified 2026-11-03. Separate user question already pending."
+      "paidApps": "Active; accepted effective November 3, 2026; verified in App Store Connect Business before submission."
     },
-    "submissionBlockers": [
-      "Incomplete final UI validation",
-      "Account Holder must accept the updated Paid Applications Schedule in App Store Connect Business; Developer Program agreement already cleared"
-    ]
+    "submissionBlockers": []
   },
-  "lastUpdatedAt": "2026-11-03T13:55:58.277980+00:00"
+  "lastUpdatedAt": "2026-11-03T14:09:00.401088+00:00"
 }
