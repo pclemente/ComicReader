@@ -28,16 +28,17 @@ The reference implementation is `swisspol/ComicFlow` at commit `05a30aea4ea757a5
 
 ## Reproduce validation
 
-Open `ComicFlow.xcodeproj`, select the shared **ComicFlow** scheme and an iPad simulator, and run **Product → Test**. The scheme includes hosted regression tests and UI tests. Tests create disposable comic fixtures in the simulator; use a test simulator rather than a device containing a personal collection.
+Open `ComicFlow.xcodeproj`, select the shared **ComicReader-StoreKit** scheme and a test simulator, and run **Product → Test**. This scheme includes hosted regression tests, UI tests and the local StoreKit configuration. The ordinary ComicFlow scheme does not configure local purchases and can present an Apple Account sign-in prompt during purchase tests. Do not enter an account for these tests. Tests create disposable comic fixtures in the simulator; use a test simulator rather than a device containing a personal collection.
 
 ```sh
-xcodebuild -project ComicFlow.xcodeproj -scheme ComicFlow \
+xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit \
   -destination 'generic/platform=iOS Simulator' \
   CODE_SIGNING_ALLOWED=NO build-for-testing
 
-xcodebuild -project ComicFlow.xcodeproj -scheme ComicFlow \
+xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit \
   -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5),OS=27.0' \
-  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test
+  -parallel-testing-enabled NO -test-timeouts-enabled YES \
+  -maximum-test-execution-time-allowance 300 test
 
 xcodebuild -project ComicFlow.xcodeproj -scheme ComicFlow \
   -configuration Release -destination 'generic/platform=iOS' \

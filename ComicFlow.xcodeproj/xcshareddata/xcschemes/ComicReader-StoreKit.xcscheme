@@ -52,6 +52,16 @@
                ReferencedContainer = "container:ComicFlow.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "4985A16593B47D41BFF4EC04"
+               BuildableName = "ComicReaderUITests.xctest"
+               BlueprintName = "ComicReaderUITests"
+               ReferencedContainer = "container:ComicFlow.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

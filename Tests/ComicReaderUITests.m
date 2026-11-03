@@ -561,7 +561,9 @@
     [app.buttons[@"library.readingLists"] tap];
     [app.buttons[@"readingLists.add"] tap];
     XCTAssertTrue([app.navigationBars[@"ComicReader Plus"] waitForExistenceWithTimeout:5]);
-    [app.navigationBars[@"ComicReader Plus"].buttons[@"Done"] tap];
+    XCUIElement* dismissPlus = app.buttons[@"plus.done"];
+    XCTAssertTrue([self waitForElementToBecomeHittable:dismissPlus timeout:5]);
+    [dismissPlus tap];
     XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
     XCTAssertFalse(app.alerts[@"New Reading List"].exists, @"Dismissing Plus must abandon the requested action.");
     [app.buttons[@"readingLists.add"] tap];
@@ -576,7 +578,9 @@
     [newList.buttons[@"Cancel"] tap];
     XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
     XCTAssertFalse(newList.exists);
-    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    XCUIElement* dismissLists = app.buttons[@"Done"].firstMatch;
+    XCTAssertTrue([self waitForElementToBecomeHittable:dismissLists timeout:5]);
+    [dismissLists tap];
     [app.buttons[@"library.readingLists"] tap];
     XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
     XCTAssertFalse(newList.exists, @"Returning to the screen must not repeat the completed intent.");
