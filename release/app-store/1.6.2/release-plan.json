@@ -1,9 +1,10 @@
 {
   "version": "1.6.2",
   "build": 16,
+  "sourceCommit": "78e385641bdb003f3079dc29b49f223dc0861133",
   "preparedDate": "2026-11-03",
-  "status": "Implementation complete; runtime validation in progress; not submitted",
-  "screenshots": "Inherit current approved screenshots. Existing screenshot-order experiment postponed.",
+  "status": "Both builds uploaded, processed and attached to saved drafts; not submitted. Final UI validation is incomplete because simulator installation/launch failed; Apple separately requires Paid Applications Schedule acceptance.",
+  "screenshots": "Keep the current approved screenshots. The existing screenshot-order experiment remains postponed.",
   "releaseMode": "Automatic after approval",
   "purchaseModel": "Existing non-consumable one-time Plus; free iCloud",
   "analytics": "No third-party analytics",
@@ -16,6 +17,15 @@
     "Signed archive/export validation for iOS and Mac"
   ],
   "validation": {
+    "signedArtifacts": {
+      "status": "Both signed archives and exported packages passed validation",
+      "evidence": "/Users/pablocpe/Documents/ComicReader Releases/1.6.2-build16/upload-record.json"
+    },
+    "archiveSource": {
+      "commit": "78e385641bdb003f3079dc29b49f223dc0861133",
+      "postArchiveValidationHarness": "ComicReader-StoreKit scheme and UI selector changes are test-only, do not change production source and must be recorded separately from the archived source commit",
+      "validationHarnessCommit": "3260471"
+    },
     "macOS": {
       "passedTests": 129,
       "skippedTests": 1,
@@ -23,14 +33,81 @@
       "environment": "Xcode 27.2, macOS 27.2, isolated sandboxed Catalyst test host",
       "limitation": "StoreKit lifecycle test skipped for documented Catalyst StoreKitTest limitation."
     },
-    "iOS": {
-      "status": "Source compiled. UI and StoreKit flow verification pending a working simulator runtime."
+    "nativeMacUI": {
+      "automatedRun": "UI runner infrastructure failed before tests began",
+      "manualCancellation": "Passed"
     },
-    "review": "No actionable correctness findings in independent review of purchase continuation, caller guards, web request replay and empty-library layout."
+    "review": "No actionable correctness findings in independent review of purchase continuation, caller guards, web request replay and empty-library layout.",
+    "iPhoneDuo": {
+      "storeKitLifecycle": {
+        "status": "Passed",
+        "scheme": "ComicReader-StoreKit",
+        "evidence": "/Users/pablocpe/Documents/ComicReader Releases/1.6.2-build16/validation/duo-storekit-configured.xcresult",
+        "configurationNote": "The ComicReader-StoreKit scheme carries the UI test target and StoreKit configuration; this test-only scheme change does not alter production source.",
+        "supersededAttempt": "The original ComicFlow scheme attempt did not configure the test store, reached the Apple Account system dialog and was interrupted."
+      },
+      "addComics": {
+        "compactLayout": "Passed",
+        "cancellableFilesPicker": "Failed because the remote Files picker UI rendered blank; rerun remains",
+        "evidence": "/Users/pablocpe/Documents/ComicReader Releases/1.6.2-build16/validation/duo-first-import.xcresult"
+      },
+      "contextualUI": {
+        "status": "Filter auto-resume passed; remaining end-to-end journeys unverified",
+        "scheme": "ComicReader-StoreKit",
+        "filterAutoResume": "Passed in 66 seconds",
+        "listInitialAttempt": "The app exposed a visible plus.done control, but iOS 27 placed it outside the navigation bar; the test-only selector was corrected",
+        "currentScope": "Corrected list, browser and OCR journeys still require completed runtime validation",
+        "productionCodeChanges": false,
+        "followUpAttempt": "The OCR journey lost the accessibility server after opening its fixture, before feature assertions. Run interrupted; no matching ComicFlow crash report found."
+      }
+    },
+    "iPad": {
+      "environment": "Fresh dedicated iPadOS 27.0 simulator; boot completed",
+      "firstAttempt": "UI runner installation failed with IXErrorDomain lost placeholder; zero test cases executed",
+      "boundedRetry": "Direct installation of the UI runner succeeded. One test-without-building retry then stalled for over five minutes inside CoreSimulator launchApplicationWithID. Interrupted before test execution.",
+      "runtimeVerified": false,
+      "remaining": [
+        "Empty-library system Files picker and cancellation",
+        "Contextual list cancellation/purchase/resumption",
+        "Authenticated browser import, safe continuation and manual retry"
+      ]
+    }
   },
   "appStoreConnect": {
-    "iOS": "1.6.2 draft created; metadata preparation in progress; no build attached",
-    "macOS": "Draft preparation pending",
-    "submissionBlocker": "Apple still requires Account Holder acceptance of updated Paid Applications Schedule."
-  }
+    "iOS": {
+      "draft": "1.6.2 draft created",
+      "metadata": "What's New and promotional text saved for en-GB, en-US and es-ES",
+      "reviewNotes": "Saved",
+      "reviewSample": "review-sample.zip attached and verified saved",
+      "upload": "Succeeded at 2026-11-03T13:16:10Z",
+      "buildProcessing": "Processed; TestFlight Ready to Submit",
+      "buildUUID": "50a17ecf-46d5-42fb-969b-f3d48cb82d19",
+      "buildAttachment": "Build 16 attached; Save persisted",
+      "versionState": "Prepare for Submission",
+      "submitted": false
+    },
+    "macOS": {
+      "draft": "1.6.2 draft created",
+      "metadata": "What's New and promotional text saved for en-GB, en-US and es-ES",
+      "reviewNotes": "Saved",
+      "reviewSample": "review-sample.zip attached and verified saved",
+      "upload": "Succeeded on retry after the first attempt failed with transient offline error -1009 (no network route)",
+      "buildProcessing": "Processed; available and selected in the release build picker",
+      "submitted": false,
+      "buildUUID": "3d68b088-1835-4b2c-978b-c3d7a26da759",
+      "buildAttachment": "Build 16 attached; Save persisted",
+      "versionState": "Prepare for Submission"
+    },
+    "releaseMode": "Automatic after approval",
+    "screenshots": "Current screenshots retained",
+    "agreements": {
+      "developerProgram": "User accepted the updated agreement; the Apps dashboard notice cleared",
+      "paidApps": "Apple Apps dashboard explicitly requires Account Holder acceptance before existing-app updates. Verified 2026-11-03. Separate user question already pending."
+    },
+    "submissionBlockers": [
+      "Incomplete final UI validation",
+      "Account Holder must accept the updated Paid Applications Schedule in App Store Connect Business; Developer Program agreement already cleared"
+    ]
+  },
+  "lastUpdatedAt": "2026-11-03T13:55:58.277980+00:00"
 }

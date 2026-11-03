@@ -1,6 +1,9 @@
 {
-  "preparedOn": "2026-10-26",
-  "status": "Submitted for iOS and macOS 1.6.1 (15); Waiting for Review verified. See submission.json.",
+  "version": "1.6.2",
+  "build": 16,
+  "preparedOn": "2026-11-03",
+  "status": "Both builds uploaded, processed and attached to saved drafts; not submitted. Final UI validation is incomplete because simulator installation/launch failed; Apple separately requires Paid Applications Schedule acceptance.",
+  "sourceCommit": "78e385641bdb003f3079dc29b49f223dc0861133",
   "appStoreAppID": "1597314495",
   "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
   "primaryCategory": "Books",
@@ -25,9 +28,45 @@
     "iOS": "ios/{locale}",
     "macOS": "macos/{locale}"
   },
+  "appStoreConnect": {
+    "locales": [
+      "en-GB",
+      "en-US",
+      "es-ES"
+    ],
+    "savedMetadata": [
+      "whats_new",
+      "promotional_text"
+    ],
+    "iOS": {
+      "draftCreated": true,
+      "reviewNotesSaved": true,
+      "reviewSample": "review-sample.zip attached and verified saved",
+      "upload": "Succeeded at 2026-11-03T13:16:10Z",
+      "buildProcessing": "Processed; TestFlight Ready to Submit",
+      "buildUUID": "50a17ecf-46d5-42fb-969b-f3d48cb82d19",
+      "buildAttachment": "Build 16 attached; Save persisted",
+      "versionState": "Prepare for Submission",
+      "submitted": false
+    },
+    "macOS": {
+      "draftCreated": true,
+      "reviewNotesSaved": true,
+      "reviewSample": "review-sample.zip attached and verified saved",
+      "upload": "Succeeded on retry after the first attempt failed with transient offline error -1009 (no network route)",
+      "buildProcessing": "Processed; available and selected in the release build picker",
+      "submitted": false,
+      "buildUUID": "3d68b088-1835-4b2c-978b-c3d7a26da759",
+      "buildAttachment": "Build 16 attached; Save persisted",
+      "versionState": "Prepare for Submission"
+    },
+    "releaseMode": "Automatic after approval",
+    "screenshots": "Current screenshots retained"
+  },
   "notes": [
     "The Spanish listing states that the app interface is in English.",
     "ComicReader Plus remains one non-consumable purchase with a Spain base price of EUR 9.99; StoreKit displays the local price.",
-    "This package contains metadata and support-link maintenance only and makes no new feature claim."
-  ]
+    "Version 1.6.2 improves first-time importing and contextual Plus purchasing, with existing free reading and iCloud unchanged."
+  ],
+  "lastUpdatedAt": "2026-11-03T13:55:58.277980+00:00"
 }
