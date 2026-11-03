@@ -2,6 +2,41 @@ import UIKit
 
 public let CRPlusSyncRequestedNotification = Notification.Name("CRPlusSyncRequestedNotification")
 
+@objc public enum CRPlusEntryContext: Int {
+    case general
+    case websiteImport
+    case comicSearch
+    case readingLists
+    case bookmarks
+    case readingFilters
+}
+
+@MainActor
+final class CRPlusUnlockContinuation {
+    private var callback: (() -> Void)?
+
+    var current: (() -> Void)? {
+        callback
+    }
+
+    var hasCallback: Bool {
+        callback != nil
+    }
+
+    func replace(with callback: (() -> Void)?) {
+        self.callback = callback
+    }
+
+    func abandon() {
+        callback = nil
+    }
+
+    func consume() -> (() -> Void)? {
+        defer { callback = nil }
+        return callback
+    }
+}
+
 @objc(CRPlusViewControllerDelegate)
 public protocol CRPlusViewControllerDelegate: AnyObject {
     func plusViewControllerDidRequestSync(_ viewController: CRPlusViewController)
@@ -9,14 +44,44 @@ public protocol CRPlusViewControllerDelegate: AnyObject {
 
 @objc(CRPlusViewController)
 @MainActor
-public final class CRPlusViewController: UITableViewController {
+public final class CRPlusViewController: UITableViewController, UIAdaptivePresentationControllerDelegate {
     @objc public class var syncRequestedNotification: NSNotification.Name {
         CRPlusSyncRequestedNotification
     }
 
     @objc public weak var delegate: CRPlusViewControllerDelegate?
 
-    @objc public var showsOnlyCloud = false
+    @objc public var showsOnlyCloud = false {
+        didSet {
+            if isViewLoaded {
+                configurePresentation()
+            }
+        }
+    }
+
+    @objc public var entryContext: CRPlusEntryContext = .general {
+        didSet {
+            if isViewLoaded, !showsOnlyCloud {
+                configurePresentation()
+            }
+        }
+    }
+
+    /// Called once, after this screen has returned to its originating presenter,
+    /// when a purchase or explicit restore verifies Plus. Entitlement-change
+    /// notifications alone never invoke this callback.
+    @objc public var onUnlock: (() -> Void)? {
+        get {
+            unlockContinuation.current
+        }
+        set {
+            unlockContinuation.replace(with: newValue)
+            if isViewLoaded {
+                updatePurchaseToolbar()
+                installPresentationControllerDelegateIfNeeded()
+            }
+        }
+    }
 
     private enum Section {
         case features
@@ -43,8 +108,35 @@ public final class CRPlusViewController: UITableViewController {
 
     private let store = CRPlusStore.sharedStore
     private let cloud = CRCloudSyncManager.sharedManager
+    private let unlockContinuation = CRPlusUnlockContinuation()
     private var isUpdatingCloudPreference = false
     private var didInstallObservers = false
+    private var originalToolbarHidden: Bool?
+    private var mayBeLeavingHierarchy = false
+
+    private lazy var restoreButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(title: "Restore",
+                                   style: .plain,
+                                   target: self,
+                                   action: #selector(restoreButtonPressed))
+        item.accessibilityIdentifier = "plus.restoreButton"
+        item.accessibilityLabel = "Restore Purchases"
+        item.accessibilityHint = "Checks the App Store for an earlier ComicReader Plus purchase."
+        return item
+    }()
+
+    private lazy var purchaseButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(title: "Buy Plus",
+                                   style: .done,
+                                   target: self,
+                                   action: #selector(purchaseButtonPressed))
+        item.accessibilityIdentifier = "plus.purchaseButton"
+        return item
+    }()
+
+    private lazy var toolbarSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace,
+                                                     target: nil,
+                                                     action: nil)
 
     private let headerTitleLabel: UILabel = {
         let label = UILabel()
@@ -87,11 +179,6 @@ public final class CRPlusViewController: UITableViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = showsOnlyCloud ? "iCloud Sync" : "ComicReader Plus"
-        if showsOnlyCloud {
-            headerTitleLabel.text = "iCloud Sync"
-            headerBodyLabel.text = "Pick up where you left off on iPhone, iPad and Mac. Your comics, read status and current page sync using your own iCloud Drive storage. Free for everyone."
-        }
         view.backgroundColor = .systemGroupedBackground
         tableView.backgroundColor = .systemGroupedBackground
         tableView.rowHeight = UITableView.automaticDimension
@@ -100,7 +187,8 @@ public final class CRPlusViewController: UITableViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done,
                                                              target: self,
                                                              action: #selector(done))
-        configureHeader()
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "plus.done"
+        configurePresentation()
         installObserversIfNeeded()
 
         if !showsOnlyCloud { store.start() }
@@ -108,7 +196,44 @@ public final class CRPlusViewController: UITableViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        mayBeLeavingHierarchy = false
+        if let navigationController {
+            if originalToolbarHidden == nil {
+                originalToolbarHidden = navigationController.isToolbarHidden
+            }
+            navigationController.setToolbarHidden(showsOnlyCloud, animated: animated)
+        }
+        updatePurchaseToolbar()
         tableView.reloadData()
+    }
+
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        installPresentationControllerDelegateIfNeeded()
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        mayBeLeavingHierarchy = isMovingFromParent ||
+            isBeingDismissed ||
+            navigationController?.isBeingDismissed == true ||
+            navigationController?.viewControllers.contains(where: { $0 === self }) == false
+        if mayBeLeavingHierarchy {
+            restoreOriginalToolbarVisibility(animated: animated)
+        }
+    }
+
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if mayBeLeavingHierarchy {
+            abandonUnlockFlow()
+        }
+        mayBeLeavingHierarchy = false
+    }
+
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        abandonUnlockFlow()
+        restoreOriginalToolbarVisibility(animated: false)
     }
 
     public override func viewDidLayoutSubviews() {
@@ -116,22 +241,43 @@ public final class CRPlusViewController: UITableViewController {
         sizeHeaderToFit()
     }
 
+    private func configurePresentation() {
+        title = showsOnlyCloud ? "iCloud Sync" : "ComicReader Plus"
+        if showsOnlyCloud {
+            headerTitleLabel.text = "iCloud Sync"
+            headerBodyLabel.text = "Pick up where you left off on iPhone, iPad and Mac. Your comics, read status and current page sync using your own iCloud Drive storage. Free for everyone."
+        } else {
+            let presentation = entryPresentation
+            headerTitleLabel.text = presentation.title
+            headerBodyLabel.text = presentation.body
+        }
+        configureHeader()
+        updatePurchaseToolbar()
+        tableView.reloadData()
+    }
+
     private func configureHeader() {
         let header = UIView()
         header.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 24, bottom: 12, trailing: 24)
 
-        let imageView = UIImageView(image: UIImage(systemName: showsOnlyCloud ? "icloud.and.arrow.up.fill" : "books.vertical.fill"))
+        let symbolName = showsOnlyCloud ? "icloud.and.arrow.up.fill" : entryPresentation.symbolName
+        let imageView = UIImageView(image: UIImage(systemName: symbolName))
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.tintColor = view.tintColor
         imageView.contentMode = .scaleAspectFit
         imageView.accessibilityElementsHidden = true
 
-        let stack = UIStackView(arrangedSubviews: [imageView, headerTitleLabel, headerBodyLabel])
+        var arrangedSubviews: [UIView] = [imageView, headerTitleLabel, headerBodyLabel]
+        if !showsOnlyCloud {
+            arrangedSubviews.append(makeContextPreview())
+        }
+        let stack = UIStackView(arrangedSubviews: arrangedSubviews)
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 10
         stack.setCustomSpacing(8, after: imageView)
+        stack.setCustomSpacing(16, after: headerBodyLabel)
         header.addSubview(stack)
 
         NSLayoutConstraint.activate([
@@ -142,6 +288,166 @@ public final class CRPlusViewController: UITableViewController {
             stack.bottomAnchor.constraint(equalTo: header.layoutMarginsGuide.bottomAnchor)
         ])
         tableView.tableHeaderView = header
+        sizeHeaderToFit()
+    }
+
+    private struct EntryPresentation {
+        let title: String
+        let body: String
+        let symbolName: String
+        let previewTitle: String
+        let previewDetail: String
+        let previewSymbolName: String
+    }
+
+    private var entryPresentation: EntryPresentation {
+        switch entryContext {
+        case .general:
+            return EntryPresentation(
+                title: "ComicReader Plus",
+                body: "Bring comics into your library, find a line across a comic, and organize what you read next. One purchase for iPhone, iPad and Mac.",
+                symbolName: "books.vertical.fill",
+                previewTitle: "Import · Search · Organize",
+                previewDetail: "Website downloads, comic text search, reading lists, bookmarks and reading filters.",
+                previewSymbolName: "sparkles"
+            )
+        case .websiteImport:
+            return EntryPresentation(
+                title: "Bring this comic into your library",
+                body: "Plus imports supported PDF, CBZ and classic CBR downloads from the web, with file checks, duplicate detection and a visible download queue.",
+                symbolName: "arrow.down.doc.fill",
+                previewTitle: "issue-12.cbz",
+                previewDetail: "Ready to import · File and duplicate checks included",
+                previewSymbolName: "checkmark.circle.fill"
+            )
+        case .comicSearch:
+            return EntryPresentation(
+                title: "Find the line you remember",
+                body: "Plus builds a private text index on this device, searches the comic you are reading and jumps directly to matching pages.",
+                symbolName: "text.magnifyingglass",
+                previewTitle: "“midnight train”",
+                previewDetail: "1 example match · Page 18 · Indexed on this device",
+                previewSymbolName: "magnifyingglass"
+            )
+        case .readingLists:
+            return EntryPresentation(
+                title: "Choose what you’ll read next",
+                body: "Plus creates reading lists across folders. Smart queues can gather in-progress, unread and finished comics automatically.",
+                symbolName: "list.bullet.rectangle.fill",
+                previewTitle: "Weekend queue",
+                previewDetail: "3 example comics · Reorder whenever you like",
+                previewSymbolName: "text.badge.checkmark"
+            )
+        case .bookmarks:
+            return EntryPresentation(
+                title: "Return to the page that mattered",
+                body: "Plus lets you name a page, keep it with the comic and jump straight back when you want to revisit it.",
+                symbolName: "bookmark.fill",
+                previewTitle: "Final reveal",
+                previewDetail: "Example bookmark · Page 42 · Tap to return",
+                previewSymbolName: "bookmark.fill"
+            )
+        case .readingFilters:
+            return EntryPresentation(
+                title: "Find your favorite reading look",
+                body: "Preview Clear Ink, Grayscale and Warm Paper here for free. Plus applies your choice while you read, without changing the original comic.",
+                symbolName: "camera.filters",
+                previewTitle: "Warm Paper",
+                previewDetail: "Try every reading filter on local sample art",
+                previewSymbolName: "camera.filters"
+            )
+        }
+    }
+
+    private func makeContextPreview() -> UIView {
+        let presentation = entryPresentation
+        let card = UIView()
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.backgroundColor = .secondarySystemGroupedBackground
+        card.layer.cornerRadius = 14
+        card.layer.cornerCurve = .continuous
+        card.layer.borderWidth = 1 / UIScreen.main.scale
+        card.layer.borderColor = UIColor.separator.cgColor
+        card.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
+        card.accessibilityIdentifier = "plus.contextPreview"
+
+        let eyebrow = UILabel()
+        eyebrow.font = .preferredFont(forTextStyle: .caption1)
+        eyebrow.adjustsFontForContentSizeCategory = true
+        eyebrow.textColor = .secondaryLabel
+        eyebrow.text = entryContext == .readingFilters ? "INTERACTIVE PREVIEW" : "EXAMPLE"
+
+        let imageView = UIImageView(image: UIImage(systemName: presentation.previewSymbolName))
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.tintColor = view.tintColor
+        imageView.contentMode = .scaleAspectFit
+        imageView.accessibilityElementsHidden = true
+        imageView.setContentHuggingPriority(.required, for: .horizontal)
+
+        let titleLabel = UILabel()
+        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
+        titleLabel.text = presentation.previewTitle
+
+        let detailLabel = UILabel()
+        detailLabel.font = .preferredFont(forTextStyle: .subheadline)
+        detailLabel.adjustsFontForContentSizeCategory = true
+        detailLabel.textColor = .secondaryLabel
+        detailLabel.numberOfLines = 0
+        detailLabel.text = presentation.previewDetail
+
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, detailLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 3
+        let previewRow = UIStackView(arrangedSubviews: [imageView, textStack])
+        previewRow.axis = .horizontal
+        previewRow.alignment = .center
+        previewRow.spacing = 12
+
+        var arrangedSubviews: [UIView] = [eyebrow, previewRow]
+        if entryContext == .readingFilters {
+            let artwork = UIImageView(image: CRPlusFilterPreviewController.sampleArtwork())
+            artwork.contentMode = .scaleAspectFill
+            artwork.clipsToBounds = true
+            artwork.layer.cornerRadius = 9
+            artwork.layer.cornerCurve = .continuous
+            artwork.heightAnchor.constraint(equalToConstant: 96).isActive = true
+            artwork.isAccessibilityElement = true
+            artwork.accessibilityLabel = "Warm Paper sample comic artwork"
+            artwork.image = CRReaderImageFilters.render(artwork.image ?? UIImage(), preset: 3)
+
+            var configuration = UIButton.Configuration.tinted()
+            configuration.title = "Try the filter preview"
+            configuration.image = UIImage(systemName: "camera.filters")
+            configuration.imagePadding = 7
+            let button = UIButton(configuration: configuration,
+                                  primaryAction: UIAction { [weak self] _ in
+                                      self?.showFilterPreview()
+                                  })
+            button.accessibilityIdentifier = "plus.contextPreview.action"
+            arrangedSubviews.append(artwork)
+            arrangedSubviews.append(button)
+        } else {
+            card.isAccessibilityElement = true
+            card.accessibilityLabel = "Example. \(presentation.previewTitle). \(presentation.previewDetail)"
+        }
+
+        let stack = UIStackView(arrangedSubviews: arrangedSubviews)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.spacing = 10
+        card.addSubview(stack)
+        NSLayoutConstraint.activate([
+            imageView.widthAnchor.constraint(equalToConstant: 28),
+            imageView.heightAnchor.constraint(equalToConstant: 28),
+            stack.leadingAnchor.constraint(equalTo: card.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: card.layoutMarginsGuide.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: card.layoutMarginsGuide.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: card.layoutMarginsGuide.bottomAnchor)
+        ])
+        return card
     }
 
     private func sizeHeaderToFit() {
@@ -164,6 +470,55 @@ public final class CRPlusViewController: UITableViewController {
         }
     }
 
+    private func updatePurchaseToolbar() {
+        guard isViewLoaded else { return }
+        guard !showsOnlyCloud else {
+            toolbarItems = []
+            return
+        }
+
+        restoreButtonItem.title = store.status == .restoring ? "Restoring…" : "Restore"
+        restoreButtonItem.isEnabled = !store.isBusy
+
+        if store.isUnlocked, onUnlock != nil {
+            purchaseButtonItem.title = "Continue"
+            purchaseButtonItem.accessibilityLabel = "Continue with Plus"
+            purchaseButtonItem.accessibilityHint = "Returns to the feature you were using."
+            purchaseButtonItem.isEnabled = true
+        } else if store.isUnlocked {
+            purchaseButtonItem.title = "Plus Unlocked"
+            purchaseButtonItem.accessibilityLabel = "ComicReader Plus is unlocked"
+            purchaseButtonItem.accessibilityHint = ""
+            purchaseButtonItem.isEnabled = false
+        } else {
+            switch store.status {
+            case .idle, .loading:
+                purchaseButtonItem.title = "Loading Price…"
+            case .purchasing:
+                purchaseButtonItem.title = "Purchasing…"
+            case .purchasePending:
+                purchaseButtonItem.title = "Purchase Pending"
+            default:
+                purchaseButtonItem.title = purchaseTitle
+            }
+            purchaseButtonItem.accessibilityLabel = purchaseTitle
+            purchaseButtonItem.accessibilityHint = "Starts the App Store purchase flow."
+            purchaseButtonItem.isEnabled = !store.isBusy && store.status != .purchasePending
+        }
+
+        toolbarItems = [restoreButtonItem, toolbarSpace, purchaseButtonItem]
+    }
+
+    private func restoreOriginalToolbarVisibility(animated: Bool) {
+        guard let navigationController, let originalToolbarHidden else { return }
+        navigationController.setToolbarHidden(originalToolbarHidden, animated: animated)
+    }
+
+    private func installPresentationControllerDelegateIfNeeded() {
+        guard onUnlock != nil else { return }
+        (navigationController?.presentationController ?? presentationController)?.delegate = self
+    }
+
     private func installObserversIfNeeded() {
         guard !didInstallObservers else {
             return
@@ -180,6 +535,7 @@ public final class CRPlusViewController: UITableViewController {
     }
 
     @objc private func storeDidChange(_ notification: Notification) {
+        updatePurchaseToolbar()
         tableView.reloadData()
     }
 
@@ -189,11 +545,20 @@ public final class CRPlusViewController: UITableViewController {
     }
 
     @objc private func done() {
-        if let navigationController, navigationController.viewControllers.first != self {
-            navigationController.popViewController(animated: true)
+        abandonUnlockFlow()
+        returnToOrigin(completion: nil)
+    }
+
+    @objc private func purchaseButtonPressed() {
+        if store.isUnlocked {
+            completeUnlockFlowIfNeeded()
         } else {
-            dismiss(animated: true)
+            purchase()
         }
+    }
+
+    @objc private func restoreButtonPressed() {
+        restore()
     }
 
     public override func numberOfSections(in tableView: UITableView) -> Int {
@@ -322,7 +687,7 @@ public final class CRPlusViewController: UITableViewController {
         switch section {
         case .features:
             if indexPath.row == 4 {
-                navigationController?.pushViewController(CRPlusFilterPreviewController(), animated: true)
+                showFilterPreview()
             }
         case .freeSync:
             let controller = CRPlusViewController()
@@ -343,6 +708,10 @@ public final class CRPlusViewController: UITableViewController {
                 requestSync()
             }
         }
+    }
+
+    private func showFilterPreview() {
+        navigationController?.pushViewController(CRPlusFilterPreviewController(), animated: true)
     }
 
     private func purchaseCell() -> UITableViewCell {
@@ -538,7 +907,11 @@ public final class CRPlusViewController: UITableViewController {
     }
 
     private func purchase() {
-        guard !store.isUnlocked, !store.isBusy else {
+        if store.isUnlocked {
+            completeUnlockFlowIfNeeded()
+            return
+        }
+        guard !store.isBusy else {
             return
         }
         store.purchase { [weak self] unlocked, error in
@@ -547,10 +920,15 @@ public final class CRPlusViewController: UITableViewController {
             }
             self.tableView.reloadData()
             if let error {
+                self.abandonUnlockFlow()
                 self.presentError(error, title: "Purchase Could Not Be Completed")
+            } else if unlocked {
+                self.completeUnlockFlowIfNeeded()
             } else if !unlocked, self.store.status == .purchasePending {
                 self.presentMessage(title: "Purchase Pending",
                                     message: "The App Store will notify ComicReader after the purchase is approved.")
+            } else {
+                self.abandonUnlockFlow()
             }
         }
     }
@@ -565,14 +943,72 @@ public final class CRPlusViewController: UITableViewController {
             }
             self.tableView.reloadData()
             if let error {
+                self.abandonUnlockFlow()
                 self.presentError(error, title: "Restore Could Not Be Completed")
             } else if unlocked {
-                self.presentMessage(title: "Purchase Restored",
-                                    message: "ComicReader Plus is active on this device.")
+                if self.onUnlock != nil {
+                    self.completeUnlockFlowIfNeeded()
+                } else {
+                    self.presentMessage(title: "Purchase Restored",
+                                        message: "ComicReader Plus is active on this device.")
+                }
             } else {
+                self.abandonUnlockFlow()
                 self.presentMessage(title: "No Purchase Found",
                                     message: "No ComicReader Plus purchase was found for this Apple Account.")
             }
+        }
+    }
+
+    private func abandonUnlockFlow() {
+        unlockContinuation.abandon()
+        updatePurchaseToolbar()
+    }
+
+    private func completeUnlockFlowIfNeeded() {
+        guard !mayBeLeavingHierarchy,
+              store.isUnlocked,
+              let callback = unlockContinuation.consume() else { return }
+        updatePurchaseToolbar()
+        returnToOrigin(completion: callback)
+    }
+
+    private func returnToOrigin(completion: (() -> Void)?) {
+        let completionAfterTransition: () -> Void = {
+            if let completion {
+                completion()
+            }
+        }
+
+        if let navigationController,
+           let ownIndex = navigationController.viewControllers.firstIndex(where: { $0 === self }) {
+            if ownIndex > 0 {
+                let origin = navigationController.viewControllers[ownIndex - 1]
+                navigationController.popToViewController(origin, animated: true)
+                if let coordinator = navigationController.transitionCoordinator {
+                    coordinator.animate(alongsideTransition: nil) { context in
+                        guard !context.isCancelled else {
+                            self.onUnlock = completion
+                            return
+                        }
+                        completionAfterTransition()
+                    }
+                } else {
+                    completionAfterTransition()
+                }
+                return
+            }
+
+            if navigationController.presentingViewController != nil {
+                navigationController.dismiss(animated: true, completion: completionAfterTransition)
+                return
+            }
+        }
+
+        if presentingViewController != nil {
+            dismiss(animated: true, completion: completionAfterTransition)
+        } else {
+            completionAfterTransition()
         }
     }
 
@@ -654,6 +1090,7 @@ private final class CRPlusFilterPreviewController: UITableViewController {
     private let artwork = CRPlusFilterPreviewController.sampleArtwork()
     private let preview = UIImageView()
     private var selectedPreset = 0
+    private var previousToolbarHidden: Bool?
 
     init() { super.init(style: .insetGrouped) }
     required init?(coder: NSCoder) { fatalError("Use init()") }
@@ -669,6 +1106,23 @@ private final class CRPlusFilterPreviewController: UITableViewController {
         preview.isAccessibilityElement = true
         preview.accessibilityLabel = "Original sample comic artwork"
         tableView.tableHeaderView = preview
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let navigationController {
+            if previousToolbarHidden == nil {
+                previousToolbarHidden = navigationController.isToolbarHidden
+            }
+            navigationController.setToolbarHidden(true, animated: animated)
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent, let navigationController, let previousToolbarHidden {
+            navigationController.setToolbarHidden(previousToolbarHidden, animated: animated)
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -706,7 +1160,7 @@ private final class CRPlusFilterPreviewController: UITableViewController {
         tableView.reloadData()
     }
 
-    private static func sampleArtwork() -> UIImage {
+    fileprivate static func sampleArtwork() -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true

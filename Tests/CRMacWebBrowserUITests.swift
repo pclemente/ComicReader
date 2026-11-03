@@ -74,22 +74,14 @@ final class CRMacWebBrowserUITests: XCTestCase {
         click(upgrade.buttons["View Plus"])
         let purchase = app.cells["plus.purchase"]
         click(purchase)
-        XCTAssertTrue(wait(for: purchase, predicate: "exists == YES AND value == 'Unlocked'", timeout: 30),
-                      "The purchase must unlock the real Catalyst application.")
+        let destination = app.buttons["Library Root  ✓"]
+        XCTAssertTrue(wait(for: destination,
+                           predicate: "exists == YES AND enabled == YES AND hittable == YES",
+                           timeout: 30),
+                      "A verified purchase must return to the browser and resume the safe GET exactly once.")
         XCTAssertTrue(purchases.allTransactions().contains {
             $0.productIdentifier == "com.pabloclementeperez.ComicFlow.plus"
         })
-        click(app.cells["plus.restore"])
-        let restored = app.alerts["Purchase Restored"]
-        XCTAssertTrue(restored.waitForExistence(timeout: 30),
-                      "Restore must revalidate the entitlement in the Catalyst process.")
-        click(restored.buttons["OK"])
-        XCTAssertEqual(purchase.value as? String, "Unlocked")
-        screenshot("Mac Plus purchase restored", app: app)
-        click(app.buttons["Done"])
-
-        click(download)
-        let destination = app.buttons["Library Root  ✓"]
         click(destination)
         XCTAssertTrue(destination.waitForNonExistence(timeout: 10))
         let imported = app.cells.matching(NSPredicate(format:
@@ -97,10 +89,27 @@ final class CRMacWebBrowserUITests: XCTestCase {
             "library.browser.download", publisher.fileName, "Imported")).firstMatch
         XCTAssertTrue(imported.waitForExistence(timeout: 30),
                       "An authenticated attachment must validate and import through WKDownload.")
+        XCTAssertEqual(app.cells.matching(identifier: "library.browser.download").count, 1,
+                       "The unlock callback must not duplicate the retained request.")
         screenshot("Mac validated website import", app: app)
 
         click(app.buttons["library.browser.downloads.back"])
-        click(download)
+        click(app.buttons["library.browser.done"])
+        click(app.buttons["library.plus"])
+        click(app.cells["plus.restore"])
+        let restored = app.alerts["Purchase Restored"]
+        XCTAssertTrue(restored.waitForExistence(timeout: 30),
+                      "Restore must revalidate the entitlement in the Catalyst process.")
+        click(restored.buttons["OK"])
+        XCTAssertEqual(app.cells["plus.purchase"].value as? String, "Unlocked")
+        screenshot("Mac Plus purchase restored", app: app)
+        click(app.buttons["Done"])
+
+        click(app.buttons["library.browser"])
+        open(publisher.url(for: ""), in: app)
+        XCTAssertTrue(app.webViews.staticTexts["Signed in to test publisher"].waitForExistence(timeout: 15))
+        let repeatedDownload = app.webViews.links["Download test comic"]
+        click(repeatedDownload)
         click(destination)
         XCTAssertTrue(destination.waitForNonExistence(timeout: 10))
         let duplicate = app.cells.matching(NSPredicate(format:
@@ -288,7 +297,7 @@ private final class CRMacPublisherFixture {
             let login = route == root + "login"
             if login { headers = "Set-Cookie: \(cookie); HttpOnly; SameSite=Lax; Path=\(root)\r\n" }
             let state = signedIn || login ? "Signed in to test publisher" : "No publisher session"
-            body = Data("<!doctype html><meta name='viewport' content='width=device-width'><title>Test publisher</title><h1>\(state)</h1><p><a href='\(root)login'>Sign in to test publisher</a></p><p><a href='\(root)download'>Download test comic</a></p>".utf8)
+            body = Data("<!doctype html><meta name='viewport' content='width=device-width'><title>Test publisher</title><h1>\(state)</h1><p><a href='\(root)login'>Sign in to test publisher</a></p><p><a href='\(root)download' download>Download test comic</a></p>".utf8)
         } else {
             status = "404 Not Found"
             body = Data()

@@ -24,6 +24,30 @@ final class CRWebImportTests: XCTestCase {
     fixtureRoot = nil
   }
 
+  func testAutomaticWebDownloadReplayAllowsOnlyBodylessGetAndHeadRequests() throws {
+    let url = try XCTUnwrap(URL(string: "https://publisher.example/download"))
+
+    XCTAssertTrue(CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(URLRequest(url: url)))
+
+    var head = URLRequest(url: url)
+    head.httpMethod = "head"
+    XCTAssertTrue(CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(head))
+
+    var post = URLRequest(url: url)
+    post.httpMethod = "POST"
+    XCTAssertFalse(CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(post))
+
+    var getWithBody = URLRequest(url: url)
+    getWithBody.httpMethod = "GET"
+    getWithBody.httpBody = Data()
+    XCTAssertFalse(CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(getWithBody))
+
+    var headWithStream = URLRequest(url: url)
+    headWithStream.httpMethod = "HEAD"
+    headWithStream.httpBodyStream = InputStream(data: Data("sensitive".utf8))
+    XCTAssertFalse(CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(headWithStream))
+  }
+
   func testUntrustedFilenamesAreNormalizedAndFormatClaimsMustMatch() throws {
     XCTAssertEqual(try CRWebImportModel.normalizedFilename("../../.secret\u{202E}fdp.PDF",
                                                           detectedFormat: .pdf),

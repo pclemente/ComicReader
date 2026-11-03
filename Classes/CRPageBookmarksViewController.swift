@@ -268,7 +268,7 @@ public final class CRPageBookmarksViewController: UITableViewController {
   }
 
   @objc private func addBookmark() {
-    authorizeMutation { [weak self] in
+    authorizeMutation(resumeAfterUnlock: true) { [weak self] in
       guard let self else { return }
       self.presentNamePrompt(title: "Add Bookmark",
                              message: "Save page \(self.currentPageIndex + 1) with a name.",
@@ -287,7 +287,7 @@ public final class CRPageBookmarksViewController: UITableViewController {
   }
 
   private func requestRename(_ bookmark: CRPageBookmark) {
-    authorizeMutation { [weak self] in
+    authorizeMutation(resumeAfterUnlock: true) { [weak self] in
       self?.presentNamePrompt(title: "Rename Bookmark",
                               message: "Page \(bookmark.pageIndex + 1)",
                               initialName: bookmark.name) { [weak self] name in
@@ -344,15 +344,15 @@ public final class CRPageBookmarksViewController: UITableViewController {
     }
   }
 
-  private func authorizeMutation(_ action: @escaping () -> Void) {
+  private func authorizeMutation(resumeAfterUnlock: Bool = false, _ action: @escaping () -> Void) {
     guard plusStore.isUnlocked else {
-      presentPlusRequired()
+      presentPlusRequired(afterUnlock: resumeAfterUnlock ? action : nil)
       return
     }
     action()
   }
 
-  private func presentPlusRequired() {
+  private func presentPlusRequired(afterUnlock: (() -> Void)? = nil) {
     guard presentedViewController == nil else {
       return
     }
@@ -363,13 +363,22 @@ public final class CRPageBookmarksViewController: UITableViewController {
     )
     alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
     alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self] _ in
-      self?.presentPlus()
+      self?.presentPlus(afterUnlock: afterUnlock)
     })
     present(alert, animated: true)
   }
 
-  private func presentPlus() {
+  private func presentPlus(afterUnlock: (() -> Void)? = nil) {
     let plusViewController = CRPlusViewController()
+    plusViewController.entryContext = .bookmarks
+    if let afterUnlock {
+      plusViewController.onUnlock = { [weak self] in
+        guard let self, self.plusStore.isUnlocked, !self.isMutating,
+              self.viewIfLoaded?.window != nil,
+              self.navigationController?.topViewController === self else { return }
+        afterUnlock()
+      }
+    }
     let navigationController = CRAdaptiveToolNavigationController(rootViewController: plusViewController)
     navigationController.modalPresentationStyle = .formSheet
     present(navigationController, animated: true)

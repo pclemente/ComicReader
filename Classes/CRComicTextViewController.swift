@@ -193,7 +193,7 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
         table.reloadData()
     }
     @objc private func startIndex() {
-        guard requirePlus(from: self) else { return }
+        guard requirePlus(from: self, afterUnlock: { [weak self] in self?.startIndex() }) else { return }
         guard document != nil, !isIndexing else { return }
         isIndexing = true
         indexGeneration += 1
@@ -271,7 +271,8 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
     }
     @objc private func sharePage() { share(selectedPageText, page: currentPage, from: self, anchor: shareButton) }
     @objc private func saveQuote() {
-        guard requirePlus(from: self), let fingerprint = document?.fingerprint else { return }
+        guard requirePlus(from: self, afterUnlock: { [weak self] in self?.saveQuote() }),
+              let fingerprint = document?.fingerprint else { return }
         let editor = CRQuoteEditorViewController(text: String(selectedPageText.prefix(10_000)), title: "Save Quote")
         editor.save = { [weak self, weak editor] text in
             guard let self, let editor, self.requirePlus(from: editor) else { return }
@@ -416,11 +417,25 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
         activity.popoverPresentationController?.sourceRect = anchor.bounds
         presenter.present(activity, animated: true)
     }
-    private func requirePlus(from presenter: UIViewController) -> Bool {
+    private func requirePlus(from presenter: UIViewController, afterUnlock: (() -> Void)? = nil) -> Bool {
         guard !CRPlusStore.sharedStore.isUnlocked else { return true }
         let alert = UIAlertController(title: "ComicReader Plus", message: "Plus builds a searchable comic index and saves editable quotations. Current-page text, copying and sharing are free.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
-        alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self] _ in self?.navigationController?.pushViewController(CRPlusViewController(), animated: true) })
+        alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self, weak presenter] _ in
+            guard let self, let presenter, !self.isClosing else { return }
+            let plus = CRPlusViewController()
+            plus.entryContext = .comicSearch
+            if let afterUnlock {
+                plus.onUnlock = { [weak self, weak presenter] in
+                    guard let self, let presenter, !self.isClosing,
+                          presenter.viewIfLoaded?.window != nil,
+                          self.navigationController?.topViewController === presenter,
+                          CRPlusStore.sharedStore.isUnlocked else { return }
+                    afterUnlock()
+                }
+            }
+            self.navigationController?.pushViewController(plus, animated: true)
+        })
         presenter.present(alert, animated: true)
         return false
     }

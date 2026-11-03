@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "planType": "app-store-product-page-optimization",
-  "status": "created-draft-not-started",
+  "status": "postponed-for-conversion-update",
   "preparedDate": "2026-10-26",
   "app": {
     "name": "ComicReader",
     "appStoreAppID": "1597314495",
-    "releaseVersionGate": "1.6.1"
+    "releaseVersionGate": "1.6.2"
   },
   "hypothesis": "Leading with the reading experience and free, optional iCloud sync will improve product-page conversion versus the library-first control while retaining library, search, and reading-list proof later in the gallery.",
   "testDesign": {
@@ -44,9 +44,10 @@
     "endDate": null,
     "maximumRunDays": 90,
     "startOnlyWhen": [
-      "ComicReader 1.6.1 is live on the App Store.",
-      "At least 7 complete days of unchanged 1.6.1 metadata and library-first screenshots have elapsed after the live timestamp.",
-      "No release, metadata, icon, app-preview, screenshot-content, pricing, or availability change is running or planned concurrently."
+      "ComicReader conversion update 1.6.2 (or its documented replacement build) is live on both iOS and macOS.",
+      "At least seven complete UTC days of unchanged metadata and library-first screenshots have elapsed after the later platform release and latest competing release, metadata, creative, pricing, availability, or advertising change.",
+      "No release, metadata, icon, app-preview, screenshot-content, pricing, availability, or advertising change is running or planned concurrently.",
+      "A fresh baseline has been captured and Apple’s duration estimate has been refreshed."
     ],
     "stopWhen": [
       "App Store Connect reports a conclusive result that satisfies the decision rule.",
@@ -55,7 +56,7 @@
     ]
   },
   "isolationRules": [
-    "Do not launch during the 1.6.1 release rollout or its first 7 complete live days.",
+    "Do not launch during the conversion update release rollout or its first seven complete unchanged UTC baseline days.",
     "Freeze all tested product-page metadata and creative assets for the experiment duration.",
     "Do not run another Product Page Optimization test or Custom Product Page campaign against the same decision at the same time.",
     "Do not substitute, recompress, crop, retouch, or relocalize any recorded screenshot.",
@@ -75,7 +76,7 @@
     "createdInAppStoreConnect": true,
     "scheduled": false,
     "browserChangesPerformed": true,
-    "nextAction": "Use the existing draft. After all launch gates pass, capture the baseline, refresh Apple’s duration estimate and start only this test."
+    "nextAction": "Keep the existing draft postponed while the conversion update is implemented, tested and released. Restart the baseline after both platforms are live and the latest competing change; then capture the fresh baseline and refresh Apple’s duration estimate."
   },
   "assetProvenance": {
     "hashAlgorithm": "SHA-256",
@@ -551,7 +552,7 @@
       "search",
       "lists"
     ],
-    "remaining": "Await seven complete stable baseline days without a competing release, creative, pricing or advertising change. Capture the baseline and refresh Apple’s duration estimate before starting. Test remains Draft.",
+    "remaining": "Keep the existing draft postponed while the conversion update is implemented, tested and released. Restart the baseline after both platforms are live and the latest competing change; then capture the fresh baseline and refresh Apple’s duration estimate.",
     "configuredLocales": [
       "en-GB",
       "en-US",
@@ -563,5 +564,14 @@
       "en-US": "Using Existing Assets: inherits the English treatment order on iPhone, iPhone Duo and iPad.",
       "es-ES": "Approved Spanish assets reordered to reader/iCloud/library/search/lists on iPhone, iPhone Duo and iPad; verified after reload."
     }
+  },
+  "postponement": {
+    "approvedDate": "2026-11-03",
+    "reason": "User prioritized the first-import and Plus conversion update.",
+    "previousEarliestStartObsolete": "2026-11-05",
+    "baselineStart": null,
+    "baselineEnd": null,
+    "testMustRemainDraft": true,
+    "preserveExistingDraftID": true
   }
 }

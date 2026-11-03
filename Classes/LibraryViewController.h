@@ -90,6 +90,7 @@
   BOOL _usingCompactLayout;
   BOOL _adaptiveLayoutConfigured;
   CGFloat _emptyStateLayoutWidth;
+  CGFloat _emptyStateLayoutHeight;
 }
 @property(nonatomic, retain) IBOutlet GridView* gridView;
 @property(nonatomic, retain) IBOutlet UINavigationBar* navigationBar;

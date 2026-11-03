@@ -75,6 +75,44 @@ final class CRPlusEntitlementLedgerTests: XCTestCase {
 }
 
 @MainActor
+final class CRPlusUnlockContinuationTests: XCTestCase {
+    func testConsumeReturnsCallbackOnlyOnce() {
+        let continuation = CRPlusUnlockContinuation()
+        var invocationCount = 0
+        continuation.replace { invocationCount += 1 }
+
+        continuation.consume()?()
+        continuation.consume()?()
+
+        XCTAssertEqual(invocationCount, 1)
+        XCTAssertFalse(continuation.hasCallback)
+    }
+
+    func testAbandonDropsCallbackWithoutInvokingIt() {
+        let continuation = CRPlusUnlockContinuation()
+        var wasInvoked = false
+        continuation.replace { wasInvoked = true }
+
+        continuation.abandon()
+        continuation.consume()?()
+
+        XCTAssertFalse(wasInvoked)
+        XCTAssertFalse(continuation.hasCallback)
+    }
+
+    func testReplacementUsesOnlyLatestCallback() {
+        let continuation = CRPlusUnlockContinuation()
+        var values: [Int] = []
+        continuation.replace { values.append(1) }
+        continuation.replace { values.append(2) }
+
+        continuation.consume()?()
+
+        XCTAssertEqual(values, [2])
+    }
+}
+
+@MainActor
 final class CRPlusStoreTests: XCTestCase {
     private enum TestFailure: Error {
         case timedOut
@@ -96,6 +134,10 @@ final class CRPlusStoreTests: XCTestCase {
         session.resetToDefaultState()
         session.clearTransactions()
         session.disableDialogs = true
+        guard session.disableDialogs else {
+            XCTFail("StoreKit Test must accept its configuration before exercising purchases.")
+            return
+        }
         logStage("session setup finished")
         defer {
             logStage("session cleanup started")

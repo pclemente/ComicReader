@@ -95,7 +95,17 @@ public final class CRReaderImageFiltersViewController: UITableViewController {
             tableView.reloadData()
             delegate?.readerImageFiltersDidChange()
         } else {
-            navigationController?.pushViewController(CRPlusViewController(), animated: true)
+            let selectedFilter = indexPath.row
+            let plus = CRPlusViewController()
+            plus.entryContext = .readingFilters
+            plus.onUnlock = { [weak self] in
+                guard let self, self.viewIfLoaded?.window != nil,
+                      self.navigationController?.topViewController === self,
+                      CRReaderImageFilters.select(selectedFilter) else { return }
+                self.tableView.reloadData()
+                self.delegate?.readerImageFiltersDidChange()
+            }
+            navigationController?.pushViewController(plus, animated: true)
         }
     }
 }

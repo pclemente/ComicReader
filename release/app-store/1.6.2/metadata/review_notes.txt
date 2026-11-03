@@ -1,0 +1,9 @@
+ComicReader 1.6.2 (16) improves first-time importing and the existing one-time Plus purchase flow. There is no new purchase product, subscription, analytics service, account requirement or change to the free/iCloud boundary.
+
+Free: reading PDF/CBZ/classic CBR files, ordinary Files/Finder imports, direct opening on Mac, browsing and website sessions, current-page text recognition/copy/share, and optional iCloud sync for library comic files, reading status and current page.
+
+Existing non-consumable Plus: validated website imports with duplicates/queue handling, text indexing/search within the current comic and editable saved quotations, reading lists/smart queues, named bookmarks and reading filters. Search indexes, quotes, lists and bookmarks stay on the device. No comics are bundled. RAR5, encrypted archives, EPUB and whole-library text search are not supported.
+
+Review flow: start with an empty library and use Add Comics; on Mac use Open Comic to read without importing, or Add Comics to import a copy. The existing review sample attachment may be used. Open Reading Lists and tap +, or open a comic and choose Comic Text > Search > Index Comic, Bookmarks > +, or a non-Original filter. The Plus screen explains that feature, shows the App Store-localized one-time price and Restore Purchases, and remains dismissible. After a verified purchase or positive restore, an eligible requested action resumes once. Cancellation, error, pending purchase and dismissal do not resume it. Website retry is limited to safe requests in the same live browsing session; forms and ambiguous requests require the user to tap again.
+
+Current iPhone Duo adaptation remains included. iCloud has its own free toolbar screen and explicit opt-in consent. The free iCloud capability is never sold as a Plus benefit.

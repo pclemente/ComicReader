@@ -143,6 +143,7 @@
   [session resetToDefaultState];
   [session clearTransactions];
   session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
 
   NSString* token = [NSUUID.UUID.UUIDString substringToIndex:8];
   NSString* comicName = [NSString stringWithFormat:@"Plus-%@.pdf", token];
@@ -398,6 +399,7 @@
   [session resetToDefaultState];
   [session clearTransactions];
   session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
 
   NSString* token = [NSUUID.UUID.UUIDString substringToIndex:8];
   NSString* comicName = [NSString stringWithFormat:@"Text-%@.pdf", token];
@@ -451,12 +453,10 @@
     XCUIElement* purchase = app.cells[@"plus.purchase"];
     XCTAssertTrue([self waitForElementToBecomeEnabled:purchase timeout:15]);
     [purchase tap];
-    XCTAssertTrue([self waitForPlusToUnlockInApp:app]);
-    [embeddedPlusNavigation.buttons[@"Done"] tap];
-    XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForExistenceWithTimeout:5]);
+    // A successful contextual purchase returns here and starts the requested
+    // index without a second tap on Index Comic.
+    XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForExistenceWithTimeout:15]);
     XCTAssertTrue(modes.buttons[@"Search"].selected);
-    XCTAssertTrue([self waitForElementToBecomeEnabled:app.buttons[@"reader.text.index"] timeout:15]);
-    [app.buttons[@"reader.text.index"] tap];
     XCTAssertTrue([self waitForElementToBecomeEnabled:query timeout:30]);
     [self replaceTextInElement:query withText:@"silver comet"];
     XCUIElement* secondPage = app.cells[@"reader.text.result.1"];
@@ -538,6 +538,124 @@
     [app terminate];
     [session clearTransactions];
     [[NSFileManager defaultManager] removeItemAtURL:fixtureURL error:NULL];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
+- (void)testContextualPlusCancellationAndPurchaseResumeNewListOnce {
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  NSURL* configurationURL = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader" withExtension:@"storekit"];
+  NSError* error = nil;
+  SKTestSession* session = [[SKTestSession alloc] initWithContentsOfURL:configurationURL error:&error];
+  XCTAssertNotNil(session, @"%@", error);
+  [session resetToDefaultState];
+  [session clearTransactions];
+  session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.readingLists"] timeout:20]);
+    [app.buttons[@"library.readingLists"] tap];
+    [app.buttons[@"readingLists.add"] tap];
+    XCTAssertTrue([app.navigationBars[@"ComicReader Plus"] waitForExistenceWithTimeout:5]);
+    [app.navigationBars[@"ComicReader Plus"].buttons[@"Done"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
+    XCTAssertFalse(app.alerts[@"New Reading List"].exists, @"Dismissing Plus must abandon the requested action.");
+    [app.buttons[@"readingLists.add"] tap];
+    XCUIElement* purchase = app.buttons[@"plus.purchaseButton"];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:purchase timeout:15]);
+    XCTAssertTrue(purchase.hittable);
+    XCTAssertTrue([purchase.label containsString:@"once"], @"The offer must state that Plus is a one-time purchase.");
+    [self saveScreenshot:@"Contextual Plus for reading lists" ofApp:app];
+    [purchase tap];
+    XCUIElement* newList = app.alerts[@"New Reading List"];
+    XCTAssertTrue([newList waitForExistenceWithTimeout:15], @"Buying must return to the requested list-name prompt.");
+    [newList.buttons[@"Cancel"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
+    XCTAssertFalse(newList.exists);
+    [app.navigationBars[@"Reading Lists"].buttons[@"Done"] tap];
+    [app.buttons[@"library.readingLists"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"readingLists.add"] timeout:5]);
+    XCTAssertFalse(newList.exists, @"Returning to the screen must not repeat the completed intent.");
+    XCTAssertEqual(session.allTransactions.count, 1u);
+  } @finally {
+    [app terminate];
+    [session clearTransactions];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
+- (void)testContextualPlusPurchaseAppliesRequestedReaderFilter {
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  NSURL* configurationURL = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader"
+                                                                    withExtension:@"storekit"];
+  NSError* sessionError = nil;
+  SKTestSession* session = [[SKTestSession alloc] initWithContentsOfURL:configurationURL
+                                                                  error:&sessionError];
+  XCTAssertNotNil(session, @"%@", sessionError);
+  [session resetToDefaultState];
+  [session clearTransactions];
+  session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
+
+  NSString* filename = [NSString stringWithFormat:@"Filter-resume-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* fixture = [self createPDFUIFixtureNamed:filename];
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:20]);
+    if (@available(iOS 16.4, *)) {
+      [app openURL:fixture];
+    } else {
+      XCTSkip(@"Document URL UI automation requires iOS 16.4 or later.");
+      return;
+    }
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+
+    XCUIElement* cover = [app descendantsMatchingType:XCUIElementTypeAny]
+      [[@"library.comic." stringByAppendingString:filename]];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:45]);
+    [cover tap];
+    XCUIElement* canvas = app.otherElements[@"reader.canvas"];
+    XCTAssertTrue([canvas waitForExistenceWithTimeout:15]);
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:
+      [canvas coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)]]);
+    [app.buttons[@"reader.filters.open"] tap];
+    XCTAssertTrue([app.navigationBars[@"Image Filters"] waitForExistenceWithTimeout:10]);
+
+    XCUIElement* original = app.cells[@"reader.filter.0"];
+    XCUIElement* grayscale = app.cells[@"reader.filter.2"];
+    XCTAssertTrue([self waitForElementToBecomeHittable:grayscale timeout:5]);
+    XCTAssertTrue(original.selected);
+    XCTAssertFalse(grayscale.selected);
+    [grayscale tap];
+
+    XCUIElement* purchase = app.buttons[@"plus.purchaseButton"];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:purchase timeout:15]);
+    XCTAssertTrue(purchase.hittable);
+    [purchase tap];
+
+    XCTAssertTrue([app.navigationBars[@"Image Filters"] waitForExistenceWithTimeout:15],
+                  @"A verified contextual purchase must return to Image Filters.");
+    NSPredicate* selected = [NSPredicate predicateWithFormat:@"selected == YES"];
+    XCTestExpectation* applied = [[XCTNSPredicateExpectation alloc] initWithPredicate:selected
+                                                                               object:grayscale];
+    XCTAssertEqual([XCTWaiter waitForExpectations:@[applied] timeout:10], XCTWaiterResultCompleted,
+                   @"The originally requested Grayscale filter must be selected automatically.");
+    XCTAssertFalse(original.selected);
+    XCTAssertFalse(app.navigationBars[@"ComicReader Plus"].exists);
+    XCTAssertEqual(session.allTransactions.count, 1u);
+    [self saveScreenshot:@"Contextual Plus resumed Grayscale filter" ofApp:app];
+  } @finally {
+    [app terminate];
+    [session clearTransactions];
+    [[NSFileManager defaultManager] removeItemAtURL:fixture error:NULL];
     XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
   }
 }
@@ -642,6 +760,59 @@
   [self addAttachment:screenshot];
 }
 
+- (void)testEmptyLibraryAddComicsOpensCancellableFilesPicker {
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCUIElement* addComics = app.buttons[@"library.empty.addComics"];
+    XCTSkipUnless([addComics waitForExistenceWithTimeout:5],
+                  @"Requires an empty library; this simulator already contains imported comics.");
+    XCTAssertEqualObjects(addComics.label, @"Add Comics");
+    XCTAssertTrue([self waitForElementToBecomeHittable:addComics timeout:5]);
+    [addComics tap];
+
+    XCUIElement* cancel = app.buttons[@"Cancel"].firstMatch;
+    XCTAssertTrue([self waitForElementToBecomeHittable:cancel timeout:35],
+                  @"The empty-library action must present the system Files picker.");
+    [cancel tap];
+    XCTAssertTrue([cancel waitForNonExistenceWithTimeout:10]);
+    XCTAssertTrue([self waitForElementToBecomeHittable:addComics timeout:5]);
+  } @finally {
+    [app terminate];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
+- (void)testEmptyLibraryAddComicsRemainsReachableInCompactLandscape {
+  self.continueAfterFailure = NO;
+  XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCUIElement* addComics = app.buttons[@"library.empty.addComics"];
+    XCTSkipUnless([addComics waitForExistenceWithTimeout:5],
+                  @"Requires an empty library; this simulator already contains imported comics.");
+
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationLandscapeLeft;
+    XCUIElement* emptyScroll = app.scrollViews[@"library.empty.scroll"];
+    XCTAssertTrue([emptyScroll waitForExistenceWithTimeout:5]);
+    for (NSUInteger attempt = 0; attempt < 4 && !addComics.hittable; attempt++) {
+      [emptyScroll swipeUp];
+    }
+    XCTAssertTrue(addComics.hittable, @"Add Comics must remain reachable in a short landscape viewport.");
+    XCTAssertTrue(CGRectContainsRect(app.windows.firstMatch.frame, addComics.frame));
+  } @finally {
+    [app terminate];
+    XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
 - (void)testNewsBannerAppearsForUpgradeAndStaysDismissed {
   self.continueAfterFailure = NO;
   XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
@@ -700,6 +871,7 @@
   [session resetToDefaultState];
   [session clearTransactions];
   session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
   XCUIApplication* app = [[XCUIApplication alloc] init];
   app.launchArguments = self.standardLaunchArguments;
   @try {
@@ -759,6 +931,7 @@
   [session resetToDefaultState];
   [session clearTransactions];
   session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
   XCUIApplication* app = [[XCUIApplication alloc] init];
   app.launchArguments = self.standardLaunchArguments;
   @try {
@@ -941,6 +1114,7 @@
   [session resetToDefaultState];
   [session clearTransactions];
   session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"StoreKit Test must accept its configuration before launching the purchase flow.");
   XCUIApplication* app = [[XCUIApplication alloc] init];
   app.launchArguments = self.standardLaunchArguments;
 

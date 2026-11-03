@@ -2,6 +2,16 @@ import Foundation
 import UIKit
 import WebKit
 
+/// A retained request is eligible only when repeating it cannot resubmit user
+/// data. The browser still revalidates its live page/session before using it.
+enum CRWebDownloadRequestReplayPolicy {
+  static func permitsAutomaticReplay(_ request: URLRequest) -> Bool {
+    let method = (request.httpMethod ?? "GET").uppercased()
+    return (method == "GET" || method == "HEAD") &&
+      request.httpBody == nil && request.httpBodyStream == nil
+  }
+}
+
 @MainActor
 private protocol CRWebBrowserSessionObserver: AnyObject {
   func webBrowserSession(_ session: CRWebBrowserSession,
@@ -102,6 +112,16 @@ public final class CRWebBrowserViewController: UIViewController {
     }
   }
 
+  private final class OneShotAction {
+    private var wasConsumed = false
+
+    func consume() -> Bool {
+      guard !wasConsumed else { return false }
+      wasConsumed = true
+      return true
+    }
+  }
+
   private let libraryRootURL: URL
   private let plusStore = CRPlusStore.sharedStore
 
@@ -122,6 +142,7 @@ public final class CRWebBrowserViewController: UIViewController {
   private var pendingJavaScriptDialogCancellation: (() -> Void)?
   private var latestEntries: [CRWebDownloadEntry] = []
   private var currentDocumentIsPDF = false
+  private var webContextGeneration: UInt = 0
 
   private let progressView: UIProgressView = {
     let view = UIProgressView(progressViewStyle: .bar)
@@ -367,6 +388,7 @@ public final class CRWebBrowserViewController: UIViewController {
   public override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     if isBeingDismissed || navigationController?.isBeingDismissed == true {
+      advanceWebContextGeneration()
       cancelPendingWebKitInteractions()
       tearDownPrivateSessionIfNeeded()
     }
@@ -482,6 +504,7 @@ public final class CRWebBrowserViewController: UIViewController {
   }
 
   private func replaceWebView(privateBrowsing: Bool) {
+    advanceWebContextGeneration()
     progressObservation?.invalidate()
     progressObservation = nil
     webView?.stopLoading()
@@ -556,6 +579,7 @@ public final class CRWebBrowserViewController: UIViewController {
 
 private extension CRWebBrowserViewController {
   @objc func done() {
+    advanceWebContextGeneration()
     cancelPendingWebKitInteractions()
     tearDownPrivateSessionIfNeeded()
     dismiss(animated: true)
@@ -571,14 +595,17 @@ private extension CRWebBrowserViewController {
   }
 
   @objc func goBack() {
+    advanceWebContextGeneration()
     webView.goBack()
   }
 
   @objc func goForward() {
+    advanceWebContextGeneration()
     webView.goForward()
   }
 
   @objc func reloadOrStop() {
+    advanceWebContextGeneration()
     if webView.isLoading {
       webView.stopLoading()
       progressView.isHidden = true
@@ -591,6 +618,7 @@ private extension CRWebBrowserViewController {
   }
 
   @objc func retryPage() {
+    advanceWebContextGeneration()
     errorView.isHidden = true
     if let url = webView.url {
       webView.load(URLRequest(url: url))
@@ -613,7 +641,7 @@ private extension CRWebBrowserViewController {
       session: session,
       webView: webView,
       openHandler: { [weak self] url in self?.openImportedComic(url) },
-      plusHandler: { [weak self] in self?.showPlus() }
+      plusHandler: { [weak self] onUnlock in self?.showPlus(onUnlock: onUnlock) }
     )
     navigationController?.pushViewController(controller, animated: true)
   }
@@ -647,6 +675,7 @@ private extension CRWebBrowserViewController {
                             "ComicReader can open only HTTP and HTTPS website pages."]))
       return
     }
+    advanceWebContextGeneration()
     errorView.isHidden = true
     currentDocumentIsPDF = false
     homeTableView.isHidden = true
@@ -673,6 +702,7 @@ private extension CRWebBrowserViewController {
   }
 
   func showHome() {
+    advanceWebContextGeneration()
     webView?.stopLoading()
     webView?.isHidden = true
     errorView.isHidden = true
@@ -925,6 +955,7 @@ private extension CRWebBrowserViewController {
   func tearDownPrivateSessionIfNeeded() {
     guard isPrivateBrowsing, !didTearDownPrivateSession else { return }
     didTearDownPrivateSession = true
+    advanceWebContextGeneration()
     cancelPendingWebKitInteractions()
     webView?.stopLoading()
     let dataStore = webView?.configuration.websiteDataStore
@@ -946,11 +977,128 @@ private extension CRWebBrowserViewController {
     openComicHandler(url)
   }
 
-  func showPlus() {
-    navigationController?.pushViewController(CRPlusViewController(), animated: true)
+  func advanceWebContextGeneration() {
+    webContextGeneration &+= 1
   }
 
-  func presentPlusRequired() {
+  func automaticDownloadReplay(for request: URLRequest,
+                               in sourceWebView: WKWebView) -> (() -> Void)? {
+    guard CRWebDownloadRequestReplayPolicy.permitsAutomaticReplay(request),
+          let requestURL = request.url, isAllowedMainPageURL(requestURL),
+          sourceWebView === webView,
+          let expectedSession = session,
+          let sourcePageURL = sourceWebView.url, isAllowedMainPageURL(sourcePageURL) else {
+      return nil
+    }
+
+    let expectedGeneration = webContextGeneration
+    let expectedPrivateBrowsing = isPrivateBrowsing
+    let once = OneShotAction()
+    return { [weak self, weak sourceWebView, weak expectedSession] in
+      guard once.consume(),
+            let self, let sourceWebView, let expectedSession else { return }
+      self.resumeAutomaticDownload(request,
+                                   sourceWebView: sourceWebView,
+                                   expectedSession: expectedSession,
+                                   expectedPrivateBrowsing: expectedPrivateBrowsing,
+                                   sourcePageURL: sourcePageURL,
+                                   expectedGeneration: expectedGeneration)
+    }
+  }
+
+  func resumeAutomaticDownload(_ request: URLRequest,
+                               sourceWebView: WKWebView,
+                               expectedSession: CRWebBrowserSession,
+                               expectedPrivateBrowsing: Bool,
+                               sourcePageURL: URL,
+                               expectedGeneration: UInt) {
+    guard matchesReplayContext(sourceWebView: sourceWebView,
+                               expectedSession: expectedSession,
+                               expectedPrivateBrowsing: expectedPrivateBrowsing,
+                               sourcePageURL: sourcePageURL,
+                               expectedGeneration: expectedGeneration) else {
+      presentDownloadReplayUnavailableNotice()
+      return
+    }
+
+    requestDestinationSelection(afterUnlock: manualDownloadRetryHandler()) { [weak self,
+                                                                               weak sourceWebView,
+                                                                               weak expectedSession] selection in
+      guard let self, let sourceWebView, let expectedSession,
+            case .selected = selection else { return }
+      guard self.matchesReplayContext(sourceWebView: sourceWebView,
+                                      expectedSession: expectedSession,
+                                      expectedPrivateBrowsing: expectedPrivateBrowsing,
+                                      sourcePageURL: sourcePageURL,
+                                      expectedGeneration: expectedGeneration) else {
+        self.presentDownloadReplayUnavailableNotice()
+        return
+      }
+
+      sourceWebView.startDownload(using: request) { [weak self,
+                                                     weak sourceWebView,
+                                                     weak expectedSession] download in
+        guard let self, let sourceWebView, let expectedSession else {
+          download.cancel(nil)
+          return
+        }
+        guard self.matchesReplayContext(sourceWebView: sourceWebView,
+                                        expectedSession: expectedSession,
+                                        expectedPrivateBrowsing: expectedPrivateBrowsing,
+                                        sourcePageURL: sourcePageURL,
+                                        expectedGeneration: expectedGeneration) else {
+          download.cancel(nil)
+          self.presentDownloadReplayUnavailableNotice()
+          return
+        }
+        self.adopt(download: download, selection: selection)
+      }
+    }
+  }
+
+  func matchesReplayContext(sourceWebView: WKWebView,
+                            expectedSession: CRWebBrowserSession,
+                            expectedPrivateBrowsing: Bool,
+                            sourcePageURL: URL,
+                            expectedGeneration: UInt) -> Bool {
+    isViewLoaded && view.window != nil && plusStore.isUnlocked &&
+      navigationController?.topViewController === self &&
+      webView === sourceWebView && session === expectedSession &&
+      isPrivateBrowsing == expectedPrivateBrowsing &&
+      (!expectedPrivateBrowsing || !didTearDownPrivateSession) &&
+      webContextGeneration == expectedGeneration && sourceWebView.url == sourcePageURL
+  }
+
+  func manualDownloadRetryHandler(
+    message: String = "ComicReader Plus is active. Tap the website’s download link again."
+  ) -> () -> Void {
+    { [weak self] in
+      guard let self else { return }
+      if self.plusStore.isUnlocked {
+        self.presentPlusActiveDownloadNotice(message: message)
+      } else {
+        self.presentDownloadReplayUnavailableNotice()
+      }
+    }
+  }
+
+  func showPlus(onUnlock: (() -> Void)? = nil) {
+    let controller = CRPlusViewController()
+    controller.entryContext = .websiteImport
+    controller.onUnlock = onUnlock
+    navigationController?.pushViewController(controller, animated: true)
+  }
+
+  func presentPlusRequired(afterUnlock: @escaping () -> Void, attempt: Int = 0) {
+    guard isViewLoaded, view.window != nil,
+          navigationController?.topViewController === self else { return }
+    if presentedViewController != nil, attempt < 10 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        self?.presentPlusRequired(afterUnlock: afterUnlock, attempt: attempt + 1)
+      }
+      return
+    }
+    guard presentedViewController == nil else { return }
     let alert = UIAlertController(
       title: "ComicReader Plus",
       message: "Web browsing and sign-ins are free. Downloading and importing a comic into the library requires ComicReader Plus.",
@@ -958,8 +1106,48 @@ private extension CRWebBrowserViewController {
     )
     alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
     alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self] _ in
-      self?.showPlus()
+      guard let self else { return }
+      self.showPlus(onUnlock: afterUnlock)
     })
+    present(alert, animated: true)
+  }
+
+  func presentPlusActiveDownloadNotice(
+    message: String = "ComicReader Plus is active. Tap the website’s download link again.",
+    attempt: Int = 0
+  ) {
+    guard isViewLoaded, view.window != nil,
+          navigationController?.topViewController === self else { return }
+    if presentedViewController != nil, attempt < 10 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        self?.presentPlusActiveDownloadNotice(message: message, attempt: attempt + 1)
+      }
+      return
+    }
+    guard presentedViewController == nil else { return }
+    let alert = UIAlertController(title: "ComicReader Plus Is Active",
+                                  message: message,
+                                  preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    present(alert, animated: true)
+  }
+
+  func presentDownloadReplayUnavailableNotice(attempt: Int = 0) {
+    guard isViewLoaded, view.window != nil,
+          navigationController?.topViewController === self else { return }
+    if presentedViewController != nil, attempt < 10 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        self?.presentDownloadReplayUnavailableNotice(attempt: attempt + 1)
+      }
+      return
+    }
+    guard presentedViewController == nil else { return }
+    let alert = UIAlertController(
+      title: "Download Not Resumed",
+      message: "The browser page, private-session state, or Plus access changed. Return to the download page and tap its link again.",
+      preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
     present(alert, animated: true)
   }
 
@@ -997,8 +1185,9 @@ private extension CRWebBrowserViewController {
 
 private extension CRWebBrowserViewController {
   private func requestDownloadAuthorization(for conversionKey: DownloadConversionKey,
+                                            afterUnlock: @escaping () -> Void,
                                             completion: @escaping (Bool) -> Void) {
-    requestDestinationSelection { [weak self] selection in
+    requestDestinationSelection(afterUnlock: afterUnlock) { [weak self] selection in
       guard let self else {
         completion(false)
         return
@@ -1013,9 +1202,10 @@ private extension CRWebBrowserViewController {
     }
   }
 
-  private func requestDestinationSelection(completion: @escaping (DestinationSelection) -> Void) {
+  private func requestDestinationSelection(afterUnlock: @escaping () -> Void,
+                                           completion: @escaping (DestinationSelection) -> Void) {
     guard plusStore.isUnlocked else {
-      presentPlusRequired()
+      presentPlusRequired(afterUnlock: afterUnlock)
       completion(.cancelled)
       return
     }
@@ -1121,9 +1311,12 @@ private extension CRWebBrowserViewController {
 
   func importCurrentComic() {
     guard let url = webView.url, isAllowedMainPageURL(url) else { return }
-    requestDestinationSelection { [weak self] selection in
+    let request = URLRequest(url: url)
+    let afterUnlock = automaticDownloadReplay(for: request, in: webView) ??
+      manualDownloadRetryHandler()
+    requestDestinationSelection(afterUnlock: afterUnlock) { [weak self] selection in
       guard let self, case .selected = selection else { return }
-      self.webView.startDownload(using: URLRequest(url: url)) { [weak self] download in
+      self.webView.startDownload(using: request) { [weak self] download in
         guard let self else {
           download.cancel { _ in }
           return
@@ -1150,7 +1343,9 @@ private extension CRWebBrowserViewController {
       download.cancel { _ in }
       if let importError = error as? CRWebImportError,
          case .plusRequired = importError {
-        presentPlusRequired()
+        presentPlusRequired(afterUnlock: manualDownloadRetryHandler(
+          message: "ComicReader Plus is active. Tap the website’s download link again."
+        ))
       } else {
         presentError(error)
       }
@@ -1183,6 +1378,7 @@ private extension CRWebBrowserViewController {
   }
 
   func clearWebsiteData(forHost host: String) {
+    advanceWebContextGeneration()
     let dataStore = webView.configuration.websiteDataStore
     let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
     dataStore.fetchDataRecords(ofTypes: dataTypes) { [weak self] records in
@@ -1203,6 +1399,7 @@ private extension CRWebBrowserViewController {
   }
 
   func clearAllWebsiteData() {
+    advanceWebContextGeneration()
     let dataStore = webView.configuration.websiteDataStore
     dataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
                          modifiedSince: .distantPast) { [weak self] in
@@ -1313,6 +1510,10 @@ extension CRWebBrowserViewController: WKNavigationDelegate {
       return
     }
 
+    if navigationAction.targetFrame?.isMainFrame != false {
+      advanceWebContextGeneration()
+    }
+
     if navigationAction.targetFrame?.isMainFrame != false && !isAllowedMainPageURL(url) {
       // about:blank is WebKit's harmless initial document and is never exposed
       // as a user-entered main page.
@@ -1331,7 +1532,11 @@ extension CRWebBrowserViewController: WKNavigationDelegate {
         return
       }
       let conversionKey = DownloadConversionKey.navigationAction(ObjectIdentifier(navigationAction))
-      requestDownloadAuthorization(for: conversionKey) { authorized in
+      let afterUnlock = automaticDownloadReplay(for: navigationAction.request, in: webView) ??
+        manualDownloadRetryHandler(
+          message: "ComicReader Plus is active. This request could not be repeated safely. Tap the website’s download link again."
+        )
+      requestDownloadAuthorization(for: conversionKey, afterUnlock: afterUnlock) { authorized in
         decisionHandler(authorized ? .download : .cancel)
       }
       return
@@ -1371,7 +1576,14 @@ extension CRWebBrowserViewController: WKNavigationDelegate {
         return
       }
       let conversionKey = DownloadConversionKey.navigationResponse(ObjectIdentifier(navigationResponse))
-      requestDownloadAuthorization(for: conversionKey) { authorized in
+      // WKNavigationResponse does not expose the originating method or body.
+      // Never infer a replayable request from its final URL.
+      requestDownloadAuthorization(
+        for: conversionKey,
+        afterUnlock: manualDownloadRetryHandler(
+          message: "ComicReader Plus is active. This website response could not be repeated safely. Tap the download link again."
+        )
+      ) { authorized in
         decisionHandler(authorized ? .download : .cancel)
       }
       return
@@ -1448,6 +1660,7 @@ extension CRWebBrowserViewController: WKNavigationDelegate {
   }
 
   public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    advanceWebContextGeneration()
     showPageError(NSError(domain: WKError.errorDomain,
                           code: WKError.webContentProcessTerminated.rawValue,
                           userInfo: [NSLocalizedDescriptionKey:
@@ -1729,13 +1942,13 @@ private final class CRWebDownloadsViewController: UITableViewController,
   private let session: CRWebBrowserSession
   private weak var webView: WKWebView?
   private let openHandler: (URL) -> Void
-  private let plusHandler: () -> Void
+  private let plusHandler: (@escaping () -> Void) -> Void
   private var entries: [CRWebDownloadEntry] = []
 
   init(session: CRWebBrowserSession,
        webView: WKWebView,
        openHandler: @escaping (URL) -> Void,
-       plusHandler: @escaping () -> Void) {
+       plusHandler: @escaping (@escaping () -> Void) -> Void) {
     self.session = session
     self.webView = webView
     self.openHandler = openHandler
@@ -1864,6 +2077,8 @@ private final class CRWebDownloadsViewController: UITableViewController,
       try session.manager.retry(id: entry.id, in: webView)
     } catch let error as CRWebImportError {
       if case .plusRequired = error {
+        // Resume data is opaque, so its original method/body cannot be proven
+        // safe. A verified unlock returns to the queue without auto-retrying.
         presentPlusRequired()
       } else {
         presentError(error)
@@ -1940,14 +2155,45 @@ private final class CRWebDownloadsViewController: UITableViewController,
     }
   }
 
-  private func presentPlusRequired() {
+  private func presentPlusRequired(attempt: Int = 0) {
+    guard isViewLoaded, view.window != nil,
+          navigationController?.topViewController === self else { return }
+    if presentedViewController != nil, attempt < 10 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        self?.presentPlusRequired(attempt: attempt + 1)
+      }
+      return
+    }
+    guard presentedViewController == nil else { return }
     let alert = UIAlertController(title: "ComicReader Plus",
                                   message: "Retrying a web download requires ComicReader Plus. Imported comics remain available to open.",
                                   preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
     alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self] _ in
-      self?.plusHandler()
+      guard let self else { return }
+      self.plusHandler { [weak self] in
+        self?.presentPlusActiveRetryNotice()
+      }
     })
+    present(alert, animated: true)
+  }
+
+  private func presentPlusActiveRetryNotice(attempt: Int = 0) {
+    guard isViewLoaded, view.window != nil,
+          navigationController?.topViewController === self else { return }
+    if presentedViewController != nil, attempt < 10 {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        self?.presentPlusActiveRetryNotice(attempt: attempt + 1)
+      }
+      return
+    }
+    guard presentedViewController == nil else { return }
+    let alert = UIAlertController(
+      title: "Retry This Download",
+      message: "Tap Retry again to resume. ComicReader cannot safely inspect or replay the original request from saved download data.",
+      preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
     present(alert, animated: true)
   }
 

@@ -1,0 +1,36 @@
+{
+  "version": "1.6.2",
+  "build": 16,
+  "preparedDate": "2026-11-03",
+  "status": "Implementation complete; runtime validation in progress; not submitted",
+  "screenshots": "Inherit current approved screenshots. Existing screenshot-order experiment postponed.",
+  "releaseMode": "Automatic after approval",
+  "purchaseModel": "Existing non-consumable one-time Plus; free iCloud",
+  "analytics": "No third-party analytics",
+  "testPlan": [
+    "Empty-library direct import, cancellation and compact landscape",
+    "Contextual Plus pricing, restore, cancellation and single resumption",
+    "Comic search, list/bookmark/filter actions",
+    "Safe GET web retry and unsafe/private-session rejection",
+    "iPhone and iPad simulator, Mac Catalyst",
+    "Signed archive/export validation for iOS and Mac"
+  ],
+  "validation": {
+    "macOS": {
+      "passedTests": 129,
+      "skippedTests": 1,
+      "failedTests": 0,
+      "environment": "Xcode 27.2, macOS 27.2, isolated sandboxed Catalyst test host",
+      "limitation": "StoreKit lifecycle test skipped for documented Catalyst StoreKitTest limitation."
+    },
+    "iOS": {
+      "status": "Source compiled. UI and StoreKit flow verification pending a working simulator runtime."
+    },
+    "review": "No actionable correctness findings in independent review of purchase continuation, caller guards, web request replay and empty-library layout."
+  },
+  "appStoreConnect": {
+    "iOS": "1.6.2 draft created; metadata preparation in progress; no build attached",
+    "macOS": "Draft preparation pending",
+    "submissionBlocker": "Apple still requires Account Holder acceptance of updated Paid Applications Schedule."
+  }
+}

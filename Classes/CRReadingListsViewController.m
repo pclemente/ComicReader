@@ -32,11 +32,26 @@ static void CRReadingListsShowError(UIViewController* controller, NSError* error
   CRReadingListsPresentWhenReady(controller, alert, 10);
 }
 
-static void CRReadingListsPresentPlus(UIViewController* controller) {
+static void CRReadingListsPresentPlusWithAction(UIViewController* controller, void (^action)(void)) {
   CRPlusViewController* plus = [[CRPlusViewController alloc] init];
+  plus.entryContext = CRPlusEntryContextReadingLists;
+  if (action) {
+    __weak UIViewController* weakController = controller;
+    plus.onUnlock = ^{
+      UIViewController* origin = weakController;
+      if (!origin.viewIfLoaded.window || origin.isBeingDismissed ||
+          origin.navigationController.topViewController != origin ||
+          !CRPlusStore.sharedStore.isUnlocked) return;
+      action();
+    };
+  }
   UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:plus];
   navigation.modalPresentationStyle = UIModalPresentationFormSheet;
   CRReadingListsPresentWhenReady(controller, navigation, 10);
+}
+
+static void CRReadingListsPresentPlus(UIViewController* controller) {
+  CRReadingListsPresentPlusWithAction(controller, nil);
 }
 
 static UIView* CRReadingListsEmptyView(NSString* title, NSString* message, NSString* symbolName,
@@ -252,7 +267,8 @@ static NSString* CRReadingSmartQueueEmptyMessage(CRReadingSmartQueueKind kind) {
 
 - (void)addList:(id)sender {
   if (!self.store.isEditingAllowed) {
-    CRReadingListsPresentPlus(self);
+    __weak __typeof__(self) weakSelf = self;
+    CRReadingListsPresentPlusWithAction(self, ^{ [weakSelf addList:nil]; });
     return;
   }
   UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"New Reading List"
@@ -445,7 +461,15 @@ static NSString* CRReadingSmartQueueEmptyMessage(CRReadingSmartQueueKind kind) {
   if (indexPath.section == CRReadingListsSectionSmartQueues) {
     CRReadingSmartQueue* queue = self.store.smartQueues[indexPath.row];
     if (!self.store.isSmartQueueAccessAllowed) {
-      CRReadingListsPresentPlus(self);
+      CRReadingSmartQueueKind requestedKind = queue.kind;
+      __weak __typeof__(self) weakSelf = self;
+      CRReadingListsPresentPlusWithAction(self, ^{
+        __typeof__(self) self = weakSelf;
+        if (!self || !self.store.isSmartQueueAccessAllowed) return;
+        CRReadingSmartQueueViewController* detail = [[CRReadingSmartQueueViewController alloc]
+          initWithStore:self.store kind:requestedKind openComicHandler:self.openComicHandler];
+        [self.navigationController pushViewController:detail animated:YES];
+      });
       return;
     }
     CRReadingSmartQueueViewController* detail = [[CRReadingSmartQueueViewController alloc]
@@ -673,7 +697,8 @@ static NSString* CRReadingSmartQueueEmptyMessage(CRReadingSmartQueueKind kind) {
 
 - (void)addComic:(id)sender {
   if (!self.store.isEditingAllowed) {
-    CRReadingListsPresentPlus(self);
+    __weak __typeof__(self) weakSelf = self;
+    CRReadingListsPresentPlusWithAction(self, ^{ [weakSelf addComic:nil]; });
     return;
   }
   CRReadingListComicPickerController* picker = [[CRReadingListComicPickerController alloc]

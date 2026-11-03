@@ -1365,6 +1365,7 @@ static void __DisplayQueueCallBack(void* info) {
   // nav-bar offset — frame is kept in sync in viewDidLayoutSubviews.
   _emptyStateView = [[UIView alloc] initWithFrame:_gridView.frame];
   _emptyStateView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _emptyStateView.accessibilityIdentifier = @"library.empty";
   _emptyStateView.hidden = wasHidden;
   _emptyStateView.alpha = previousAlpha;
 
@@ -1376,12 +1377,16 @@ static void __DisplayQueueCallBack(void* info) {
     scroll.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
   }
   scroll.tag = 9901;
+  scroll.accessibilityIdentifier = @"library.empty.scroll";
   [_emptyStateView addSubview:scroll];
   [scroll release];
 
   // ── Single content view – everything goes in here ─────────────────────────
   CGFloat w = _emptyStateView.bounds.size.width;
+  CGFloat h = _emptyStateView.bounds.size.height;
   _emptyStateLayoutWidth = w;
+  _emptyStateLayoutHeight = h;
+  BOOL usesShortLayout = h > 0.0 && h < 420.0;
   CGFloat horizontalInset = MIN(20.0, floor(w / 2.0));
   CGFloat cardW = MAX(0.0, MIN(w - 2.0 * horizontalInset, 600.0));
   CGFloat cardX = (w - cardW) / 2.0;
@@ -1407,16 +1412,20 @@ static void __DisplayQueueCallBack(void* info) {
     iconView.frame = CGRectMake(0, 0, 96, 96);
   }
   iconView.contentMode = UIViewContentModeScaleAspectFit;
+  iconView.isAccessibilityElement = NO;
+  iconView.accessibilityElementsHidden = YES;
   iconView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-  CGFloat iconSize = MIN(110.0, w);
+  CGFloat iconSize = usesShortLayout ? 0.0 : MIN(110.0, w);
   iconView.frame = CGRectMake((w - iconSize) / 2.0, y, iconSize, iconSize);
+  iconView.hidden = usesShortLayout;
   [contentView addSubview:iconView];
   [iconView release];
-  y = CGRectGetMaxY(iconView.frame) + 20;
+  y = usesShortLayout ? 8.0 : CGRectGetMaxY(iconView.frame) + 20.0;
 
   // ── Title ─────────────────────────────────────────────────────────────────
   UILabel* titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
   titleLabel.text = @"Your Library is Empty";
+  titleLabel.accessibilityIdentifier = @"library.empty.title";
   titleLabel.font = [UIFont systemFontOfSize:28 weight:UIFontWeightBold];
   titleLabel.textAlignment = NSTextAlignmentCenter;
   titleLabel.numberOfLines = 0;
@@ -1434,7 +1443,12 @@ static void __DisplayQueueCallBack(void* info) {
 
   // ── Subtitle ──────────────────────────────────────────────────────────────
   UILabel* subtitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardX, y, cardW, 0)];
-  subtitleLabel.text = @"Add .cbz, .cbr or .pdf comics using any of the methods below.";
+#if TARGET_OS_MACCATALYST
+  subtitleLabel.text = @"Open a .cbz, .cbr or .pdf comic now, or add files to your library.";
+#else
+  subtitleLabel.text = @"Add .cbz, .cbr or .pdf comics to start reading.";
+#endif
+  subtitleLabel.accessibilityIdentifier = @"library.empty.subtitle";
   subtitleLabel.font = [UIFont systemFontOfSize:17];
   subtitleLabel.textAlignment = NSTextAlignmentCenter;
   subtitleLabel.numberOfLines = 0;
@@ -1447,7 +1461,7 @@ static void __DisplayQueueCallBack(void* info) {
   CGSize subtitleSize = [subtitleLabel sizeThatFits:CGSizeMake(MAX(1.0, cardW), CGFLOAT_MAX)];
   subtitleLabel.frame = CGRectMake(cardX, y, cardW, ceil(subtitleSize.height));
   [contentView addSubview:subtitleLabel];
-  y = CGRectGetMaxY(subtitleLabel.frame) + 32;
+  y = CGRectGetMaxY(subtitleLabel.frame) + (usesShortLayout ? 16.0 : 32.0);
   [subtitleLabel release];
 
   // ── Step cards ────────────────────────────────────────────────────────────
@@ -1466,6 +1480,66 @@ static void __DisplayQueueCallBack(void* info) {
     stepBodyColor  = [UIColor grayColor];
     accentColor    = [UIColor colorWithRed:0.20 green:0.55 blue:1.00 alpha:1.0];
   }
+
+  // Keep these actions in the measured content flow so short and folded
+  // viewports can scroll to them instead of clipping them.
+  CGFloat actionW = MAX(0.0, MIN(cardW, 360.0));
+  CGFloat actionX = (w - actionW) / 2.0;
+  UIFont* actionFont = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+  UIEdgeInsets actionInsets = UIEdgeInsetsMake(14.0, 20.0, 14.0, 20.0);
+
+  UIButton* primaryAction = [UIButton buttonWithType:UIButtonTypeSystem];
+#if TARGET_OS_MACCATALYST
+  [primaryAction setTitle:@"Open Comic…" forState:UIControlStateNormal];
+  primaryAction.accessibilityIdentifier = @"library.empty.openComic";
+  primaryAction.accessibilityHint = @"Opens selected comics without adding them to your library.";
+  [primaryAction addTarget:self action:@selector(_openComicFilesCommand:) forControlEvents:UIControlEventTouchUpInside];
+#else
+  [primaryAction setTitle:@"Add Comics" forState:UIControlStateNormal];
+  primaryAction.accessibilityIdentifier = @"library.empty.addComics";
+  primaryAction.accessibilityHint = @"Choose comic files to add to your library.";
+  [primaryAction addTarget:self action:@selector(purchase:) forControlEvents:UIControlEventTouchUpInside];
+#endif
+  primaryAction.titleLabel.font = actionFont;
+  primaryAction.titleLabel.adjustsFontForContentSizeCategory = YES;
+  primaryAction.titleLabel.numberOfLines = 0;
+  primaryAction.titleLabel.textAlignment = NSTextAlignmentCenter;
+  primaryAction.contentEdgeInsets = actionInsets;
+  primaryAction.backgroundColor = accentColor;
+  [primaryAction setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+  primaryAction.layer.cornerRadius = 12.0;
+  primaryAction.layer.masksToBounds = YES;
+  CGSize primarySize = [primaryAction sizeThatFits:CGSizeMake(MAX(1.0, actionW), CGFLOAT_MAX)];
+  CGFloat primaryH = MAX(52.0, ceil(primarySize.height));
+  primaryAction.frame = CGRectMake(actionX, y, actionW, primaryH);
+  [contentView addSubview:primaryAction];
+  y = CGRectGetMaxY(primaryAction.frame);
+
+#if TARGET_OS_MACCATALYST
+  y += 10.0;
+  UIButton* importAction = [UIButton buttonWithType:UIButtonTypeSystem];
+  [importAction setTitle:@"Add Comics" forState:UIControlStateNormal];
+  importAction.accessibilityIdentifier = @"library.empty.addComics";
+  importAction.accessibilityHint = @"Imports copies of selected comics into your library.";
+  importAction.titleLabel.font = actionFont;
+  importAction.titleLabel.adjustsFontForContentSizeCategory = YES;
+  importAction.titleLabel.numberOfLines = 0;
+  importAction.titleLabel.textAlignment = NSTextAlignmentCenter;
+  importAction.contentEdgeInsets = actionInsets;
+  importAction.backgroundColor = cardBg;
+  [importAction setTitleColor:accentColor forState:UIControlStateNormal];
+  importAction.layer.borderColor = accentColor.CGColor;
+  importAction.layer.borderWidth = 1.5;
+  importAction.layer.cornerRadius = 12.0;
+  importAction.layer.masksToBounds = YES;
+  [importAction addTarget:self action:@selector(purchase:) forControlEvents:UIControlEventTouchUpInside];
+  CGSize importSize = [importAction sizeThatFits:CGSizeMake(MAX(1.0, actionW), CGFLOAT_MAX)];
+  CGFloat importH = MAX(52.0, ceil(importSize.height));
+  importAction.frame = CGRectMake(actionX, y, actionW, importH);
+  [contentView addSubview:importAction];
+  y = CGRectGetMaxY(importAction.frame);
+#endif
+  y += usesShortLayout ? 20.0 : 28.0;
 
   struct { NSString* symbol; NSString* title; NSString* body; } steps[] = {
 #if TARGET_OS_MACCATALYST
@@ -1609,6 +1683,20 @@ static void __DisplayQueueCallBack(void* info) {
   scroll.contentSize = CGSizeMake(scroll.bounds.size.width, contentH);
   CGFloat topInset = MAX(0.0, floor((availH - contentH) / 2.0));
   scroll.contentInset = UIEdgeInsetsMake(topInset, 0, 0, 0);
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection*)previousTraitCollection {
+  [super traitCollectionDidChange:previousTraitCollection];
+  if (!_emptyStateView || !previousTraitCollection) return;
+  UIContentSizeCategory previousCategory = previousTraitCollection.preferredContentSizeCategory;
+  UIContentSizeCategory currentCategory = self.traitCollection.preferredContentSizeCategory;
+  if (![previousCategory isEqualToString:currentCategory]) {
+    // The empty state uses measured frames. Rebuild at the new Dynamic Type
+    // metrics even when the viewport width is unchanged; the builder retains
+    // and clamps the existing scroll position.
+    [self _buildEmptyStateView];
+    [self.view setNeedsLayout];
+  }
 }
 
 - (void) _captureGridLayoutSnapshot {
@@ -1755,7 +1843,8 @@ static void __DisplayQueueCallBack(void* info) {
   self.hasGridLayoutSnapshot = NO;
 
   // Keep the empty-state overlay exactly over the grid (below the nav bar).
-  if (fabs(_emptyStateLayoutWidth - CGRectGetWidth(_gridView.bounds)) > 0.5) {
+  if (fabs(_emptyStateLayoutWidth - CGRectGetWidth(_gridView.bounds)) > 0.5 ||
+      fabs(_emptyStateLayoutHeight - CGRectGetHeight(_gridView.bounds)) > 0.5) {
     [self _buildEmptyStateView];
   }
   if (_emptyStateView) {

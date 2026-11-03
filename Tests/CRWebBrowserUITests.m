@@ -95,7 +95,7 @@
     body = self.comic;
   } else {
     NSString* state = signedIn || login ? @"Signed in to test publisher" : @"No publisher session";
-    NSString* html = [NSString stringWithFormat:@"<!doctype html><meta name='viewport' content='width=device-width'><title>Test publisher</title><h1>%@</h1><p><a href='/login'>Sign in to test publisher</a></p><p><a href='/download'>Download test comic</a></p>", state];
+    NSString* html = [NSString stringWithFormat:@"<!doctype html><meta name='viewport' content='width=device-width'><title>Test publisher</title><h1>%@</h1><p><a href='/login'>Sign in to test publisher</a></p><p><a href='/download' download>Download test comic</a></p><p><a href='/download'>Download response test comic</a></p>", state];
     body = [html dataUsingEncoding:NSUTF8StringEncoding];
   }
   NSString* response = [NSString stringWithFormat:@"HTTP/1.0 %@\r\nContent-Type: %@\r\nContent-Length: %lu\r\nCache-Control: no-store\r\nConnection: close\r\n%@\r\n", status, mime, (unsigned long)body.length, headers];
@@ -137,6 +137,16 @@
 
 - (void)testWebBrowserSessionsAndPrivateModeWithoutPlus {
   self.continueAfterFailure = NO;
+  NSURL* configuration = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader"
+                                                                  withExtension:@"storekit"];
+  NSError* error;
+  SKTestSession* purchaseSession = [[SKTestSession alloc] initWithContentsOfURL:configuration
+                                                                          error:&error];
+  XCTAssertNotNil(purchaseSession, @"%@", error);
+  [purchaseSession resetToDefaultState];
+  [purchaseSession clearTransactions];
+  purchaseSession.disableDialogs = YES;
+  XCTAssertTrue(purchaseSession.disableDialogs, @"StoreKit Test must accept its configuration before launching purchases.");
   CRBrowserFixtureServer* server = [CRBrowserFixtureServer new];
   [server start];
   XCUIApplication* app = [XCUIApplication new];
@@ -147,6 +157,17 @@
     [app.buttons[@"library.browser"] tap];
     [self openFixture:server route:@"/login" inBrowser:app];
     XCTAssertTrue([app.webViews.staticTexts[@"Signed in to test publisher"] waitForExistenceWithTimeout:30]);
+    XCUIElement* download = app.webViews.links[@"Download test comic"];
+    XCTAssertTrue([download waitForExistenceWithTimeout:10]);
+    [download tap];
+    XCUIElement* upsell = app.alerts[@"ComicReader Plus"];
+    XCTAssertTrue([upsell waitForExistenceWithTimeout:10]);
+    [upsell.buttons[@"Not Now"] tap];
+    XCTAssertTrue([upsell waitForNonExistenceWithTimeout:10]);
+    XCTAssertTrue([download waitForExistenceWithTimeout:10],
+                  @"Cancelling the Plus prompt must leave free browsing usable.");
+    XCTAssertFalse([app.buttons[@"Library Root  ✓"] waitForExistenceWithTimeout:1],
+                   @"A download destination must not be offered without entitlement.");
     [self saveScreenshot:@"Browser authenticated website" ofApp:app];
     [app.buttons[@"library.browser.done"] tap];
     [app.buttons[@"library.browser"] tap];
@@ -165,6 +186,8 @@
   } @finally {
     [app terminate];
     [server stop];
+    [purchaseSession clearTransactions];
+    [purchaseSession resetToDefaultState];
   }
 }
 
@@ -177,6 +200,7 @@
   [purchaseSession resetToDefaultState];
   [purchaseSession clearTransactions];
   purchaseSession.disableDialogs = YES;
+  XCTAssertTrue(purchaseSession.disableDialogs, @"StoreKit Test must accept its configuration before launching purchases.");
   CRBrowserFixtureServer* server = [CRBrowserFixtureServer new];
   [server start];
   XCUIApplication* app = [XCUIApplication new];
@@ -194,18 +218,17 @@
     [upsell.buttons[@"View Plus"] tap];
     XCTAssertTrue([self waitForElementToBecomeEnabled:app.cells[@"plus.purchase"] timeout:15]);
     [app.cells[@"plus.purchase"] tap];
-    XCTAssertTrue([self waitForPlusToUnlockInApp:app]);
-    [app.buttons[@"Done"] tap];
-    XCTAssertTrue([download waitForExistenceWithTimeout:10]);
-    [download tap];
     XCUIElement* root = app.buttons[@"Library Root  ✓"];
-    XCTAssertTrue([self waitForElementToBecomeHittable:root timeout:10]);
+    XCTAssertTrue([self waitForElementToBecomeHittable:root timeout:30],
+                  @"A verified purchase must return to the browser and resume the safe GET exactly once.");
     [root tap];
     XCTAssertTrue([root waitForNonExistenceWithTimeout:10]);
     XCUIElement* downloadedComic = app.cells[@"library.browser.download"];
     NSPredicate* imported = [NSPredicate predicateWithFormat:@"exists == YES AND value BEGINSWITH %@", @"Imported"];
     XCTestExpectation* completion = [[XCTNSPredicateExpectation alloc] initWithPredicate:imported object:downloadedComic];
     XCTAssertEqual([XCTWaiter waitForExpectations:@[completion] timeout:30], XCTWaiterResultCompleted);
+    XCTAssertEqual([app.cells matchingIdentifier:@"library.browser.download"].count, 1,
+                   @"The unlock callback must not duplicate the retained request.");
     [self saveScreenshot:@"Authenticated comic download queue" ofApp:app];
     [app.buttons[@"library.browser.downloads.back"] tap];
     [download tap];
@@ -221,6 +244,53 @@
     XCTAssertTrue([app.staticTexts[@"Please Wait…"] waitForNonExistenceWithTimeout:15]);
     XCTAssertTrue([self waitForElementToBecomeHittable:app.otherElements[@"reader.canvas"] timeout:10]);
     [self saveScreenshot:@"Downloaded comic opened in reader" ofApp:app];
+  } @finally {
+    [app terminate];
+    [server stop];
+    [purchaseSession clearTransactions];
+    [purchaseSession resetToDefaultState];
+  }
+}
+
+- (void)testResponseConvertedDownloadRequiresManualRetryAfterPurchase {
+  self.continueAfterFailure = NO;
+  NSURL* configuration = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader"
+                                                                  withExtension:@"storekit"];
+  NSError* error;
+  SKTestSession* purchaseSession = [[SKTestSession alloc] initWithContentsOfURL:configuration
+                                                                          error:&error];
+  XCTAssertNotNil(purchaseSession, @"%@", error);
+  [purchaseSession resetToDefaultState];
+  [purchaseSession clearTransactions];
+  purchaseSession.disableDialogs = YES;
+  XCTAssertTrue(purchaseSession.disableDialogs, @"StoreKit Test must accept its configuration before launching purchases.");
+  CRBrowserFixtureServer* server = [CRBrowserFixtureServer new];
+  [server start];
+  XCUIApplication* app = [XCUIApplication new];
+  app.launchArguments = self.standardLaunchArguments;
+  @try {
+    [app launch];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.browser"] timeout:15]);
+    [app.buttons[@"library.browser"] tap];
+    [self openFixture:server route:@"/login" inBrowser:app];
+    XCUIElement* download = app.webViews.links[@"Download response test comic"];
+    XCTAssertTrue([download waitForExistenceWithTimeout:30]);
+    [download tap];
+    XCUIElement* upsell = app.alerts[@"ComicReader Plus"];
+    XCTAssertTrue([upsell waitForExistenceWithTimeout:10]);
+    [upsell.buttons[@"View Plus"] tap];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:app.cells[@"plus.purchase"] timeout:15]);
+    [app.cells[@"plus.purchase"] tap];
+
+    XCUIElement* notice = app.alerts[@"ComicReader Plus Is Active"];
+    XCTAssertTrue([notice waitForExistenceWithTimeout:30],
+                  @"A response-converted request must require an explicit second tap after unlock.");
+    XCTAssertFalse(app.buttons[@"Library Root  ✓"].exists,
+                   @"An ambiguous response conversion must never be replayed automatically.");
+    XCTAssertEqual([app.cells matchingIdentifier:@"library.browser.download"].count, 0);
+    [notice.buttons[@"OK"] tap];
+    XCTAssertTrue([download waitForExistenceWithTimeout:10],
+                  @"The original page must remain available for the explicit retry.");
   } @finally {
     [app terminate];
     [server stop];
