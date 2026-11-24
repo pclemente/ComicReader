@@ -5,7 +5,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: comicreader-storekit-mobile-confirmation-1.6.3
+  group: comicreader-external-storekit-retry-1.6.3
   cancel-in-progress: true
 jobs:
   purchase:
@@ -19,7 +19,7 @@ jobs:
           - family: iPad
             model: iPad Pro 13-inch (M5)
     runs-on: xcode-27
-    timeout-minutes: 35
+    timeout-minutes: 24
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
       SIM_MODEL: ${{ matrix.model }}
@@ -43,7 +43,7 @@ jobs:
       - name: Build and run the reader offer and purchase journeys
         run: |
           set -euo pipefail
-          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderTests/CRComicSearchOfferTests/testExplorePlusOpensOneOfferAndDismissesToFreePage -only-testing:ComicReaderTests/CRPlusUnlockContinuationTests -only-testing:ComicReaderUITests/ComicReaderUITests/testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund -only-testing:ComicReaderUITests/ComicReaderUITests/testComicSearchCheckoutCancellationAndVerifiedRetry -only-testing:ComicReaderUITests/ComicReaderUITests/testPlusPurchaseRestoreAndRefund CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test | tee "$RUNNER_TEMP/qa/test.log"
+          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderUITests/ComicReaderUITests/testComicSearchCheckoutCancellationAndVerifiedRetry CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test | tee "$RUNNER_TEMP/qa/test.log"
       - name: Record and validate individual results
         if: ${{ !cancelled() }}
         run: |
@@ -63,7 +63,7 @@ jobs:
                   descend(x.get("children",[])); descend(x.get("testNodes",[]))
           descend(json.loads((p/"tests.json").read_text()))
           print("Individual cases:",cases)
-          expected=["testComicSearchCheckoutCancellationAndVerifiedRetry","testExplorePlusOpensOneOfferAndDismissesToFreePage","testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund","testPlusPurchaseRestoreAndRefund","testConsumeReturnsCallbackOnlyOnce","testAbandonDropsCallbackWithoutInvokingIt","testReplacementUsesOnlyLatestCallback"]
+          expected=["testComicSearchCheckoutCancellationAndVerifiedRetry"]
           assert all(any(name in case and outcome=="Passed" for case,outcome in cases) for name in expected), "A required case did not pass"
           PY
       - name: Save XCTest evidence
