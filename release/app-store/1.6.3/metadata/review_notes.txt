@@ -1,0 +1,5 @@
+This update changes how readers reach the existing ComicReader Plus non-consumable from Comic Search. There is no new product or subscription.
+
+With a supported comic open (the review sample can be used), open Comic Text, choose Search, then tap Explore Plus. The offer shows the localized one-time price and Restore Purchases. Explore Plus itself does not start a transaction. Done returns to Comic Text without purchasing. After a successful purchase or positive restore from this offer, indexing can continue in the open comic.
+
+Reading, ordinary file imports, current-page text recognition/copy/share and optional iCloud sync remain free. No account or third-party tracking is required.
