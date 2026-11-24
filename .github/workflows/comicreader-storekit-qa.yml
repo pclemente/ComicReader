@@ -19,7 +19,7 @@ jobs:
           - family: iPad
             model: iPad Pro 13-inch (M5)
     runs-on: xcode-27
-    timeout-minutes: 24
+    timeout-minutes: 32
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
       SIM_MODEL: ${{ matrix.model }}
@@ -40,10 +40,21 @@ jobs:
           xcrun simctl bootstatus "$device" -b
       # The previous run preserves hosted StoreKit timeouts on both platforms.
       # Test real mobile transactions from an independent StoreKit-enabled UI runner.
+      - name: Register the target application with the disposable simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -jobs 3 CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= build-for-testing > "$RUNNER_TEMP/qa/build.log"
+          xcrun simctl install "$SIM_ID" "$RUNNER_TEMP/build/Build/Products/Debug-iphonesimulator/ComicFlow.app"
+          xcrun simctl launch "$SIM_ID" com.pabloclementeperez.ComicFlow -AppleLanguages '(en)' -AppleLocale en_US
+          xcrun simctl get_app_container "$SIM_ID" com.pabloclementeperez.ComicFlow data
+          # Initial launch registers the installed bundle for the StoreKit daemon.
+          # No purchase is triggered. The actual test still requires the local-store readback.
+          sleep 8
+          xcrun simctl terminate "$SIM_ID" com.pabloclementeperez.ComicFlow
       - name: Build and run the reader offer and purchase journeys
         run: |
           set -euo pipefail
-          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderUITests/ComicReaderUITests/testComicSearchCheckoutCancellationAndVerifiedRetry CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test | tee "$RUNNER_TEMP/qa/test.log"
+          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderUITests/ComicReaderUITests/testComicSearchCheckoutCancellationAndVerifiedRetry CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test-without-building | tee "$RUNNER_TEMP/qa/test.log"
       - name: Record and validate individual results
         if: ${{ !cancelled() }}
         run: |
