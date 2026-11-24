@@ -172,6 +172,20 @@ final class CRPlusStoreTests: XCTestCase {
                         scene.windows.contains { $0.isKeyWindow && !$0.isHidden }
                 }
         }
+        if #available(iOS 17.0, macCatalyst 17.0, *) {
+            // Ask Apple's local store to cancel checkout. No entitlement or
+            // transaction may survive, and a subsequent purchase must still work.
+            try await session.setSimulatedError(.generic(.userCancelled), forAPI: .purchase)
+            let unlocked = await withCheckedContinuation { continuation in
+                store.purchase { success, _ in continuation.resume(returning: success) }
+            }
+            XCTAssertFalse(unlocked)
+            XCTAssertFalse(store.isUnlocked)
+            XCTAssertFalse(store.isBusy)
+            XCTAssertTrue(session.allTransactions().isEmpty)
+            try await session.setSimulatedError(nil, forAPI: .purchase)
+            logStage("cancelled checkout left the store locked", store: store)
+        }
         logStage("purchase started", store: store)
         let purchased = try await purchase(using: store)
         logStage("purchase finished", store: store)

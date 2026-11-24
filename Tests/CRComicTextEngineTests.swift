@@ -397,6 +397,7 @@ final class CRComicSearchOfferTests: XCTestCase {
       explore.sendActions(for: .touchUpInside)
     }
     let offer = try XCTUnwrap(navigation.topViewController as? CRPlusViewController)
+    offer.loadViewIfNeeded()
     XCTAssertEqual(navigation.viewControllers.count, 2)
     XCTAssertNil(reader.presentedViewController)
     XCTAssertEqual(offer.entryContext, .comicSearch)
