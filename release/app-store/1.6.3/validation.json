@@ -1,0 +1,33 @@
+{
+  "version": "1.6.3",
+  "build": "17",
+  "platform": "iOS",
+  "archiveSource": "f004468fbde07d7f47803ebebb01411ae0d73d97",
+  "checkoutTestSource": "320b391a64187745d3c8fd1d7104e8ca00dc65e7",
+  "checkoutTest": {
+    "case": "testComicSearchCheckoutCancellationAndVerifiedRetry",
+    "run": "https://github.com/pclemente/ComicReader/actions/runs/45393311077",
+    "passedOn": [
+      "iPhone 18 Pro",
+      "iPad Pro 13-inch (M5)"
+    ],
+    "os": "iOS 27.2 simulator",
+    "store": "Local Apple StoreKit test session",
+    "verified": [
+      "Comic Search opens the priced offer in one tap.",
+      "Cancelling creates no transaction and leaves Search locked, without a purchase-failure alert.",
+      "Retry creates exactly one local Plus purchase, returns to Search and indexes the comic without another tap."
+    ],
+    "workflowCommit": "49539174490eab116874030ea48e3e98b89fc9dc"
+  },
+  "independentPurchaseRestoreRefund": {
+    "case": "testPlusPurchaseRestoreAndRefund",
+    "run": "https://github.com/pclemente/ComicReader/actions/runs/45381992385",
+    "passedOn": [
+      "iPhone 18 Pro",
+      "iPad Pro 13-inch (M5)"
+    ]
+  },
+  "limits": "The longer OCR and quote UI scenario reached and verified the purchase and Search result on both families. The later Library toolbar check failed on iPhone and the quote editing step timed out on iPad. These broader scenarios did not pass in full. The dedicated checkout and entitlement tests passed independently.",
+  "purchaseModel": "Existing one-time, non-consumable Plus; no price change."
+}
