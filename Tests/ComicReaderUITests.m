@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 @import StoreKitTest;
 @import UIKit;
+#import "ComicReaderUITests-Swift.h"
 
 @interface ComicReaderUITests : XCTestCase
 @end
@@ -562,28 +563,15 @@
   }
 }
 
-// The local purchase confirmation is hosted by the app or a system scene, depending on iOS.
-// Match only a cancellation control; this helper never confirms a transaction.
-- (XCUIElement*)localStoreKitCancelButtonForApp:(XCUIApplication*)app {
-  NSArray<XCUIApplication*>* hosts = @[app,
-    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.ios.StoreKitUIService"],
-    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.StoreKitUISceneService"],
-    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.ServicesPaymentAngel"],
-    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.springboard"]];
-  __block XCUIElement* button = nil;
-  NSPredicate* cancelLabel = [NSPredicate predicateWithFormat:@"label IN %@", @[@"Cancel", @"Close"]];
-  NSPredicate* visible = [NSPredicate predicateWithBlock:^BOOL(id unused, NSDictionary* bindings) {
-    for (XCUIApplication* host in hosts) {
-      if (host.state < XCUIApplicationStateRunningBackground) continue;
-      for (XCUIElement* candidate in [host.buttons matchingPredicate:cancelLabel].allElementsBoundByIndex) {
-        if (candidate.hittable) { button = candidate; return YES; }
-      }
-    }
-    return NO;
+- (void)setLocalCheckoutCancellation:(BOOL)enabled session:(SKTestSession*)session API_AVAILABLE(ios(17.0)) {
+  XCTestExpectation* changed = [self expectationWithDescription:@"Local StoreKit purchase error configured"];
+  __block NSString* problem = nil;
+  [CRUIStoreKitErrors setCancelledPurchase:enabled session:session completion:^(NSString* error) {
+    problem = error;
+    [changed fulfill];
   }];
-  XCTestExpectation* expectation = [[XCTNSPredicateExpectation alloc] initWithPredicate:visible object:nil];
-  if ([XCTWaiter waitForExpectations:@[expectation] timeout:25] != XCTWaiterResultCompleted) return nil;
-  return button;
+  XCTAssertEqual([XCTWaiter waitForExpectations:@[changed] timeout:20], XCTWaiterResultCompleted);
+  XCTAssertNil(problem, @"%@", problem);
 }
 
 - (void)testComicSearchCheckoutCancellationAndVerifiedRetry {
@@ -643,24 +631,44 @@
     XCTAssertEqual(session.allTransactions.count, 0u);
 
     openPricedOffer();
-    // Unlike simply closing our offer, this exercises the cancellation result from StoreKit.
-    session.disableDialogs = NO;
-    XCTAssertFalse(session.disableDialogs);
+    if (@available(iOS 17.0, *)) {
+      [self setLocalCheckoutCancellation:YES session:session];
+    } else { XCTSkip(@"The local StoreKit purchase-error API requires iOS 17."); }
     [buy tap];
-    XCUIElement* cancel = [self localStoreKitCancelButtonForApp:app];
-    XCTAssertNotNil(cancel, @"Apple's local checkout must present a cancellation control.");
-    [cancel tap];
+
+    // Require evidence that the app processed the injected result. A completed
+    // tap with no transaction on its own could also mean checkout is still pending.
+    XCUIElement* failed = app.alerts[@"Purchase Could Not Be Completed"];
+    XCUIElement* cancelled = app.staticTexts[@"The purchase was cancelled."];
+    NSPredicate* processed = [NSPredicate predicateWithBlock:^BOOL(id unused, NSDictionary* bindings) {
+      return failed.exists || cancelled.exists;
+    }];
+    BOOL resolved = [XCTWaiter waitForExpectations:@[[[XCTNSPredicateExpectation alloc]
+      initWithPredicate:processed object:nil]] timeout:8] == XCTWaiterResultCompleted;
+    if (!resolved && !failed.exists) {
+      [app.tables.firstMatch swipeUp]; // The Plus status footer can start below the fold.
+      resolved = [XCTWaiter waitForExpectations:@[[[XCTNSPredicateExpectation alloc]
+        initWithPredicate:processed object:nil]] timeout:12] == XCTWaiterResultCompleted;
+    }
+    NSString* unexpectedError = failed.exists ? [[failed.staticTexts.allElementsBoundByIndex
+      valueForKey:@"label"] componentsJoinedByString:@" | "] : nil;
+    NSString* evidence = [NSString stringWithFormat:
+      @"StoreKit cancellation: processed=%d, cancelled footer=%d, error alert=%@, purchase button=%@, transactions=%lu",
+      resolved, cancelled.exists, unexpectedError ?: @"none", buy.label, (unsigned long)session.allTransactions.count];
+    XCTAttachment* cancellationState = [XCTAttachment attachmentWithString:evidence];
+    cancellationState.name = @"Local checkout cancellation result";
+    cancellationState.lifetime = XCTAttachmentLifetimeKeepAlways;
+    [self addAttachment:cancellationState];
+    XCTAssertTrue(resolved, @"%@", evidence);
+    if (failed.exists) [failed.buttons[@"OK"] tap];
     XCTAssertTrue([self waitForElementToBecomeEnabled:buy timeout:20]);
     XCTAssertTrue(offer.exists);
-    XCTAssertFalse(app.alerts[@"Purchase Could Not Be Completed"].exists);
-    XCTAssertEqualObjects(app.cells[@"plus.purchase"].value, @"Not purchased");
     XCTAssertEqual(session.allTransactions.count, 0u);
     [done tap];
     XCTAssertTrue([self waitForElementToBecomeHittable:explore timeout:10]);
     XCTAssertFalse(query.enabled);
 
-    session.disableDialogs = YES;
-    XCTAssertTrue(session.disableDialogs);
+    if (@available(iOS 17.0, *)) [self setLocalCheckoutCancellation:NO session:session];
     openPricedOffer();
     [buy tap];
     XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForExistenceWithTimeout:25]);
@@ -673,6 +681,7 @@
     XCTAssertEqual(session.allTransactions.count, 1u);
     XCTAssertEqualObjects(session.allTransactions.firstObject.productIdentifier,
                           @"com.pabloclementeperez.ComicFlow.plus");
+    XCTAssertNil(unexpectedError, @"Cancelling checkout must not present a purchase-failure dialog: %@", unexpectedError);
   } @finally {
     [app terminate];
     [session clearTransactions];

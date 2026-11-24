@@ -11,6 +11,7 @@
 		D02610230000000000000002 /* ComicReader.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA88F0A8C74E6AA4EF65A933 /* ComicReader.storekit */; };
 		3B0D35C50E34D5615ACCF3AB /* CRReviewPromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */; };
 		E3D56880404534223523D173 /* CRReviewPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */; };
+		D42611240000000000000001 /* CRUIStoreKitErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42611240000000000000002 /* CRUIStoreKitErrors.swift */; };
 		CB3DE61BB9692D5919DBF9C0 /* CRWebBrowserUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */; };
 		60EA26A92A95879A9AA36098 /* CRBrowserSiteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */; };
 		3074986D18BB12AD36502C22 /* CRWebImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */; };
@@ -223,6 +224,7 @@
 		D02610230000000000000005 /* ComicFlow-MacUITestHost.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ComicFlow-MacUITestHost.entitlements"; sourceTree = "<group>"; };
 		8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRReviewPromptTests.swift; sourceTree = SOURCE_ROOT; };
 		2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classes/CRReviewPrompt.swift; sourceTree = SOURCE_ROOT; };
+		D42611240000000000000002 /* CRUIStoreKitErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRUIStoreKitErrors.swift; sourceTree = SOURCE_ROOT; };
 		D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests/CRWebBrowserUITests.m; sourceTree = SOURCE_ROOT; };
 		43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRBrowserSiteStoreTests.swift; sourceTree = SOURCE_ROOT; };
 		FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CRWebImportTests.swift; sourceTree = SOURCE_ROOT; };
@@ -686,6 +688,7 @@
 				8F2F1C349FAF11672D7DEB0D /* CRBrowserSiteStore.swift */,
 				FDBCE4340D8F9FB4106ADFD7 /* CRWebImportTests.swift */,
 				43AB0B4BB634CE7781AB102F /* CRBrowserSiteStoreTests.swift */,
+				D42611240000000000000002 /* CRUIStoreKitErrors.swift */,
 				D6EBCF846EE551826A2CB504 /* CRWebBrowserUITests.m */,
 				2CE1060D9391173EFFA3322C /* CRReviewPrompt.swift */,
 				8B3E2A58FF44DC950C4D11BE /* CRReviewPromptTests.swift */,
@@ -1347,6 +1350,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D42611240000000000000001 /* CRUIStoreKitErrors.swift in Sources */,
 				CB3DE61BB9692D5919DBF9C0 /* CRWebBrowserUITests.m in Sources */,
 				4DB49182193176D8EB91234C /* ComicReaderUITests.m in Sources */,
 			);
@@ -1717,6 +1721,7 @@
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderUITests;
+				SWIFT_VERSION = 5.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1844,6 +1849,7 @@
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pabloclementeperez.ComicReaderUITests;
+				SWIFT_VERSION = 5.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
