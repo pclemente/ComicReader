@@ -1,0 +1,20 @@
+{
+  "version": "1.6.3",
+  "build": "17",
+  "bundleIdentifier": "com.pabloclementeperez.ComicFlow",
+  "appStoreAppID": "1597314495",
+  "sourceCommit": "f004468fbde07d7f47803ebebb01411ae0d73d97",
+  "verifiedAt": "2026-11-24T14:09:57.334774+00:00",
+  "platforms": {
+    "iOS": {
+      "status": "Waiting for Review",
+      "submittedAt": "2026-11-24T15:07:00+01:00",
+      "timePrecision": "minute",
+      "reviewSubmissionID": "65069859-0fee-4f21-a29b-0d8385aaecae",
+      "reviewURL": "https://appstoreconnect.apple.com/apps/1597314495/distribution/reviewsubmissions/details/65069859-0fee-4f21-a29b-0d8385aaecae",
+      "itemsSubmitted": 1
+    }
+  },
+  "releaseMode": "Automatic after approval",
+  "validation": "validation.json"
+}
