@@ -15,33 +15,33 @@ jobs:
       matrix:
         include:
           - family: iPhone
-            model: iPhone 17 Pro
+            model: iPhone 18 Pro
           - family: iPad
             model: iPad Pro 13-inch (M5)
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 35
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
       SIM_MODEL: ${{ matrix.model }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Start an isolated iOS 26.5 simulator
+      - name: Start an isolated iOS 27.2 simulator
         run: |
           set -euo pipefail
           xcodebuild -version
           mkdir -p "$RUNNER_TEMP/qa"
           xcrun simctl list devices available --json > "$RUNNER_TEMP/qa/devices.json"
-          device=$(python3 -c 'import os,json; j=json.load(open(os.environ["RUNNER_TEMP"]+"/qa/devices.json")); print(next(d["udid"] for rt,ds in j["devices"].items() if rt.endswith(".iOS-26-5") for d in ds if d["name"]==os.environ["SIM_MODEL"]))')
+          device=$(python3 -c 'import os,json; j=json.load(open(os.environ["RUNNER_TEMP"]+"/qa/devices.json")); print(next(d["udid"] for rt,ds in j["devices"].items() if rt.endswith(".iOS-27-2") for d in ds if d["name"]==os.environ["SIM_MODEL"]))')
           echo "SIM_ID=$device" >> "$GITHUB_ENV"
-          echo "Testing $SIM_MODEL ($device) on iOS 26.5."
+          echo "Testing $SIM_MODEL ($device) on iOS 27.2."
           xcrun simctl boot "$device"
           xcrun simctl bootstatus "$device" -b
       - name: Build and run the reader offer and purchase journeys
         run: |
           set -euo pipefail
-          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderTests/CRComicSearchOfferTests/testExplorePlusOpensOneOfferAndDismissesToFreePage -only-testing:ComicReaderTests/CRPlusUnlockContinuationTests -only-testing:ComicReaderTests/CRPlusStoreTests/testPurchaseRestoreAndRefundLifecycle -only-testing:ComicReaderUITests/ComicReaderUITests/testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund -only-testing:ComicReaderUITests/ComicReaderUITests/testPlusPurchaseRestoreAndRefund CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test | tee "$RUNNER_TEMP/qa/test.log"
+          xcodebuild -project ComicFlow.xcodeproj -scheme ComicReader-StoreKit -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath "$RUNNER_TEMP/build" -parallel-testing-enabled NO -jobs 3 -test-timeouts-enabled YES -maximum-test-execution-time-allowance 300 -resultBundlePath "$RUNNER_TEMP/qa/Release.xcresult" -only-testing:ComicReaderTests/CRComicSearchOfferTests -only-testing:ComicReaderTests/CRPlusUnlockContinuationTests -only-testing:ComicReaderTests/CRPlusStoreTests/testPurchaseRestoreAndRefundLifecycle -only-testing:ComicReaderUITests/ComicReaderUITests/testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund -only-testing:ComicReaderUITests/ComicReaderUITests/testPlusPurchaseRestoreAndRefund CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= test | tee "$RUNNER_TEMP/qa/test.log"
       - name: Record and validate individual results
         if: ${{ !cancelled() }}
         run: |
@@ -61,7 +61,7 @@ jobs:
                   descend(x.get("children",[])); descend(x.get("testNodes",[]))
           descend(json.loads((p/"tests.json").read_text()))
           print("Individual cases:",cases)
-          expected=["testPurchaseRestoreAndRefundLifecycle","testExplorePlusOpensOneOfferAndDismissesToFreePage","testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund","testPlusPurchaseRestoreAndRefund","testConsumeReturnsCallbackOnlyOnce","testAbandonDropsCallbackWithoutInvokingIt","testReplacementUsesOnlyLatestCallback"]
+          expected=["testExplorePlusOpensOneOfferAndDismissesToFreePage","testSandboxSearchPurchaseResumesIndexAndChargesOnce","testPurchaseRestoreAndRefundLifecycle","testComicTextSearchAndQuotesKeepFreeOCRAndSavedQuotesAfterRefund","testPlusPurchaseRestoreAndRefund","testConsumeReturnsCallbackOnlyOnce","testAbandonDropsCallbackWithoutInvokingIt","testReplacementUsesOnlyLatestCallback"]
           assert all(any(name in case and outcome=="Passed" for case,outcome in cases) for name in expected), "A required case did not pass"
           PY
       - name: Save XCTest evidence

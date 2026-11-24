@@ -1,4 +1,5 @@
 import Foundation
+import StoreKitTest
 import UIKit
 import XCTest
 
@@ -358,8 +359,24 @@ private func makeTwoPagePDF() -> Data {
 
 @MainActor
 final class CRComicSearchOfferTests: XCTestCase {
-  func testExplorePlusOpensOneOfferAndDismissesToFreePage() async throws {
-    try XCTSkipIf(CRPlusStore.sharedStore.isUnlocked, "This test exercises a free account in the isolated app host.")
+  private struct SearchOffer {
+    let reader: CRComicTextViewController
+    let navigation: UINavigationController
+    let offer: CRPlusViewController
+    let modes: UISegmentedControl
+    let text: UITextView
+    let explore: UIButton
+  }
+
+  private func find(_ identifier: String, in view: UIView) -> UIView? {
+    if view.accessibilityIdentifier == identifier { return view }
+    for child in view.subviews {
+      if let match = find(identifier, in: child) { return match }
+    }
+    return nil
+  }
+
+  private func withFreeSearchOffer(_ test: (SearchOffer) async throws -> Void) async throws {
     let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
       .first { !$0.windows.isEmpty }, "An application-hosted window scene is required.")
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
@@ -368,20 +385,14 @@ final class CRComicSearchOfferTests: XCTestCase {
 
     let reader = CRComicTextViewController(comicPath: url.path, currentPageIndex: 0)
     let navigation = UINavigationController(rootViewController: reader)
+    let previousKeyWindow = scene.windows.first { $0.isKeyWindow }
     let window = UIWindow(windowScene: scene)
     window.rootViewController = navigation
-    window.isHidden = false
-    defer { window.isHidden = true; window.rootViewController = nil }
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true; window.rootViewController = nil; previousKeyWindow?.makeKey() }
     window.layoutIfNeeded()
     XCTAssertTrue(reader.view.window === window)
 
-    func find(_ identifier: String, in view: UIView) -> UIView? {
-      if view.accessibilityIdentifier == identifier { return view }
-      for child in view.subviews {
-        if let match = find(identifier, in: child) { return match }
-      }
-      return nil
-    }
     let text = try XCTUnwrap(find("reader.text.content", in: reader.view) as? UITextView)
     let ready = expectation(for: NSPredicate(format: "text CONTAINS %@", "First PDF page"), evaluatedWith: text)
     await fulfillment(of: [ready], timeout: 10)
@@ -396,32 +407,96 @@ final class CRComicSearchOfferTests: XCTestCase {
       explore.sendActions(for: .touchUpInside)
       explore.sendActions(for: .touchUpInside)
     }
+
     let offer = try XCTUnwrap(navigation.topViewController as? CRPlusViewController)
     offer.loadViewIfNeeded()
     XCTAssertEqual(navigation.viewControllers.count, 2)
     XCTAssertNil(reader.presentedViewController)
     XCTAssertEqual(offer.entryContext, .comicSearch)
     XCTAssertNotNil(offer.onUnlock)
+    // UIKit may defer a navigation transition even inside performWithoutAnimation.
+    let offerReady = expectation(for: NSPredicate { _, _ in
+      MainActor.assumeIsolated {
+        offer.viewIfLoaded?.window === window && navigation.visibleViewController === offer &&
+          navigation.transitionCoordinator == nil
+      }
+    }, evaluatedWith: nil)
+    await fulfillment(of: [offerReady], timeout: 12)
+    try await test(SearchOffer(reader: reader, navigation: navigation, offer: offer, modes: modes,
+                               text: text, explore: explore))
+  }
 
-    let done = try XCTUnwrap(offer.navigationItem.rightBarButtonItem)
-    XCTAssertEqual(done.accessibilityIdentifier, "plus.done")
-    let action = try XCTUnwrap(done.action)
-    UIView.performWithoutAnimation {
-      XCTAssertTrue(UIApplication.shared.sendAction(action, to: done.target, from: done, for: nil))
+  func testExplorePlusOpensOneOfferAndDismissesToFreePage() async throws {
+    try XCTSkipIf(CRPlusStore.sharedStore.isUnlocked, "This test exercises a free account in the isolated app host.")
+    try await withFreeSearchOffer { screen in
+      let done = try XCTUnwrap(screen.offer.navigationItem.rightBarButtonItem)
+      XCTAssertEqual(done.accessibilityIdentifier, "plus.done")
+      let action = try XCTUnwrap(done.action)
+      UIView.performWithoutAnimation {
+        XCTAssertTrue(UIApplication.shared.sendAction(action, to: done.target, from: done, for: nil))
+      }
+      let readerReady = expectation(for: NSPredicate { _, _ in
+        MainActor.assumeIsolated {
+          screen.navigation.topViewController === screen.reader && screen.navigation.transitionCoordinator == nil
+        }
+      }, evaluatedWith: nil)
+      await fulfillment(of: [readerReady], timeout: 12)
+      XCTAssertNil(screen.offer.onUnlock)
+      XCTAssertEqual(screen.modes.selectedSegmentIndex, 1)
+      let query = try XCTUnwrap(find("reader.text.query", in: screen.reader.view) as? UISearchTextField)
+      XCTAssertFalse(query.isEnabled)
+      screen.modes.selectedSegmentIndex = 0
+      screen.modes.sendActions(for: .valueChanged)
+      XCTAssertFalse(screen.text.isHidden)
+      XCTAssertTrue(screen.text.isSelectable)
+      XCTAssertTrue(screen.text.text.contains("First PDF page"))
+      let share = try XCTUnwrap(find("reader.text.share", in: screen.reader.view) as? UIButton)
+      XCTAssertFalse(share.isHidden)
+      XCTAssertTrue(share.isEnabled)
     }
-    XCTAssertTrue(navigation.topViewController === reader)
-    XCTAssertNil(offer.onUnlock)
-    XCTAssertEqual(modes.selectedSegmentIndex, 1)
-    let query = try XCTUnwrap(find("reader.text.query", in: reader.view) as? UISearchTextField)
-    XCTAssertFalse(query.isEnabled)
-    modes.selectedSegmentIndex = 0
-    modes.sendActions(for: .valueChanged)
-    XCTAssertFalse(text.isHidden)
-    XCTAssertTrue(text.isSelectable)
-    XCTAssertTrue(text.text.contains("First PDF page"))
-    let share = try XCTUnwrap(find("reader.text.share", in: reader.view) as? UIButton)
-    XCTAssertFalse(share.isHidden)
-    XCTAssertTrue(share.isEnabled)
+  }
+
+  func testSandboxSearchPurchaseResumesIndexAndChargesOnce() async throws {
+    // The fixture must acknowledge local StoreKit testing before the purchase action is available.
+    let config = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "ComicReader", withExtension: "storekit"))
+    let session = try SKTestSession(contentsOf: config)
+    session.resetToDefaultState()
+    session.disableDialogs = true
+    guard session.disableDialogs else { XCTFail("StoreKit did not confirm the local test configuration."); return }
+    session.clearTransactions()
+    defer { session.clearTransactions(); session.resetToDefaultState() }
+
+    let store = CRPlusStore.sharedStore
+    XCTAssertFalse(store.isUnlocked, "The local test session should begin without Plus.")
+    try await withFreeSearchOffer { screen in
+      store.start()
+      let priceReady = expectation(for: NSPredicate { _, _ in
+        MainActor.assumeIsolated { !store.isBusy && store.displayPrice?.isEmpty == false }
+      }, evaluatedWith: nil)
+      await fulfillment(of: [priceReady], timeout: 25)
+      guard let price = store.displayPrice, !price.isEmpty else { XCTFail("No local Plus price."); return }
+      let buy = try XCTUnwrap(screen.offer.toolbarItems?.first { $0.accessibilityIdentifier == "plus.purchaseButton" })
+      XCTAssertTrue(buy.isEnabled)
+      XCTAssertTrue(buy.accessibilityLabel?.contains(price) == true)
+      XCTAssertEqual(session.allTransactions().count, 0)
+      let action = try XCTUnwrap(buy.action)
+      XCTAssertTrue(UIApplication.shared.sendAction(action, to: buy.target, from: buy, for: nil))
+
+      let indexed = expectation(for: NSPredicate { _, _ in
+        MainActor.assumeIsolated {
+          store.isUnlocked && screen.navigation.topViewController === screen.reader &&
+            screen.explore.currentTitle == "Comic Indexed"
+        }
+      }, evaluatedWith: nil)
+      await fulfillment(of: [indexed], timeout: 40)
+      XCTAssertTrue(store.isUnlocked)
+      XCTAssertTrue(screen.navigation.topViewController === screen.reader)
+      XCTAssertEqual(screen.explore.currentTitle, "Comic Indexed")
+      XCTAssertNil(screen.offer.onUnlock)
+      let transactions = session.allTransactions()
+      XCTAssertEqual(transactions.count, 1)
+      XCTAssertEqual(transactions.first?.productIdentifier, CRPlusStore.productIdentifier)
+    }
   }
 }
 
