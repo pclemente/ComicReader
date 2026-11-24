@@ -1,5 +1,7 @@
 import Foundation
+#if targetEnvironment(macCatalyst)
 import StoreKitTest
+#endif
 import UIKit
 import XCTest
 
@@ -456,6 +458,9 @@ final class CRComicSearchOfferTests: XCTestCase {
     }
   }
 
+  #if targetEnvironment(macCatalyst)
+  // On iOS, ComicReaderUITests.testComicSearchCheckoutCancellationAndVerifiedRetry
+  // drives checkout from a separate UI test runner and verifies the single transaction.
   func testSandboxSearchPurchaseResumesIndexAndChargesOnce() async throws {
     // The fixture must acknowledge local StoreKit testing before the purchase action is available.
     let config = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "ComicReader", withExtension: "storekit"))
@@ -498,6 +503,7 @@ final class CRComicSearchOfferTests: XCTestCase {
       XCTAssertEqual(transactions.first?.productIdentifier, CRPlusStore.productIdentifier)
     }
   }
+  #endif
 }
 
 private enum TestFailure: Error {
