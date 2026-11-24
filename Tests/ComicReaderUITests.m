@@ -509,6 +509,8 @@
     [self saveScreenshot:@"Edited quotation with its comic and page" ofApp:app];
     [app.buttons[@"reader.quote.done"] tap];
     [app.buttons[@"reader.text.done"] tap];
+    XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForNonExistenceWithTimeout:10]);
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:readerCenter]);
     XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"Library"] timeout:5]);
     [app.buttons[@"Library"] tap];
 
@@ -557,6 +559,125 @@
     [session clearTransactions];
     [[NSFileManager defaultManager] removeItemAtURL:fixtureURL error:NULL];
     XCUIDevice.sharedDevice.orientation = UIDeviceOrientationPortrait;
+  }
+}
+
+// The local purchase confirmation is hosted by the app or a system scene, depending on iOS.
+// Match only a cancellation control; this helper never confirms a transaction.
+- (XCUIElement*)localStoreKitCancelButtonForApp:(XCUIApplication*)app {
+  NSArray<XCUIApplication*>* hosts = @[app,
+    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.ios.StoreKitUIService"],
+    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.StoreKitUISceneService"],
+    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.ServicesPaymentAngel"],
+    [[XCUIApplication alloc] initWithBundleIdentifier:@"com.apple.springboard"]];
+  __block XCUIElement* button = nil;
+  NSPredicate* cancelLabel = [NSPredicate predicateWithFormat:@"label IN %@", @[@"Cancel", @"Close"]];
+  NSPredicate* visible = [NSPredicate predicateWithBlock:^BOOL(id unused, NSDictionary* bindings) {
+    for (XCUIApplication* host in hosts) {
+      if (host.state < XCUIApplicationStateRunningBackground) continue;
+      for (XCUIElement* candidate in [host.buttons matchingPredicate:cancelLabel].allElementsBoundByIndex) {
+        if (candidate.hittable) { button = candidate; return YES; }
+      }
+    }
+    return NO;
+  }];
+  XCTestExpectation* expectation = [[XCTNSPredicateExpectation alloc] initWithPredicate:visible object:nil];
+  if ([XCTWaiter waitForExpectations:@[expectation] timeout:25] != XCTWaiterResultCompleted) return nil;
+  return button;
+}
+
+- (void)testComicSearchCheckoutCancellationAndVerifiedRetry {
+  self.continueAfterFailure = NO;
+  NSURL* config = [[NSBundle bundleForClass:self.class] URLForResource:@"ComicReader" withExtension:@"storekit"];
+  XCTAssertNotNil(config);
+  NSError* error = nil;
+  SKTestSession* session = [[SKTestSession alloc] initWithContentsOfURL:config error:&error];
+  XCTAssertNotNil(session, @"%@", error);
+  [session resetToDefaultState];
+  session.disableDialogs = YES;
+  XCTAssertTrue(session.disableDialogs, @"Only run checkout after Apple's local StoreKit session is confirmed.");
+  [session clearTransactions];
+
+  NSString* fileName = [NSString stringWithFormat:@"Checkout-%@.pdf", NSUUID.UUID.UUIDString];
+  NSURL* fixture = [self createPDFUIFixtureNamed:fileName];
+  XCUIApplication* app = [[XCUIApplication alloc] init];
+  app.launchArguments = [self.standardLaunchArguments arrayByAddingObjectsFromArray:
+    @[@"-AppleLanguages", @"(en)", @"-CRCloudSyncOptedIn", @"NO"]];
+  @try {
+    [app launch];
+    [self dismissLegacyRatingPromptIfPresentInApp:app];
+    XCTAssertTrue([self waitForElementToBecomeHittable:app.buttons[@"library.plus"] timeout:20]);
+    if (@available(iOS 16.4, *)) { [app openURL:fixture]; }
+    else { XCTSkip(@"The document-import UI fixture requires iOS 16.4 or later."); }
+    NSString* coverID = [@"library.comic." stringByAppendingString:fileName];
+    XCUIElement* cover = [app descendantsMatchingType:XCUIElementTypeAny][coverID];
+    XCTAssertTrue([self waitForElementToBecomeHittable:cover timeout:30]);
+    [cover tap];
+    XCUICoordinate* center = [app coordinateWithNormalizedOffset:CGVectorMake(0.5, 0.5)];
+    XCTAssertTrue([self revealReaderToolbarInApp:app atCoordinate:center]);
+    [app.buttons[@"reader.text.open"] tap];
+    XCTAssertTrue([self waitForTextElement:app.textViews[@"reader.text.content"]
+                                 toContain:@"UI fixture, page 1" timeout:25]);
+    XCUIElement* modes = app.segmentedControls[@"reader.text.mode"];
+    [modes.buttons[@"Search"] tap];
+    XCUIElement* explore = app.buttons[@"reader.text.index"];
+    XCUIElement* query = app.searchFields[@"reader.text.query"];
+    XCUIElement* offer = app.navigationBars[@"ComicReader Plus"];
+    XCUIElement* buy = app.buttons[@"plus.purchaseButton"];
+    XCUIElement* done = app.buttons[@"plus.done"];
+    void (^openPricedOffer)(void) = ^{
+      XCTAssertTrue([self waitForElementToBecomeHittable:explore timeout:10]);
+      XCTAssertEqualObjects(explore.label, @"Explore Plus");
+      XCTAssertFalse(query.enabled);
+      [explore tap];
+      XCTAssertTrue([offer waitForExistenceWithTimeout:10]);
+      XCTAssertFalse(app.alerts[@"ComicReader Plus"].exists);
+      XCTAssertTrue([self waitForElementToBecomeEnabled:buy timeout:20]);
+      XCTAssertTrue(buy.hittable);
+      XCTAssertTrue([buy.label containsString:@"once"]);
+    };
+
+    openPricedOffer();
+    [done tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:explore timeout:10]);
+    XCTAssertEqual(session.allTransactions.count, 0u);
+
+    openPricedOffer();
+    // Unlike simply closing our offer, this exercises the cancellation result from StoreKit.
+    session.disableDialogs = NO;
+    XCTAssertFalse(session.disableDialogs);
+    [buy tap];
+    XCUIElement* cancel = [self localStoreKitCancelButtonForApp:app];
+    XCTAssertNotNil(cancel, @"Apple's local checkout must present a cancellation control.");
+    [cancel tap];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:buy timeout:20]);
+    XCTAssertTrue(offer.exists);
+    XCTAssertFalse(app.alerts[@"Purchase Could Not Be Completed"].exists);
+    XCTAssertEqualObjects(app.cells[@"plus.purchase"].value, @"Not purchased");
+    XCTAssertEqual(session.allTransactions.count, 0u);
+    [done tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:explore timeout:10]);
+    XCTAssertFalse(query.enabled);
+
+    session.disableDialogs = YES;
+    XCTAssertTrue(session.disableDialogs);
+    openPricedOffer();
+    [buy tap];
+    XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForExistenceWithTimeout:25]);
+    XCTAssertTrue(modes.buttons[@"Search"].selected);
+    XCTAssertTrue([self waitForElementToBecomeEnabled:query timeout:25]);
+    [query tap];
+    [query typeText:@"page 3"];
+    XCTAssertTrue([app.cells[@"reader.text.result.2"] waitForExistenceWithTimeout:30],
+                  @"A confirmed purchase must index the last page without a second indexing tap.");
+    XCTAssertEqual(session.allTransactions.count, 1u);
+    XCTAssertEqualObjects(session.allTransactions.firstObject.productIdentifier,
+                          @"com.pabloclementeperez.ComicFlow.plus");
+  } @finally {
+    [app terminate];
+    [session clearTransactions];
+    [session resetToDefaultState];
+    [[NSFileManager defaultManager] removeItemAtURL:fixture error:NULL];
   }
 }
 
