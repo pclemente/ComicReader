@@ -193,8 +193,12 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
         table.reloadData()
     }
     @objc private func startIndex() {
-        guard requirePlus(from: self, afterUnlock: { [weak self] in self?.startIndex() }) else { return }
         guard document != nil, !isIndexing else { return }
+        guard CRPlusStore.sharedStore.isUnlocked else {
+            guard presentedViewController == nil else { return }
+            showSearchPlus(from: self) { [weak self] in self?.startIndex() }
+            return
+        }
         isIndexing = true
         indexGeneration += 1
         let generation = indexGeneration
@@ -422,22 +426,27 @@ public final class CRComicTextViewController: UIViewController, UITableViewDataS
         let alert = UIAlertController(title: "ComicReader Plus", message: "Plus builds a searchable comic index and saves editable quotations. Current-page text, copying and sharing are free.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
         alert.addAction(UIAlertAction(title: "View Plus", style: .default) { [weak self, weak presenter] _ in
-            guard let self, let presenter, !self.isClosing else { return }
-            let plus = CRPlusViewController()
-            plus.entryContext = .comicSearch
-            if let afterUnlock {
-                plus.onUnlock = { [weak self, weak presenter] in
-                    guard let self, let presenter, !self.isClosing,
-                          presenter.viewIfLoaded?.window != nil,
-                          self.navigationController?.topViewController === presenter,
-                          CRPlusStore.sharedStore.isUnlocked else { return }
-                    afterUnlock()
-                }
-            }
-            self.navigationController?.pushViewController(plus, animated: true)
+            guard let presenter else { return }
+            self?.showSearchPlus(from: presenter, afterUnlock: afterUnlock)
         })
         presenter.present(alert, animated: true)
         return false
+    }
+    private func showSearchPlus(from presenter: UIViewController, afterUnlock: (() -> Void)? = nil) {
+        guard !isClosing, presenter.viewIfLoaded?.window != nil,
+              let navigationController, navigationController.topViewController === presenter else { return }
+        let plus = CRPlusViewController()
+        plus.entryContext = .comicSearch
+        if let afterUnlock {
+            plus.onUnlock = { [weak self, weak presenter] in
+                guard let self, let presenter, !self.isClosing,
+                      presenter.viewIfLoaded?.window != nil,
+                      self.navigationController?.topViewController === presenter,
+                      CRPlusStore.sharedStore.isUnlocked else { return }
+                afterUnlock()
+            }
+        }
+        navigationController.pushViewController(plus, animated: true)
     }
     private func showFailure(_ error: Error) {
         status.text = error.localizedDescription

@@ -340,18 +340,87 @@ final class CRComicPageSourceTests: XCTestCase {
     return try XCTUnwrap(source)
   }
 
-  private func makeTwoPagePDF() -> Data {
-    let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 600, height: 800))
-    return renderer.pdfData { context in
-      let attributes: [NSAttributedString.Key: Any] = [
-        .font: UIFont.systemFont(ofSize: 28),
-        .foregroundColor: UIColor.black
-      ]
-      context.beginPage()
-      ("First PDF page" as NSString).draw(at: CGPoint(x: 60, y: 90), withAttributes: attributes)
-      context.beginPage()
-      ("Second PDF page" as NSString).draw(at: CGPoint(x: 60, y: 90), withAttributes: attributes)
+}
+
+private func makeTwoPagePDF() -> Data {
+  let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 600, height: 800))
+  return renderer.pdfData { context in
+    let attributes: [NSAttributedString.Key: Any] = [
+      .font: UIFont.systemFont(ofSize: 28),
+      .foregroundColor: UIColor.black
+    ]
+    context.beginPage()
+    ("First PDF page" as NSString).draw(at: CGPoint(x: 60, y: 90), withAttributes: attributes)
+    context.beginPage()
+    ("Second PDF page" as NSString).draw(at: CGPoint(x: 60, y: 90), withAttributes: attributes)
+  }
+}
+
+@MainActor
+final class CRComicSearchOfferTests: XCTestCase {
+  func testExplorePlusOpensOneOfferAndDismissesToFreePage() async throws {
+    try XCTSkipIf(CRPlusStore.sharedStore.isUnlocked, "This test exercises a free account in the isolated app host.")
+    let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+      .first { !$0.windows.isEmpty }, "An application-hosted window scene is required.")
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+    try makeTwoPagePDF().write(to: url)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let reader = CRComicTextViewController(comicPath: url.path, currentPageIndex: 0)
+    let navigation = UINavigationController(rootViewController: reader)
+    let window = UIWindow(windowScene: scene)
+    window.rootViewController = navigation
+    window.isHidden = false
+    defer { window.isHidden = true; window.rootViewController = nil }
+    window.layoutIfNeeded()
+    XCTAssertTrue(reader.view.window === window)
+
+    func find(_ identifier: String, in view: UIView) -> UIView? {
+      if view.accessibilityIdentifier == identifier { return view }
+      for child in view.subviews {
+        if let match = find(identifier, in: child) { return match }
+      }
+      return nil
     }
+    let text = try XCTUnwrap(find("reader.text.content", in: reader.view) as? UITextView)
+    let ready = expectation(for: NSPredicate(format: "text CONTAINS %@", "First PDF page"), evaluatedWith: text)
+    await fulfillment(of: [ready], timeout: 10)
+    let modes = try XCTUnwrap(find("reader.text.mode", in: reader.view) as? UISegmentedControl)
+    let explore = try XCTUnwrap(find("reader.text.index", in: reader.view) as? UIButton)
+    modes.selectedSegmentIndex = 1
+    modes.sendActions(for: .valueChanged)
+    XCTAssertEqual(explore.currentTitle, "Explore Plus")
+    XCTAssertTrue(explore.isEnabled)
+    XCTAssertFalse(explore.isHidden)
+    UIView.performWithoutAnimation {
+      explore.sendActions(for: .touchUpInside)
+      explore.sendActions(for: .touchUpInside)
+    }
+    let offer = try XCTUnwrap(navigation.topViewController as? CRPlusViewController)
+    XCTAssertEqual(navigation.viewControllers.count, 2)
+    XCTAssertNil(reader.presentedViewController)
+    XCTAssertEqual(offer.entryContext, .comicSearch)
+    XCTAssertNotNil(offer.onUnlock)
+
+    let done = try XCTUnwrap(offer.navigationItem.rightBarButtonItem)
+    XCTAssertEqual(done.accessibilityIdentifier, "plus.done")
+    let action = try XCTUnwrap(done.action)
+    UIView.performWithoutAnimation {
+      XCTAssertTrue(UIApplication.shared.sendAction(action, to: done.target, from: done, for: nil))
+    }
+    XCTAssertTrue(navigation.topViewController === reader)
+    XCTAssertNil(offer.onUnlock)
+    XCTAssertEqual(modes.selectedSegmentIndex, 1)
+    let query = try XCTUnwrap(find("reader.text.query", in: reader.view) as? UISearchTextField)
+    XCTAssertFalse(query.isEnabled)
+    modes.selectedSegmentIndex = 0
+    modes.sendActions(for: .valueChanged)
+    XCTAssertFalse(text.isHidden)
+    XCTAssertTrue(text.isSelectable)
+    XCTAssertTrue(text.text.contains("First PDF page"))
+    let share = try XCTUnwrap(find("reader.text.share", in: reader.view) as? UIButton)
+    XCTAssertFalse(share.isHidden)
+    XCTAssertTrue(share.isEnabled)
   }
 }
 

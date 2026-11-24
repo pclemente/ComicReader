@@ -433,24 +433,41 @@
     XCTAssertTrue([self waitForTextElement:pageText toContain:@"lantern glows" timeout:25]);
     XCTAssertTrue(pageText.enabled);
     [self saveScreenshot:@"Free on-device OCR from a scanned page" ofApp:app];
+    XCUIElement* modes = app.segmentedControls[@"reader.text.mode"];
+    [modes.buttons[@"Search"] tap];
+    XCUIElement* query = app.searchFields[@"reader.text.query"];
+    XCTAssertTrue(query.exists);
+    XCTAssertFalse(query.enabled);
+    XCUIElement* explore = app.buttons[@"reader.text.index"];
+    XCTAssertEqualObjects(explore.label, @"Explore Plus");
+    [explore tap];
+
+    XCUIElement* embeddedPlusNavigation = app.navigationBars[@"ComicReader Plus"];
+    XCTAssertTrue([embeddedPlusNavigation waitForExistenceWithTimeout:5],
+                  @"Explore Plus must open the Comic Search offer in one tap.");
+    XCTAssertFalse(app.alerts[@"ComicReader Plus"].exists);
+    XCTAssertTrue(app.staticTexts[@"Find the line you remember"].exists);
+    XCUIElement* purchase = app.buttons[@"plus.purchaseButton"];
+    XCTAssertTrue([self waitForElementToBecomeEnabled:purchase timeout:15]);
+    XCTAssertTrue(purchase.hittable);
+    XCTAssertTrue([purchase.label containsString:@"once"]);
+    [app.buttons[@"plus.done"] tap];
+    XCTAssertTrue([self waitForElementToBecomeHittable:explore timeout:5]);
+    XCTAssertTrue(modes.buttons[@"Search"].selected);
+    XCTAssertFalse(query.enabled);
+    XCTAssertEqual(session.allTransactions.count, 0u);
+
+    [modes.buttons[@"This Page"] tap];
+    XCTAssertTrue([self waitForTextElement:pageText toContain:@"lantern glows" timeout:15]);
     [app.buttons[@"reader.text.share"] tap];
     [self verifyAndDismissComicTextShareSheetInApp:app containingText:@"lantern glows"];
     [app.buttons[@"reader.text.saveQuote"] tap];
     [self dismissComicTextPlusGateInApp:app];
-    XCUIElement* modes = app.segmentedControls[@"reader.text.mode"];
-    [modes.buttons[@"Search"] tap];
-    XCUIElement* query = app.searchFields[@"reader.text.query"];
-    XCTAssertFalse(query.enabled);
-    [app.buttons[@"reader.text.index"] tap];
 
-    // Buy from the reader's actual upgrade route, then return to the same Search screen.
-    XCUIElement* searchGate = app.alerts[@"ComicReader Plus"];
-    XCTAssertTrue([searchGate waitForExistenceWithTimeout:5]);
-    [searchGate.buttons[@"View Plus"] tap];
-    XCUIElement* embeddedPlusNavigation = app.navigationBars[@"ComicReader Plus"];
+    [modes.buttons[@"Search"] tap];
+    [explore tap];
     XCTAssertTrue([embeddedPlusNavigation waitForExistenceWithTimeout:5]);
     XCUIElement* plusButton = app.buttons[@"library.plus"];
-    XCUIElement* purchase = app.cells[@"plus.purchase"];
     XCTAssertTrue([self waitForElementToBecomeEnabled:purchase timeout:15]);
     [purchase tap];
     // A successful contextual purchase returns here and starts the requested
@@ -461,6 +478,7 @@
     [self replaceTextInElement:query withText:@"silver comet"];
     XCUIElement* secondPage = app.cells[@"reader.text.result.1"];
     XCTAssertTrue([self waitForElementToBecomeHittable:secondPage timeout:30]);
+    XCTAssertEqual(session.allTransactions.count, 1u);
     [self saveScreenshot:@"Plus searches dialogue across the comic" ofApp:app];
     [secondPage tap];
     XCTAssertTrue([app.navigationBars[@"Comic Text"] waitForNonExistenceWithTimeout:10]);
