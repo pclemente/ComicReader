@@ -1,0 +1,7 @@
+# English subtitle candidate — not published
+
+On 26 November 2026 the [US](https://apps.apple.com/us/app/comicreader-comic-book-reader/id1597314495?platform=mac) and [UK](https://apps.apple.com/gb/app/comicreader-comic-book-reader/id1597314495?platform=mac) Mac listings showed “CBR, CBZ & PDF for iPhone Duo”. [Apple shares the localized subtitle across platforms](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/). The proposed text describes what a reader can do on iPhone, iPad and Mac: read an imported CBZ, classic CBR or PDF without a network connection. It does not promise that cloud files can be downloaded offline.
+
+Use [en-US/subtitle.txt](en-US/subtitle.txt) and [en-GB/subtitle.txt](en-GB/subtitle.txt) for the **Subtitle** field only. Each is 27 of Apple's 30 characters. Keep the current Spanish subtitle, “CBR, CBZ y PDF sin conexión”.
+
+Consider this draft at a future editable version, outside the existing screenshot experiment and its baseline. Change only the English subtitle; keep keywords, screenshots, pricing and advertising steady. After release, verify the text on the US and UK iPhone and Mac pages. Compare Search-sourced first-time downloads, impressions and Apple's conversion rate across equal 28-day windows before and after, skipping the release day and separating platform and territory. If another release or metadata change overlaps, or volume is too low, the comparison cannot establish a subtitle effect.
